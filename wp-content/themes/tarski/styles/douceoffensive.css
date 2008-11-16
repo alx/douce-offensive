@@ -1,0 +1,59 @@
+/*
+douceoffensive.css
+'douceoffensive' style for the Tarski theme - http://tarskitheme.com/
+Designed by Alexandre Girard, http://alexgirard.com, and Guillaume Ajavon, http://douceoffensive.org
+*/
+
+
+/* Main structure
+----------------------------------------------- */
+body.douceoffensive { font-family: Verdana, Helvetica, Arial, sans-serif; font-size: 76%; line-height: 120%; color: #404040; background: #000; }
+
+/* Navigation
+----------------------------------------------- */
+body.douceoffensive #wrapper .nav-current:link, body.douceoffensive #wrapper .nav-current:visited, body.douceoffensive #wrapper .nav-current:active { color: #bf6068; }
+body.douceoffensive #wrapper .nav-current:hover { color: #a6212c; }
+
+/* Content
+----------------------------------------------- */
+body.douceoffensive code { color: #bf8f93; }
+body.douceoffensive abbr, body.douceoffensive acronym { border-bottom: 1px solid #bf8f93; }
+		
+		/* Headers
+		--------------------------------------- */
+		body.douceoffensive h3 { color: #bf6068; }
+		body.douceoffensive h4, body.douceoffensive h5, body.douceoffensive h6 { color: #bf8f93; }
+		
+		/* Post content
+		--------------------------------------- */
+		body.douceoffensive .articlenav { background: #fcfeff; }
+		
+		/* Inserts
+		--------------------------------------- */
+		body.douceoffensive .insert { background: #fcfeff; margin: 0 0 1em 0; border: 1px solid #cfdee5; padding: 9px; }
+			body.douceoffensive .insert h3 { border-bottom: 1px solid #cfdee5; }
+		
+		/* Downloads
+		--------------------------------------- */
+		body.douceoffensive .content a.download:link, body.douceoffensive .content a.download:visited, body.douceoffensive .content a.download:active { background-color: #fcfeff; border: 1px solid #cfdee5; }
+		
+		/* Images
+		--------------------------------------- */
+		body.douceoffensive a img { border: 1px solid #3689b3; }
+		body.douceoffensive a:hover img, body.douceoffensive .comment a:hover .avatar { border: 1px solid #a6212c; }
+		
+/* Links
+----------------------------------------------- */
+body.douceoffensive a:link, body.douceoffensive a:active, body.douceoffensive a:visited { color: #3689b3; }
+body.douceoffensive a:hover { color: #a6212c; }
+
+body.douceoffensive .content a:link, body.douceoffensive .content a:active, body.douceoffensive .content a:visited, body.douceoffensive .link-pages a:link, body .link-pages a:active, body .link-pages a:visited, body .tagdata a:link, body.douceoffensive .tagdata a:active, body.douceoffensive .tagdata a:visited, body.douceoffensive .widget_tag_cloud a:link, body.douceoffensive .widget_tag_cloud a:active, body.douceoffensive .widget_tag_cloud a:visited { border-bottom: 1px solid #cfdee5; }
+body.douceoffensive .content a:hover, body.douceoffensive .link-pages a:hover, body.douceoffensive .tagdata a:hover, body.douceoffensive .widget_tag_cloud a:hover { border-bottom: 1px solid #a6212c; }
+
+/* Widgets
+----------------------------------------------- */
+
+	/* Calendar widget
+	------------------------------------------- */
+	body.douceoffensive .widget_calendar tbody td a { color: #fff; background: #8bb6cc; }
+	body.douceoffensive .widget_calendar tbody td a:hover { color: #fff; background: #cc8a95; }

@@ -13,6 +13,9 @@
 					
 					<div class="meta">
 						<h1 class="title entry-title"><?php the_title(); ?></h1>
+						<?php if (yapb_is_photoblog_post()): ?>  
+							<?php yapb_image('', array('alt' => 'My marvelous image'), '') ?>  
+						<?php endif ?>
 						<?php if(is_attachment()) { ?>
 							<p class="metadata"><?php
 								echo '<span class="date updated">' . get_the_time(get_option('date_format')) . '</span>';
