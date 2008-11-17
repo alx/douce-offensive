@@ -22,8 +22,4 @@
 
 	<div id="header">
 
-		<h1><a href="<?php echo get_option('home'); ?>"
-			title="<?php bloginfo('name'); ?> home"><?php bloginfo('name'); ?></a></h1>
-		<small><?php bloginfo('description'); ?></small>
-
 	</div><!-- header -->

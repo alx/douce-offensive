@@ -1,12 +1,12 @@
 /*
-	Theme Name: Skimmed Milk
-	Theme URI: http://thortz.com/skimmed-milk/
-	Description: Another clean, white theme for WordPress
-	Author: Thortz
-	Author URI: http://thortz.com
-	Version: 1.2
+	Theme Name: Douce Offensive
+	Theme URI: http://douceoffensive.org
+	Description: Douce Offensive theme for WordPress, based on Skimmed-Milk
+	Author: Alexandre Girard
+	Author URI: http://alexgirard.com
+	Version: 1.0
 
-	October 2007
+	November 2008
 	Requires Wordpress 2.3+
 	
 	Note that a few rules are subsequently overriden by print.css for print media
@@ -62,7 +62,7 @@ html {
 
 /*	Some defaults. Change the font size here to shrink or enlarge the whole design */
 body {
-	background-color: #fff;
+	background-color: #000;
 	color: #888;
 	font-size: 0.66em;
 	font-family: 'Lucida Grande', Verdana, Arial, Sans-Serif;
@@ -74,14 +74,14 @@ body {
 /*	Links in orange. Background explicitly specified just to keep css validator happy */
 a {
 	background-color: inherit;
-	color: #ff7010;
+	color: #EEE;
 	text-decoration: none;
 	}
 
 /*	Show green when mousing over a link */
 a:hover {
 	background-color: inherit;
-	color: #0b3;
+	color: #CCC;
 	}
 
 /*	Most headers use the thinner Trebuchet font */
@@ -287,7 +287,7 @@ h2.pagetitle {
 /*	..so we highlight them in orange as they are moused over */
 .post h2 a:hover, .post h3 a:hover {
 	background-color: inherit;
-	color: #ff7010;
+	color: #EEE;
 	}
 
 /*	This sizes the main body text of posts.
