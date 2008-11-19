@@ -17,7 +17,7 @@
 						?>
 					</div><!-- entry -->
 					
-					<?php skimmed_milk_post_title('h2'); ?>
+					<?php skimmed_milk_post_title('h5'); ?>
 					
 					
 					<?php 

@@ -243,11 +243,7 @@ function skimmed_milk_nav_link($left, $right) {
 
 // post titles in single, index, archive & search
 function skimmed_milk_post_title($tag = 'h3') {
-?>
-	<<?php echo $tag; ?> id="post-<?php the_ID(); ?>"><a href="<?php echo get_permalink(); ?>" rel="bookmark"
-		title="<?php printf(__("Permanent link to '%s'", 'skimmed'), the_title_attribute(array('echo' => false))); ?>"><?php the_title(); ?></a></<?php echo $tag; ?>>
-	<small><?php the_time(__('F jS, Y', 'skimmed')); ?></small>
-<?php
+	echo $tag.' id="post-'.the_ID().'"'.the_title();
 }
 
 
