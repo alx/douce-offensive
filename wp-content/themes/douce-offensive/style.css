@@ -640,3 +640,7 @@ div.nav_photo {
 div.first_column {
 	margin-left:0px;
 }
+
+div.selected_photo {
+	border: 1px solid #fff;
+}
