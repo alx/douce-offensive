@@ -11,10 +11,16 @@
 				<div class="post">
 
 					<div class="main-photo">
-						<?php the_content('<span class="nowrap">' . __('Read more', 'skimmed') . ' &raquo;</span>'); ?>
+						<?php the_content(); ?>
 					</div><!-- entry -->
 					
 					<?php skimmed_milk_post_title('h2'); ?>
+					
+					
+					<?php 
+						// Just display description
+						echo ereg_replace( "<img.[^>]*>", "", get_the_content() );
+					?>
 
 				</div><!-- post -->
 
