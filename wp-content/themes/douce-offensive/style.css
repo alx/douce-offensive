@@ -610,12 +610,7 @@ li.widget_rss h2 a:hover {
 	height: 400px;
 	}
 
-.thumbnail {
-	float:left;
-	margin-left:5px;
-}
-
-.main-photo{
+.main_photo{
 	float:left;
 	padding-right:20px;
 }
@@ -625,4 +620,17 @@ li.widget_rss h2 a:hover {
 	padding-top: 10px;
 	width: 280px;
 	float:right;
+}
+
+div.nav_photo:hover {
+	cursor:pointer;
+	text-align:center;
+}
+
+div.nav_photo {
+	float:left;
+	margin-top:2px;
+	margin-left:5px;
+	cursor:pointer;
+	text-align:center;
 }

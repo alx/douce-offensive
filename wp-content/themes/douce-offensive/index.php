@@ -10,7 +10,7 @@
 
 				<div class="post">
 
-					<div class="main-photo">
+					<div id="main_photo">
 						<?php 
 							// Just display photo
 							echo ereg_replace( "<p.*<\/p>", "", get_the_content() );
@@ -42,13 +42,7 @@
 		query_posts('showposts=20');
 		
 		while (have_posts()) : the_post();
-			?>
-			<div class="thumbnail">
-			<?php
 			the_excerpt();
-			?>
-			</div>
-			<?php
 		endwhile;
 		?>
 		</div> <!-- navigator -->
