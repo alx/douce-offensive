@@ -127,7 +127,7 @@ p {
 
 /*	The page contains everything, it centres itself horizontally within the browser */
 #page {
-	width: 1000px;
+	width: 1200px;
 	min-width: 25em;
 	max-width: 98%;
 	text-align: left;
@@ -610,4 +610,8 @@ li.widget_rss h2 a:hover {
 .thumbnail {
 	float:left;
 	margin-left:5px;
+}
+
+.main-photo{
+	float:left;
 }
