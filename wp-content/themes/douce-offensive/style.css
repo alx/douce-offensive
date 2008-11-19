@@ -127,7 +127,7 @@ p {
 
 /*	The page contains everything, it centres itself horizontally within the browser */
 #page {
-	width: 66em;
+	width: 1000px;
 	min-width: 25em;
 	max-width: 98%;
 	text-align: left;
