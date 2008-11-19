@@ -35,6 +35,7 @@
 					$output .= '(' . intval($category->count) . ')</li>';
 					
 					if($i%3) $output .= '</ul><ul>';
+					$i += 1;
 				endforeach;
 				
 				$output .= '<ul>';
