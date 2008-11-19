@@ -20,4 +20,11 @@
 <body>
 <div id="page"><?php // Note html, body & page are all closed by footer.php ?>
 
-	<div id="header"></div><!-- header -->
+	<div id="header">
+		<ul>
+			<?php if ( ! function_exists('dynamic_sidebar') || ! dynamic_sidebar()) : // only show our sidebar here if dynamic_sidebar() can't build widgets ?>
+
+				<?php wp_list_categories('show_count=1&title_li=<h2>' . __('', 'skimmed') . '</h2>'); ?>
+			<?php endif; // end if can't use widgets ?>
+		</ul>
+	</div><!-- header -->

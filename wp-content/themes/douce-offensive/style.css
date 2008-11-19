@@ -154,7 +154,7 @@ p {
 	}
 
 /*	The main headers within the side bar are in upper case & in the wider font */
-#sidebar h2 {
+#header h2 {
 	font-family: 'Lucida Grande', Verdana, Arial, Sans-Serif;
 	font-size: 1.2em;
 	text-transform: uppercase;
@@ -163,40 +163,40 @@ p {
 	}
 
 /*	We don't want bullets drawn in our lists */
-#sidebar ul {
+#header ul {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
 	}
 
 /*	Some space below each sublist, separating it from the next h2 header */
-#sidebar ul ul {
+#header ul ul {
 	margin: 0 0 1em 0;
 	}
 
 /*	This places a right guillemot glyph before list items and
 	similarly before the search submit link (fails in IE) */
-#sidebar ul ul li:before, #searchform p:before {
+#header ul ul li:before, #searchform p:before {
 	content: "\00BB  ";
 	}
 
 /*	A touch of space to separate links */
-#sidebar ul ul li {
+#header ul ul li {
 	margin: 0 0 0.24em 0;
 	}
 
 /*	Tighten up around sub-page & sub-category lists */
-#sidebar ul ul ul {
+#header ul ul ul {
 	margin: 0;
 	}
 
 /*	Sub-pages & sub-categories don't get a smaller guillemot thingie (not IE) */
-#sidebar ul ul ul li:before {
+#header ul ul ul li:before {
 	content: "\203a  ";
 	}
 
 /*	Sub-sub-pages & sub-sub-categories and sub-sub-sub-etc don't get any blips */
-#sidebar ul ul ul ul li:before {
+#header ul ul ul ul li:before {
 	content: "";
 	}
 
@@ -213,6 +213,9 @@ p {
 #header {
 	margin: 20px 0 0 0;
 	width: 100%;
+	height:70px;
+	text-align: right;
+	text-transform: lowercase;
 	}
 
 /*	The footer resides below both the main column and the side bar (WinIE not sidebar)
