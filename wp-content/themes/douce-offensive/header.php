@@ -16,11 +16,7 @@
 	
 	<?php wp_head(); ?>
 	
-	<script type="text/javascript" charset="utf-8">
-      	$(document).ready(function() {
-			$(".nav_photo").click(function() { $(".photoQcontent").attr("src", $(this).attr("url"));});
-		});
-	</script>
+	<script src="<?php bloginfo('stylesheet_directory'); ?>/douce-offensive.js" type="text/javascript">
 </head>
 
 <body>
