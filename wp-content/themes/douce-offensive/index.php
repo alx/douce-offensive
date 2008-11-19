@@ -11,11 +11,12 @@
 				global $page; $page = 1; ?>
 
 				<div class="post">
-					<?php skimmed_milk_post_title('h2'); ?>
 
 					<div class="main-photo">
 						<?php the_content('<span class="nowrap">' . __('Read more', 'skimmed') . ' &raquo;</span>'); ?>
 					</div><!-- entry -->
+					
+					<?php skimmed_milk_post_title('h2'); ?>
 
 				</div><!-- post -->
 
