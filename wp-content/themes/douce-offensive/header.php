@@ -21,6 +21,7 @@
 <div id="page"><?php // Note html, body & page are all closed by footer.php ?>
 
 	<div id="header">
+		<ul>
 		<?php
 		$categories = get_categories();
 
@@ -39,4 +40,5 @@
 		$output .= '<ul>';
 		echo $output;
 		?>
+		</ul>
 	</div><!-- header -->
