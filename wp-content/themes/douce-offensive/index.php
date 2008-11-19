@@ -11,7 +11,10 @@
 				<div class="post">
 
 					<div class="main-photo">
-						<?php the_content(); ?>
+						<?php 
+							// Just display photo
+							echo ereg_replace( "<p.*<\/p>", "", get_the_content() );
+						?>
 					</div><!-- entry -->
 					
 					<?php skimmed_milk_post_title('h2'); ?>
