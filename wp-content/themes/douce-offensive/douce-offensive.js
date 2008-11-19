@@ -6,3 +6,9 @@ jQuery(document).ready(function() {
 	    jQuery(this).css("border","#fff 1px solid");
 	});
 });
+
+jQuery.preloadImages = function() {
+  for(var i = 0; i<arguments.length; i++) {
+    jQuery("<img>").attr("src", arguments[i]);
+  }
+}
