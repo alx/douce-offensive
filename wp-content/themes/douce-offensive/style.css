@@ -150,7 +150,7 @@ p {
 	of the page */
 #header, #content, #footer {
 	width: 70%;
-	float: right;
+	float: left;
 	}
 
 /*	The main headers within the side bar are in upper case & in the wider font */

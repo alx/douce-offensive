@@ -19,3 +19,5 @@
 
 <body>
 <div id="page"><?php // Note html, body & page are all closed by footer.php ?>
+
+	<div id="header"></div><!-- header -->
