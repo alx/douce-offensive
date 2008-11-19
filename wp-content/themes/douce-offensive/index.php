@@ -46,6 +46,7 @@
 		while (have_posts()) : the_post();
 			$excerpt = get_the_excerpt();
 
+			// add new class without left margin
 			if($i%4 == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
 			$i += 1;
 			

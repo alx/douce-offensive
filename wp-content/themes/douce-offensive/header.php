@@ -15,6 +15,11 @@
 	<link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
 
 	<?php wp_head(); ?>
+	
+	<script type="text/javascript" charset="utf-8">
+		$("div.nav_photo").click(function() { $(".photoQcontent").attr("src", $(this).attr("url"));});
+	</script>
+	
 </head>
 
 <body>
