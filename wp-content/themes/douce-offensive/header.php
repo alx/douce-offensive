@@ -15,8 +15,8 @@
 	<link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
 	
 	<?php wp_head(); ?>
-	
-	<script src="<?php bloginfo('stylesheet_directory'); ?>/douce-offensive.js" type="text/javascript">
+	<script type="text/javascript" src="<?php bloginfo('siteurl'); ?>/wp-includes/js/jquery/jquery.js"></script>
+	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/douce-offensive.js" type="text/javascript"></script>
 </head>
 
 <body>
