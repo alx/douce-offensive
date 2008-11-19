@@ -3,10 +3,8 @@
 	<div id="content">
 
 		<?php
-			$exclude_post = 0;
-			
 			while (have_posts()) : the_post();
-				$exclude_post = get_the_ID();
+			
 				global $page; $page = 1; ?>
 
 				<div class="post">
@@ -43,7 +41,7 @@
 		<?php
 		
 		// Get the last 19 excerpt to display thumbnail
-		query_posts('showposts=19&p=-'.$exclude_post);
+		query_posts('showposts=19&offset=1');
 		$i = 1;
 
 		while (have_posts()) : the_post();
