@@ -131,7 +131,7 @@ p {
 	min-width: 25em;
 	max-width: 98%;
 	text-align: left;
-	margin: 0 auto 0 auto;
+	margin-left:50px;
 	}
 
 /*	The side bar contains the menu of useful links on the left
