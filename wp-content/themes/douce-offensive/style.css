@@ -149,7 +149,7 @@ p {
 /*	The main column contains everything except the side bar, and sits against the right
 	of the page */
 #header, #content, #footer {
-	width: 70%;
+	width: 1000px;
 	float: left;
 	}
 
@@ -266,7 +266,7 @@ h2.pagetitle {
 /*	Each post has a some space below it */
 .post {
 	margin: 0 0 3em 0;
-	height:200px;
+	height:190px;
 	}
 
 /*	Post titles on the index and single pages use h2 with a line above
@@ -619,5 +619,8 @@ li.widget_rss h2 a:hover {
 }
 
 #navigator {
-	border-top: 1px solid #999;
+	border-top: 1px dotted #666;
+	padding-top: 10px;
+	width: 280px;
+	float:right;
 }
