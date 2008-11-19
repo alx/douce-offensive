@@ -172,6 +172,8 @@ p {
 /*	Some space below each sublist, separating it from the next h2 header */
 #header ul ul {
 	margin: 0 0 1em 0;
+	float: left;
+	margin-right:40px;
 	}
 
 /*	This places a right guillemot glyph before list items and
