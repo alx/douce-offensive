@@ -634,6 +634,7 @@ div.nav_photo {
 	margin-left:5px;
 	cursor:pointer;
 	text-align:center;
+	border: 1px solid #000;
 }
 
 div.first_column {
