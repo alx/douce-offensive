@@ -149,7 +149,7 @@ p {
 /*	The main column contains everything except the side bar, and sits against the right
 	of the page */
 #header, #content, #footer {
-	width: 1000px;
+	width: 1010px;
 	float: left;
 	}
 
@@ -619,7 +619,7 @@ li.widget_rss h2 a:hover {
 
 #navigator {
 	border-top: 1px dotted #666;
-	width: 275px;
+	width: 283px;
 	float:right;
 }
 
