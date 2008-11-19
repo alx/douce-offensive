@@ -2,10 +2,11 @@
 
 	<div id="content">
 
-		<?php if (have_posts()) :
-
+		<?php
+			$exclude_post = 0;
+			
 			while (have_posts()) : the_post();
-
+				$exclude_post = get_the_ID();
 				global $page; $page = 1; ?>
 
 				<div class="post">
@@ -26,22 +27,24 @@
 					?>
 
 				</div><!-- post -->
+				
+			<div id="navigator">
 
-			<?php endwhile;
+			<?php 
 			
-		else : // no posts
-
-			skimmed_milk_something_not_found(__('No posts found', 'skimmed'));
-
-		endif; // end if have posts
-		
+			// Display this post in navigator first
+			// because other will be dynamicly assigned
+			$excerpt = get_the_excerpt();
+			$excerpt = ereg_replace( "nav_photo", "nav_photo selected_photo first_column", $excerpt );
+			echo $excerpt;
+			
+			endwhile;
 		?>
-		<div id="navigator">
 		<?php
-
-		// Get the last 20 excerpt to display thumbnail
-		query_posts('showposts=20');
-		$i = 0;
+		
+		// Get the last 19 excerpt to display thumbnail
+		query_posts('showposts=19&p=-'.$exclude_post);
+		$i = 1;
 
 		while (have_posts()) : the_post();
 			$excerpt = get_the_excerpt();
