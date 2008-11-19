@@ -14,14 +14,13 @@
 	<link rel="alternate" type="application/rss+xml" title="<?php printf(__('%s RSS Feed', 'skimmed'), bloginfo('name')); ?>" href="<?php bloginfo('rss2_url'); ?>" />
 	<link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
 
-	<?php wp_head(); ?>
-	
 	<script type="text/javascript" charset="utf-8">
       	$(document).ready(function() {
 			$(".nav_photo").click(function() { $(".photoQcontent").attr("src", $(this).attr("url"));});
 		});
 	</script>
 	
+	<?php wp_head(); ?>
 </head>
 
 <body>
