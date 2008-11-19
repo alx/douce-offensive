@@ -626,6 +626,7 @@ li.widget_rss h2 a:hover {
 div.nav_photo:hover {
 	cursor:pointer;
 	text-align:center;
+	border: 1px solid #333;
 }
 
 div.nav_photo {
