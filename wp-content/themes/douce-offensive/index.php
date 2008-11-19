@@ -44,12 +44,12 @@
 		$i = 0;
 
 		while (have_posts()) : the_post();
-			$excerpt = the_excerpt();
+			$excerpt = get_the_excerpt();
 
-			if($i%4 == 0) {
-				echo ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
-			}
+			if($i%4 == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
 			$i += 1;
+			
+			echo $excerpt;
 		endwhile;
 		?>
 		</div> <!-- navigator -->
