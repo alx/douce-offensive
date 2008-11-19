@@ -1,3 +1,8 @@
 wp-config.php
 .DS_*
 .htaccess
+wp-content/uploads
+wp-content/main/
+wp-content/original/
+wp-content/photoQCache/
+wp-content/thumbnail/
