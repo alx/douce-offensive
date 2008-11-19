@@ -1,0 +1,416 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: u@thortz.com\n"
+"POT-Creation-Date: 2007-10-06 21:15+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: 404.php:5 page.php:37
+msgid "Page not found"
+msgstr ""
+
+#: archive.php:9 attachment.php:25 attachment.php:48 comments.php:43
+#: functions.php:249 single.php:24
+msgid "F jS, Y"
+msgstr ""
+
+#: archive.php:10
+msgid "F Y"
+msgstr ""
+
+#: archive.php:11
+msgid "Y"
+msgstr ""
+
+#: archive.php:15
+#, php-format
+msgid "Posts about %s"
+msgstr ""
+
+#: archive.php:17
+#, php-format
+msgid "Posts tagged with %s"
+msgstr ""
+
+#: archive.php:19
+#, php-format
+msgid "%s Archive"
+msgstr ""
+
+#: archive.php:22
+#, php-format
+msgid "Later %s posts"
+msgstr ""
+
+#: archive.php:33 index.php:17
+msgid "Read more"
+msgstr ""
+
+#: archive.php:46
+#, php-format
+msgid "Earlier %s posts"
+msgstr ""
+
+#: archive.php:50
+msgid "Archive not found"
+msgstr ""
+
+#: attachment.php:22
+msgid "To post containing this attachment"
+msgstr ""
+
+#: attachment.php:24
+msgid "Permanent link to this attachment page"
+msgstr ""
+
+#: attachment.php:38
+#, php-format
+msgid "To the %2$s %1$s file"
+msgstr ""
+
+#: attachment.php:49
+#, php-format
+msgid "Uploaded on %1$s at %2$s"
+msgstr ""
+
+#: attachment.php:54
+#, php-format
+msgid "%sFeed%s on comments about this attachment"
+msgstr ""
+
+#: attachment.php:55
+msgid "RSS feed for comments about this attachment"
+msgstr ""
+
+#: attachment.php:66
+msgid "Attachment not found"
+msgstr ""
+
+#: comments.php:23 functions.php:263
+msgid "No responses"
+msgstr ""
+
+#: comments.php:23 functions.php:263
+msgid "One response"
+msgstr ""
+
+#: comments.php:23 functions.php:263
+msgid "responses"
+msgstr ""
+
+#: comments.php:38
+msgid "Your comment is awaiting moderation"
+msgstr ""
+
+#: comments.php:40
+msgid "comments"
+msgstr ""
+
+#: comments.php:40
+msgid "tracks back"
+msgstr ""
+
+#: comments.php:40
+msgid "pings back"
+msgstr ""
+
+#: comments.php:43
+msgid "Link to this comment"
+msgstr ""
+
+#: comments.php:43
+#, php-format
+msgid "%s at %s"
+msgstr ""
+
+#: comments.php:44 functions.php:262 functions.php:307
+msgid "Edit"
+msgstr ""
+
+#: comments.php:65
+msgid "Leave a comment"
+msgstr ""
+
+#: comments.php:65
+msgid "about this attachment"
+msgstr ""
+
+#: comments.php:70
+#, php-format
+msgid "You must be %slogged in%s to post a comment"
+msgstr ""
+
+#: comments.php:71
+msgid "Log in here"
+msgstr ""
+
+#: comments.php:81
+msgid "Name"
+msgstr ""
+
+#: comments.php:81 comments.php:84
+msgid "(required)"
+msgstr ""
+
+#: comments.php:84
+msgid "Mail (won't be published)"
+msgstr ""
+
+#: comments.php:87
+msgid "Web site"
+msgstr ""
+
+#: comments.php:96
+msgid "Send your comment to "
+msgstr ""
+
+#: comments.php:96 comments.php:100
+msgid "Submit comment"
+msgstr ""
+
+#: comments.php:114
+msgid "Comments are now closed"
+msgstr ""
+
+#: footer.php:4
+#, php-format
+msgid "%1$s uses %2$s with %3$s and feeds you %4$s and %5$s"
+msgstr ""
+
+#: footer.php:5
+#, php-format
+msgid "%s home page"
+msgstr ""
+
+#: footer.php:6
+msgid "Wordpress open source blogging software"
+msgstr ""
+
+#: footer.php:7
+msgid "A Wordpress theme by Thortz based on White As Milk by Azeem Azeez"
+msgstr ""
+
+#: footer.php:8
+msgid "RSS feed for recent posts"
+msgstr ""
+
+#: footer.php:8
+msgid "Posts"
+msgstr ""
+
+#: footer.php:9
+msgid "RSS feed for comments on recent posts"
+msgstr ""
+
+#: footer.php:9
+msgid "Comments"
+msgstr ""
+
+#: footer.php:16
+#, php-format
+msgid "Valid %1$s and %2$s. "
+msgstr ""
+
+#: footer.php:17
+msgid "Validate the XHTML source for this page"
+msgstr ""
+
+#: footer.php:18
+msgid "Validate the CSS stylesheet for this page"
+msgstr ""
+
+#: footer.php:19
+#, php-format
+msgid "%1$u queries in %2$ss. "
+msgstr ""
+
+#: footer.php:20
+#, php-format
+msgid "Logged in as %s"
+msgstr ""
+
+#: footer.php:21
+msgid "Link to your profile"
+msgstr ""
+
+#: footer.php:24
+msgid "Log out of this account"
+msgstr ""
+
+#: footer.php:24
+msgid "Log out"
+msgstr ""
+
+#: functions.php:20
+msgid "Search all posts"
+msgstr ""
+
+#: functions.php:20 functions.php:24
+msgid "Search"
+msgstr ""
+
+#: functions.php:47 functions.php:63
+msgid "Archives"
+msgstr ""
+
+#: functions.php:105 functions.php:195
+msgid "Title:"
+msgstr ""
+
+#: functions.php:110
+msgid "Maximum number of months:"
+msgstr ""
+
+#: functions.php:116
+msgid "Show yearly archives"
+msgstr ""
+
+#: functions.php:122
+msgid "Show post counts"
+msgstr ""
+
+#: functions.php:160 functions.php:190
+msgid "Tags"
+msgstr ""
+
+#: functions.php:200
+msgid "Smallest:"
+msgstr ""
+
+#: functions.php:206
+msgid "Largest:"
+msgstr ""
+
+#: functions.php:248
+#, php-format
+msgid "Permanent link to '%s'"
+msgstr ""
+
+#: functions.php:259
+#, php-format
+msgid "Posted in %s"
+msgstr ""
+
+#: functions.php:260
+msgid "Tagged "
+msgstr ""
+
+#: functions.php:263
+msgid "Comments off"
+msgstr ""
+
+#: functions.php:276
+#, php-format
+msgid "Page %1$s of %2$s"
+msgstr ""
+
+#: functions.php:283
+msgid "Pages:"
+msgstr ""
+
+#: functions.php:293
+#, php-format
+msgid "%1$sFeed%2$s on comments or %3$strackback%4$s from your site"
+msgstr ""
+
+#: functions.php:294 functions.php:300
+msgid "RSS feed for comments on this post"
+msgstr ""
+
+#: functions.php:296 functions.php:304
+msgid "Copy this link to trackback this post from your own blog"
+msgstr ""
+
+#: functions.php:299
+#, php-format
+msgid "%sFeed%s on comments but note that pings and trackbacks are closed"
+msgstr ""
+
+#: functions.php:303
+#, php-format
+msgid "Comments are closed but you may %strackback%s from your site"
+msgstr ""
+
+#: functions.php:319
+msgid "Human or computer? One of us has slipped up."
+msgstr ""
+
+#: functions.php:321
+msgid ""
+"To find pages that <strong>do</strong> exist, try using the links or the "
+"search box on the left or click the blog title to go to its home page."
+msgstr ""
+
+#: functions.php:323
+msgid ""
+"But perhaps that's what you were doing anyway, when it all went wrong..?"
+msgstr ""
+
+#: header.php:14
+#, php-format
+msgid "%s RSS Feed"
+msgstr ""
+
+#: index.php:7
+msgid "Later posts"
+msgstr ""
+
+#: index.php:29
+msgid "Earlier posts"
+msgstr ""
+
+#: index.php:33
+msgid "No posts found"
+msgstr ""
+
+#: search.php:9
+#, php-format
+msgid "Posts containing %s"
+msgstr ""
+
+#: search.php:11
+#, php-format
+msgid "Later posts containing %s"
+msgstr ""
+
+#: search.php:33
+#, php-format
+msgid "Earlier posts containing %s"
+msgstr ""
+
+#: search.php:37
+#, php-format
+msgid "No posts contain %s"
+msgstr ""
+
+#: sidebar.php:5
+msgid "Pages"
+msgstr ""
+
+#: sidebar.php:7
+msgid "Topics"
+msgstr ""
+
+#: single.php:25
+#, php-format
+msgid "Posted in %1$s on %2$s at %3$s"
+msgstr ""
+
+#: single.php:30
+msgid "Tagged with "
+msgstr ""
+
+#: single.php:51
+msgid "Post not found"
+msgstr ""
