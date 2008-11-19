@@ -39,7 +39,7 @@
 			$i += 1;
 		endforeach;
 		
-		$output .= '<ul>';
+		$output .= '<li>contact: <a href="mailto:globaleffect@gmail.com">globaleffect@gmail.com</a></li><ul>';
 		echo $output;
 		?>
 		</ul>
