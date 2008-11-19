@@ -31,8 +31,8 @@
 		?>
 		<div id="navigator">
 		<?php
-		// Get the last 10 posts in the special_cat category.
-		query_posts('showposts=10');
+		// Get the last 20 posts in the special_cat category.
+		query_posts('showposts=20');
 		
 		while (have_posts()) : the_post();
 			?>

@@ -266,6 +266,7 @@ h2.pagetitle {
 /*	Each post has a some space below it */
 .post {
 	margin: 0 0 3em 0;
+	height:200px;
 	}
 
 /*	Post titles on the index and single pages use h2 with a line above
@@ -614,4 +615,9 @@ li.widget_rss h2 a:hover {
 
 .main-photo{
 	float:left;
+	padding-right:20px;
+}
+
+#navigator {
+	border-top: 1px solid #999;
 }
