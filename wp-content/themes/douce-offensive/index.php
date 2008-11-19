@@ -38,11 +38,16 @@
 		?>
 		<div id="navigator">
 		<?php
-		// Get the last 20 posts in the special_cat category.
+
+		// Get the last 20 excerpt to display thumbnail
 		query_posts('showposts=20');
-		
+		$i = 0;
+
 		while (have_posts()) : the_post();
-			the_excerpt();
+			$excerpt = the_excerpt();
+
+			if($i%4 == 0) echo ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
+			$i++;
 		endwhile;
 		?>
 		</div> <!-- navigator -->

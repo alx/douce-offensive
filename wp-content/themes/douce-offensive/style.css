@@ -617,7 +617,6 @@ li.widget_rss h2 a:hover {
 
 #navigator {
 	border-top: 1px dotted #666;
-	padding-top: 10px;
 	width: 280px;
 	float:right;
 }
@@ -629,8 +628,12 @@ div.nav_photo:hover {
 
 div.nav_photo {
 	float:left;
-	margin-top:2px;
+	margin-top:9px;
 	margin-left:5px;
 	cursor:pointer;
 	text-align:center;
+}
+
+div.nav_photo .first_column {
+	margin-left:0px;
 }
