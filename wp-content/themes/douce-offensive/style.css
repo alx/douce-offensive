@@ -610,7 +610,7 @@ li.widget_rss h2 a:hover {
 	height: 400px;
 	}
 
-.main_photo{
+#main_photo{
 	float:left;
 	padding-right:20px;
 }
