@@ -22,9 +22,23 @@
 
 	<div id="header">
 		<ul>
-			<?php if ( ! function_exists('dynamic_sidebar') || ! dynamic_sidebar()) : // only show our sidebar here if dynamic_sidebar() can't build widgets ?>
 
-				<?php wp_list_categories('show_count=1&title_li=<h2>' . __('', 'skimmed') . '</h2>'); ?>
-			<?php endif; // end if can't use widgets ?>
+				<?php
+				$categories = get_categories();
+
+				$output = '<ul>';
+				$i = 1;
+				foreach($categories as $cat):
+					$output .= '<li class="cat-item cat-item-'.$cat->term_id.'">';
+					$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), $cat_name) . '"';
+					$output .= ' href="' . get_category_link( $category->term_id ) . '">douceoffensive</a>';
+					$output .= '(' . intval($category->count) . ')</li>';
+					
+					if($i%3) $output .= '</ul><ul>';
+				endforeach;
+				
+				$output .= '<ul>';
+				echo $output;
+				?>
 		</ul>
 	</div><!-- header -->
