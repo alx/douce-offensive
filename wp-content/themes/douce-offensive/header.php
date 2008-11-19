@@ -21,25 +21,22 @@
 <div id="page"><?php // Note html, body & page are all closed by footer.php ?>
 
 	<div id="header">
-		<ul>
+		<?php
+		$categories = get_categories();
 
-				<?php
-				$categories = get_categories();
-
-				$output = '<ul>';
-				$i = 1;
-				foreach($categories as $cat):
-					$output .= '<li class="cat-item cat-item-'.$cat->term_id.'">';
-					$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
-					$output .= ' href="' . get_category_link( $cat->term_id ) . '">douceoffensive</a>';
-					$output .= '(' . intval($cat->count) . ')</li>';
-					
-					if($i%3 == 0) $output .= '</ul><ul>';
-					$i += 1;
-				endforeach;
-				
-				$output .= '<ul>';
-				echo $output;
-				?>
-		</ul>
+		$output = '<ul>';
+		$i = 1;
+		foreach($categories as $cat):
+			$output .= '<li class="cat-item cat-item-'.$cat->term_id.'">';
+			$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
+			$output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+			$output .= '(' . intval($cat->count) . ')</li>';
+			
+			if($i%3 == 0) $output .= '</ul><ul>';
+			$i += 1;
+		endforeach;
+		
+		$output .= '<ul>';
+		echo $output;
+		?>
 	</div><!-- header -->
