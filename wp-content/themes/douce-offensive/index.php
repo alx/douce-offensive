@@ -16,8 +16,7 @@
 						?>
 					</div><!-- entry -->
 					
-					<?php skimmed_milk_post_title('h5'); ?>
-					
+					<h5 id="photo_title"><?php the_title(); ?></h5>
 					
 					<?php 
 						// Just display description
