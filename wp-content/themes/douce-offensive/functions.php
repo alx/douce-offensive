@@ -243,7 +243,7 @@ function skimmed_milk_nav_link($left, $right) {
 
 // post titles in single, index, archive & search
 function skimmed_milk_post_title($tag = 'h3') {
-	echo $tag.' id="post-'.the_ID().'"'.the_title();
+	echo '<'.$tag.' id="post-'.the_ID().'">'.the_title().'</'.$tag.'>';
 }
 
 
