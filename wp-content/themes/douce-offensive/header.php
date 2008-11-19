@@ -30,9 +30,9 @@
 				$i = 1;
 				foreach($categories as $cat):
 					$output .= '<li class="cat-item cat-item-'.$cat->term_id.'">';
-					$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), $cat_name) . '"';
-					$output .= ' href="' . get_category_link( $category->term_id ) . '">douceoffensive</a>';
-					$output .= '(' . intval($category->count) . ')</li>';
+					$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), $cat->cat_name) . '"';
+					$output .= ' href="' . get_category_link( $cat->term_id ) . '">douceoffensive</a>';
+					$output .= '(' . intval($cat->count) . ')</li>';
 					
 					if($i%3) $output .= '</ul><ul>';
 					$i += 1;
