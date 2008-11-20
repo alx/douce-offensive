@@ -40,7 +40,11 @@
 		<?php
 		
 		// Get the last 19 excerpt to display thumbnail
-		query_posts('showposts=19&offset=1');
+		$post_request = 'showposts=19&offset=1';
+
+		if(is_category()) $post_request .= "";
+		
+		query_posts($post_request);
 		$i = 1;
 
 		while (have_posts()) : the_post();
