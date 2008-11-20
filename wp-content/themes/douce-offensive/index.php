@@ -12,7 +12,7 @@
 					<div id="main_photo">
 						<?php 
 							// Just display photo
-							echo ereg_replace( "<p.*<\/p>", "", get_the_content() );
+							echo ereg_replace( "<div.*<\/div>", "", get_the_content() );
 						?>
 					</div><!-- entry -->
 					
@@ -20,7 +20,7 @@
 					
 					<?php 
 						// Just display description
-						echo ereg_replace( "<img.[^>]*>", "", get_the_content() );
+						//echo ereg_replace( "<img.[^>]*>", "", get_the_content() );
 					?>
 
 				</div><!-- post -->
