@@ -151,6 +151,7 @@ p {
 #header, #content, #footer {
 	width: 1010px;
 	float: left;
+	display:inline;
 	}
 
 /*	The main headers within the side bar are in upper case & in the wider font */
@@ -173,6 +174,7 @@ p {
 #header ul ul {
 	margin: 0 0 1em 0;
 	float: left;
+	display:inline;
 	margin-right:40px;
 	}
 
@@ -615,6 +617,7 @@ li.widget_rss h2 a:hover {
 
 #main_photo{
 	float:left;
+	display:inline;
 	padding-right:20px;
 }
 
@@ -623,8 +626,8 @@ li.widget_rss h2 a:hover {
 	width: 283px;
 	float:right;
 	position:absolute;
-	left: 730px;
-	top: 224px;
+	left: 0px;
+	bottom: 0px;
 }
 
 .nav_photo:hover {
@@ -635,6 +638,7 @@ li.widget_rss h2 a:hover {
 
 .nav_photo {
 	float:left;
+	display:inline;
 	margin-top:9px;
 	margin-left:5px;
 	cursor:pointer;
@@ -648,6 +652,7 @@ div.selected_photo {
 
 .empty_thumb{
 	float:left;
+	display:inline;
 	margin-top:9px;
 	margin-left:5px;
 	border: 1px solid #000;
