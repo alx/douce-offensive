@@ -5,7 +5,8 @@
 		<?php
 
 		// Calculate offset of photos to fetch
-		$offset_main = (get_query_var('paged')-1)*19;
+		$offset_main = 0;
+		if(isset(get_query_var('paged'))) $offset_main = (get_query_var('paged') - 1) * 19;
 		
 		// Display only 1 element, the one going in main frame
 
@@ -50,7 +51,7 @@
 		<?php
 		
 		// Get the last 19 excerpt to display thumbnail
-		$post_request = 'showposts=19&offset='. $offset_main + 1;
+		$post_request = 'showposts=19&offset='. ($offset_main + 1);
 		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
 		query_posts($post_request);
 		$i = 1;
