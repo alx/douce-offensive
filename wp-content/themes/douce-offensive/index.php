@@ -74,7 +74,7 @@
 			} else {
 				
 				// Display previous_page arrow if we're not on page 1
-				if($current_page > 1 and $i == 16) { ?>
+				if($current_page >= 1 and $i == 16) { ?>
 					
 					<a class="nav_photo first_column" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
 					
@@ -95,7 +95,7 @@
 		endwhile;
 		
 		// If needed, add missing cases until reacing previous_page link
-		if($current_page > 1 and $i < 16){
+		if($current_page >= 1 and $i < 16){
 			
 			$missing_cases = 16 - $i;
 			
