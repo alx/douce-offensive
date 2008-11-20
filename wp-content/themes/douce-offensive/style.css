@@ -232,6 +232,7 @@ p {
 #content {
 	background-color: inherit;
 	color: #484848;
+	position: relative;
 	}
 
 /*	Used for Archive & Search page headers as well as the top of 'Pages' */
@@ -621,6 +622,8 @@ li.widget_rss h2 a:hover {
 	border-top: 1px dotted #666;
 	width: 283px;
 	float:right;
+	position:absolute;
+	right:700px;
 }
 
 .nav_photo:hover {
