@@ -6,8 +6,9 @@
 
 		// Calculate offset of photos to fetch
 		$offset_main = 0;
-		if(get_query_var('paged') >= 1) {
-			$offset_main = ((get_query_var('paged') - 1) * 19);
+		$current_page = get_query_var('paged');
+		if($current_page >= 1) {
+			$offset_main = (($current_page - 1) * 19);
 		}
 		
 		// Display only 1 element, the one going in main frame
@@ -68,7 +69,7 @@
 			} else {
 				
 				// Display previous_page arrow if we're not on page 1
-				if(get_query_var('paged') > 1 and $i == 16) { ?>
+				if($current_page > 1 and $i == 16) { ?>
 					
 					<a class="nav_photo" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
 					
@@ -88,7 +89,7 @@
 		endwhile;
 		
 		// If needed, add missing cases until reacing previous_page link
-		if(get_query_var('paged') > 1 and $i < 16){
+		if($current_page > 1 and $i < 16){
 			for($j = 0; $j < (16 - $i); $j++) {
 				?> <div class="empty_thumb"></div> <?php
 			}
