@@ -6,7 +6,7 @@
 
 		// Calculate offset of photos to fetch
 		$offset_main = 0;
-		$current_page = get_query_var('paged');
+		$current_page = get_query_var('paged') - 1;
 		if($current_page == 1) {
 			$offset_main = 19;
 		}
