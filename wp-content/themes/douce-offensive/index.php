@@ -48,15 +48,32 @@
 		$i = 1;
 
 		while (have_posts()) : the_post();
-			$excerpt = get_the_excerpt();
+		
+			// If we reach last thumbnail, display next_page arrow instead of the last thumbnail
+			if($i == 19){ ?>
+			
+				<a class="nav_photo" href="<?php next_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_next.png" width="65px" heigth="49px"></a> <?php
+			
+			} else {
+				
+				// Display previous_page arrow if we're not on page 1
+				if(get_query_var('paged') > 1) { ?>
+					
+					<a class="nav_photo" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
+					
+				}
+				else {
+					$excerpt = get_the_excerpt();
 
-			if($i == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo selected_photo", $excerpt );
-			
-			// add new class without left margin
-			if($i%4 == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
-			$i += 1;
-			
-			echo $excerpt;
+					if($i == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo selected_photo", $excerpt );
+
+					// add new class without left margin
+					if($i%4 == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
+					$i += 1;
+
+					echo $excerpt;
+				}
+			}
 		endwhile;
 		?>
 		</div> <!-- navigator -->

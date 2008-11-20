@@ -623,13 +623,13 @@ li.widget_rss h2 a:hover {
 	float:right;
 }
 
-div.nav_photo:hover {
+.nav_photo:hover {
 	cursor:pointer;
 	text-align:center;
 	border: 1px solid #333;
 }
 
-div.nav_photo {
+.nav_photo {
 	float:left;
 	margin-top:9px;
 	margin-left:5px;
@@ -638,7 +638,7 @@ div.nav_photo {
 	border: 1px solid #000;
 }
 
-div.first_column {
+.first_column {
 	margin-left:0px;
 }
 

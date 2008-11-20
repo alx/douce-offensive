@@ -3,7 +3,7 @@ jQuery(document).ready(function() {
 		jQuery(this).attr("url");
 		jQuery(".photoQcontent").attr("src", jQuery(this).attr("url"));
 		jQuery("#photo_title").html(jQuery(this).children("img").attr("alt"));
-		jQuery("div.nav_photo").css("border","#000 1px solid");
+		jQuery(".nav_photo").css("border","#000 1px solid");
 	    jQuery(this).css("border","#fff 1px solid");
 	});
 });
