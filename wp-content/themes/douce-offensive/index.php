@@ -42,7 +42,7 @@
 		// Get the last 19 excerpt to display thumbnail
 		$post_request = 'showposts=19&offset=1';
 
-		if(is_category()) $post_request .= "cat=".get_query_var('cat');
+		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
 		
 		query_posts($post_request);
 		$i = 1;
