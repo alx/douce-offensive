@@ -71,7 +71,7 @@
 				// Display previous_page arrow if we're not on page 1
 				if($current_page > 1 and $i == 16) { ?>
 					
-					<a class="nav_photo" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
+					<a class="nav_photo first_column" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
 					
 				}
 				else {
@@ -91,10 +91,17 @@
 		
 		// If needed, add missing cases until reacing previous_page link
 		if($current_page > 1 and $i < 16){
-			for($j = 0; $j < (16 - $i); $j++) {
-				?> <div class="empty_thumb"></div> <?php
+			
+			$missing_cases = 16 - $i;
+			
+			for($j = 0; $j < $missing_cases; $j++) {
+				
+				// Dont forget to increment $i to take care of first_column border
+				?> <div class="empty_thumb <?php if($i%4 == 0) echo "first_column"; ?>"></div> <?php
+				$i += 1;
 			}
-			?><a class="nav_photo" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
+			
+			?><a class="nav_photo first_column" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
 		}
 		
 		?>
