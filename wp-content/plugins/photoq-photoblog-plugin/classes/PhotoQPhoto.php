@@ -103,9 +103,9 @@ class PhotoQPhoto
 		return '<img width="'.$this->_sizes[$sizeName]->getScaledWidth().'" height="'.$this->_sizes[$sizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sizeName]->getUrl().'" class="'.$class.'" />';
 	}
 	
-	function generateImgLink($sourceSizeName, $targetSizeName, $attributes, $class,  $title)
+	function generateImgLink($sourceSizeName, $targetSizeName, $attributes, $class)
 	{
-		return '<div '. $attributes . ' url="'.$this->_sizes[$targetSizeName]->getUrl().'" title="' . $title . '"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /></div><script type="text/javascript" charset="utf-8">jQuery.preloadImages("'.$this->_sizes["main"]->getUrl().'");</script>';
+		return '<div '. $attributes . ' url="'.$this->_sizes[$targetSizeName]->getUrl().'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /></div><script type="text/javascript" charset="utf-8">jQuery.preloadImages("'.$this->_sizes["main"]->getUrl().'");</script>';
 	}
 	
 	/**
@@ -129,7 +129,7 @@ class PhotoQPhoto
 				$targetSize = $this->_oc->getValue($viewName . 'View-imgLinkTargetSize');
 				$data = $this->generateImgLink($sourceSize, $targetSize,
 					stripslashes(html_entity_decode($this->_oc->getValue($viewName . 'View-imgLinkAttributes'))),
-					"photoQ$viewName photoQLinkImg", $this->title
+					"photoQ$viewName photoQLinkImg"
 				);
 				break;
 		}
