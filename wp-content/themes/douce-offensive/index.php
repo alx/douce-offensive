@@ -10,6 +10,7 @@
 		// Display only 1 element, the one going in main frame
 
 		$post_request = 'showposts=1&offset=' . $offset_main;
+		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
 		query_posts($post_request);
 		
 		while (have_posts()) : the_post();
@@ -50,9 +51,7 @@
 		
 		// Get the last 19 excerpt to display thumbnail
 		$post_request = 'showposts=19&offset='. $offset_main + 1;
-
 		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
-		
 		query_posts($post_request);
 		$i = 1;
 
