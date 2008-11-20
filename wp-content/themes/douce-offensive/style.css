@@ -270,10 +270,12 @@ h2.pagetitle {
 	visibility: hidden;
 	}
 
-/*	Each post has a some space below it */
 .post {
-	margin: 0 0 3em 0;
 	height:190px;
+	width: 283px;
+	position:absolute;
+	top:0px;
+	right:0px;
 	}
 
 /*	Post titles on the index and single pages use h2 with a line above
@@ -622,6 +624,7 @@ li.widget_rss h2 a:hover {
 }
 
 #navigator {
+	margin-top: 20px;
 	border-top: 1px dotted #666;
 	width: 283px;
 	float:right;
