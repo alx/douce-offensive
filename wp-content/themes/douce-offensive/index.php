@@ -81,11 +81,12 @@
 
 					// add new class without left margin
 					if($i%4 == 0) $excerpt = ereg_replace( "nav_photo", "nav_photo first_column", $excerpt );
-					$i += 1;
 
 					echo $excerpt;
 				}
 			}
+			
+			$i += 1;
 		endwhile;
 		
 		// If needed, add missing cases until reacing previous_page link
