@@ -11,7 +11,7 @@
 			$offset_main = 19;
 		}
 		elseif ($current_page > 1) {
-			$offset_main = 19 + ($current_page * 18);
+			$offset_main = 19 + (($current_page - 1) * 18);
 		}
 		
 		// Display only 1 element, the one going in main frame
