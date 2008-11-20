@@ -3,9 +3,14 @@
 	<div id="content">
 
 		<?php
-			while (have_posts()) : the_post();
+		
+		// Display only 1 element, the one going in main frame
+		$post_request = 'showposts=1&offset='.(get_query_var('paged')-1)*19;
+		query_posts($post_request);
+		
+		while (have_posts()) : the_post();
 			
-				global $page; $page = 1; ?>
+			global $page; $page = 1; ?>
 
 				<div class="post">
 
@@ -40,7 +45,7 @@
 		<?php
 		
 		// Get the last 19 excerpt to display thumbnail
-		$post_request = 'showposts=19&offset=1';
+		$post_request = 'showposts=19&offset='.((get_query_var('paged')-1)*19)+1;
 
 		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
 		
@@ -57,7 +62,7 @@
 			} else {
 				
 				// Display previous_page arrow if we're not on page 1
-				if(get_query_var('paged') > 1) { ?>
+				if(get_query_var('paged') > 1 and $i == 16) { ?>
 					
 					<a class="nav_photo" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
 					
