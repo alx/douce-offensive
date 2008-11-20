@@ -60,7 +60,7 @@
 		// Get the last 19 excerpt to display thumbnail
 		$post_request = 'showposts=19&offset='. ($offset_main + 1);
 		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
-		if(is_front_page()) $post_request .= '&orderby=date&order=DESC';
+		if(is_front_page()) $post_request .= '&orderby=rand';
 		query_posts($post_request);
 		$i = 1;
 
