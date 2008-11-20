@@ -6,7 +6,9 @@
 
 		// Calculate offset of photos to fetch
 		$offset_main = 0;
-		if(isset(get_query_var('paged'))) $offset_main = (get_query_var('paged') - 1) * 19;
+		if(get_query_var('paged') >= 1) {
+			$offset_main = ((get_query_var('paged') - 1) * 19);
+		}
 		
 		// Display only 1 element, the one going in main frame
 
