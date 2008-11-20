@@ -642,7 +642,7 @@ div.selected_photo {
 	border: 1px solid #fff;
 }
 
-div.empty_thumb{
+.empty_thumb{
 	float:left;
 	margin-top:9px;
 	margin-left:5px;
