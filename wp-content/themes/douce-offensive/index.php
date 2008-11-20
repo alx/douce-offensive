@@ -86,6 +86,15 @@
 				}
 			}
 		endwhile;
+		
+		// If needed, add missing cases until reacing previous_page link
+		if(get_query_var('paged') > 1 and $i < 16){
+			for($j = 0; $j < (16 - $i); $j++) {
+				?> <div class="empty_thumb"></div> <?php
+			}
+			?><a class="nav_photo" href="<?php previous_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_prev.png" width="65px" heigth="49px"></a><?php
+		}
+		
 		?>
 		</div> <!-- navigator -->
 		

@@ -645,3 +645,12 @@ li.widget_rss h2 a:hover {
 div.selected_photo {
 	border: 1px solid #fff;
 }
+
+div.empty_thumb{
+	float:left;
+	margin-top:9px;
+	margin-left:5px;
+	border: 1px solid #000;
+	width:65px;
+	height:49px;
+}
