@@ -638,10 +638,6 @@ li.widget_rss h2 a:hover {
 	border: 1px solid #000;
 }
 
-.first_column {
-	margin-left:0px;
-}
-
 div.selected_photo {
 	border: 1px solid #fff;
 }
@@ -653,4 +649,8 @@ div.empty_thumb{
 	border: 1px solid #000;
 	width:65px;
 	height:49px;
+}
+
+.first_column {
+	margin-left:0px;
 }
