@@ -97,7 +97,7 @@
 			for($j = 0; $j < $missing_cases; $j++) {
 				
 				// Dont forget to increment $i to take care of first_column border
-				?> <div class="empty_thumb <?php if($i%4 == 0) echo "first_column"; ?>"></div> <?php
+				?> <div class="empty_thumb <?php if($i%4 == 0) echo "first_column"; ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/black.png" width="65px" heigth="49px"></div> <?php
 				$i += 1;
 			}
 			

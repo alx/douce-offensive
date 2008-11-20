@@ -647,6 +647,7 @@ div.empty_thumb{
 	margin-top:9px;
 	margin-left:5px;
 	border: 1px solid #000;
+	text-align:center;
 	width:65px;
 	height:49px;
 }
