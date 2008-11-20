@@ -18,6 +18,7 @@
 
 		$post_request = 'showposts=1&offset=' . $offset_main;
 		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
+		if(is_front_page()) $post_request .= '&orderby=date&order=DESC';
 		query_posts($post_request);
 		
 		while (have_posts()) : the_post();
@@ -59,13 +60,14 @@
 		// Get the last 19 excerpt to display thumbnail
 		$post_request = 'showposts=19&offset='. ($offset_main + 1);
 		if(is_category()) $post_request .= "&cat=".get_query_var('cat');
+		if(is_front_page()) $post_request .= '&orderby=date&order=DESC';
 		query_posts($post_request);
 		$i = 1;
 
 		while (have_posts()) : the_post();
 		
 			// If we reach last thumbnail, display next_page arrow instead of the last thumbnail
-			if($i == 19){ ?>
+			if($i == 19 and !is_front_page()){ ?>
 			
 				<a class="nav_photo" href="<?php next_posts(); ?>"><img src="<?php bloginfo('stylesheet_directory'); ?>/images/arrow_next.png" width="65px" heigth="49px"></a> <?php
 			
