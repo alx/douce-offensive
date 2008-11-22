@@ -619,13 +619,14 @@ li.widget_rss h2 a:hover {
 	float:left;
 	display:inline;
 	padding-right:20px;
+	width:700px;
 }
 
 #navigator {
 	border-top: 1px dotted #666;
 	width: 283px;
 	float:right;
-	position:absolute;
+	position:relative;
 	right: 0px;
 	bottom: 0px;
 }
@@ -644,6 +645,8 @@ li.widget_rss h2 a:hover {
 	cursor:pointer;
 	text-align:center;
 	border: 1px solid #000;
+	height:49px;
+	width:65px;
 }
 
 div.selected_photo {
