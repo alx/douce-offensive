@@ -17,4 +17,6 @@ $wp_version = '2.7';
  */
 $wp_db_version = 9872;
 
+$wp_local_package = 'fr_FR';
+
 ?>

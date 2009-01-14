@@ -43,7 +43,7 @@ if ( file_exists( ABSPATH . 'wp-config.php') ) {
 	require_once( ABSPATH . '/wp-includes/classes.php' );
 	require_once( ABSPATH . '/wp-includes/functions.php' );
 	require_once( ABSPATH . '/wp-includes/plugin.php' );
-	wp_die(sprintf(/*WP_I18N_NO_CONFIG*/"There doesn't seem to be a <code>wp-config.php</code> file. I need this before we can get started. Need more help? <a href='http://codex.wordpress.org/Editing_wp-config.php'>We got it</a>. You can create a <code>wp-config.php</code> file through a web interface, but this doesn't work for all server setups. The safest way is to manually create the file.</p><p><a href='%ssetup-config.php' class='button'>Create a Configuration File</a>"/*/WP_I18N_NO_CONFIG*/, $path), /*WP_I18N_ERROR_TITLE*/"WordPress &rsaquo; Error"/*/WP_I18N_ERROR_TITLE*/);
+	wp_die(sprintf(/*WP_I18N_NO_CONFIG*/'Je ne trouve pas votre fichier <code>wp-config.php</code>. J&rsquo;en ai besoin avant de lancer l&rsquo;installation.<br />Besoin d&rsquo;aide ? <a href=\'http://codex.wordpress.org/fr:Installer_WordPress\'>En voici</a>.</p><p>Vous pouvez créer un fichier <code>wp-config.php</code> à l&rsquo;aide de notre interface Web, mais ça ne marche pas pour toutes les configurations de serveur. La méthode la plus sûre reste de créer le fichier à la main.</p><p><a href=\'%ssetup-config.php\' class=\'button\'>Créer le fichier de configuration</a>'/*/WP_I18N_NO_CONFIG*/, $path), /*WP_I18N_ERROR_TITLE*/'WordPress &raquo; Erreur'/*/WP_I18N_ERROR_TITLE*/);
 
 }
 

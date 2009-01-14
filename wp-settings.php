@@ -101,7 +101,7 @@ if ( empty($PHP_SELF) )
 	$_SERVER['PHP_SELF'] = $PHP_SELF = preg_replace("/(\?.*)?$/",'',$_SERVER["REQUEST_URI"]);
 
 if ( version_compare( '4.3', phpversion(), '>' ) ) {
-	die( sprintf( /*WP_I18N_OLD_PHP*/'Your server is running PHP version %s but WordPress requires at least 4.3.'/*/WP_I18N_OLD_PHP*/, phpversion() ) );
+	die( sprintf( /*WP_I18N_OLD_PHP*/'Votre serveur utilise la version %s de PHP mais WordPress nécéssite au moins la version 4.3.'/*/WP_I18N_OLD_PHP*/, phpversion() ) );
 }
 
 if ( !defined('WP_CONTENT_DIR') )
@@ -139,7 +139,7 @@ if ( file_exists(ABSPATH . '.maintenance') && !defined('WP_INSTALLING') ) {
 }
 
 if ( !extension_loaded('mysql') && !file_exists(WP_CONTENT_DIR . '/db.php') )
-	die( /*WP_I18N_OLD_MYSQL*/'Your PHP installation appears to be missing the MySQL extension which is required by WordPress.'/*/WP_I18N_OLD_MYSQL*/ );
+	die( /*WP_I18N_OLD_MYSQL*/'Votre installation PHP ne dispose pas de MySQL. Extension requise pour WordPress.'/*/WP_I18N_OLD_MYSQL*/ );
 
 /**
  * PHP 4 standard microtime start capture.
@@ -247,7 +247,7 @@ if ( !empty($wpdb->error) )
 $prefix = $wpdb->set_prefix($table_prefix);
 
 if ( is_wp_error($prefix) )
-	wp_die(/*WP_I18N_BAD_PREFIX*/'<strong>ERROR</strong>: <code>$table_prefix</code> in <code>wp-config.php</code> can only contain numbers, letters, and underscores.'/*/WP_I18N_BAD_PREFIX*/);
+	wp_die(/*WP_I18N_BAD_PREFIX*/'<strong>ERREUR</strong>: la ligne <code>$table_prefix</code> du fichier <code>wp-config.php</code> ne doit contenir que des chiffres, lettres ou le caractère souligné.'/*/WP_I18N_BAD_PREFIX*/);
 
 if ( file_exists(WP_CONTENT_DIR . '/object-cache.php') )
 	require_once (WP_CONTENT_DIR . '/object-cache.php');

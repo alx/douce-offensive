@@ -317,16 +317,16 @@ class wpdb {
 
 		$this->dbh = @mysql_connect($dbhost, $dbuser, $dbpassword, true);
 		if (!$this->dbh) {
-			$this->bail(sprintf(/*WP_I18N_DB_CONN_ERROR*/"
-<h1>Error establishing a database connection</h1>
-<p>This either means that the username and password information in your <code>wp-config.php</code> file is incorrect or we can't contact the database server at <code>%s</code>. This could mean your host's database server is down.</p>
+			$this->bail(sprintf(/*WP_I18N_DB_CONN_ERROR*/'
+<h1>Erreur lors de l&rsquo;établissement de la connexion &agrave; la base de données</h1>
+<p>Cela signifie soit que l&rsquo;identifiant et/ou le mot de passe indiqués dans votre fichier <code>wp-config.php</code> sont incorrects, ou que le serveur de base de données à l&rsquo;adresse <code>%s</code> est inaccessible - ce qui implique que le serveur de base de données de votre hébergeur est sans doute défaillant.</p>
 <ul>
-	<li>Are you sure you have the correct username and password?</li>
-	<li>Are you sure that you have typed the correct hostname?</li>
-	<li>Are you sure that the database server is running?</li>
+	<li>Êtes-vous certain(e) d&rsquo;avoir correctement indiqué votre identifiant et votre mot de passe&nbsp;?</li>
+	<li>Êtes-vous certain(e) d&rsquo;avoir entré le bon serveur de base de données&nbsp;?</li>
+	<li>Êtes-vous certain(e) que le serveur de base de données fonctionne correctement&nbsp;?</li>
 </ul>
-<p>If you're unsure what these terms mean you should probably contact your host. If you still need help you can always visit the <a href='http://wordpress.org/support/'>WordPress Support Forums</a>.</p>
-"/*/WP_I18N_DB_CONN_ERROR*/, $dbhost));
+<p>Si vous n&rsquo;êtes pas sûr(e) de bien comprendre les mots de cette liste, vous devriez sans doute prendre contact avec votre hébergeur. Si malgré cela cette erreur s&rsquo;affiche toujours, indiquez votre problème au <a href=\'http://www.wordpress-fr.net/support/\'>forum d&rsquo;entraide en français</a>.</p>
+'/*/WP_I18N_DB_CONN_ERROR*/, $dbhost));
 			return;
 		}
 
@@ -373,7 +373,7 @@ class wpdb {
 	function set_prefix($prefix) {
 
 		if ( preg_match('|[^a-z0-9_]|i', $prefix) )
-			return new WP_Error('invalid_db_prefix', /*WP_I18N_DB_BAD_PREFIX*/'Invalid database prefix'/*/WP_I18N_DB_BAD_PREFIX*/);
+			return new WP_Error('invalid_db_prefix', /*WP_I18N_DB_BAD_PREFIX*/'Préfixe de la base de données invalide'/*/WP_I18N_DB_BAD_PREFIX*/);
 
 		$old_prefix = $this->prefix;
 		$this->prefix = $prefix;
@@ -405,14 +405,14 @@ class wpdb {
 		if (!@mysql_select_db($db, $this->dbh)) {
 			$this->ready = false;
 			$this->bail(sprintf(/*WP_I18N_DB_SELECT_DB*/'
-<h1>Can&#8217;t select database</h1>
-<p>We were able to connect to the database server (which means your username and password is okay) but not able to select the <code>%1$s</code> database.</p>
+<h1>Impossible de sélectionner la base de données</h1>
+<p>La connexion au serveur de base de données s&rsquo;est bien faite (donc votre identifiant et votre mot de passe sont les bons), mais la base de données <code>%1$s</code> n&rsquo;a pas pu être sélectionnée.</p>
 <ul>
-<li>Are you sure it exists?</li>
-<li>Does the user <code>%2$s</code> have permission to use the <code>%1$s</code> database?</li>
-<li>On some systems the name of your database is prefixed with your username, so it would be like <code>username_%1$s</code>. Could that be the problem?</li>
+<li>Êtes-vous certain(e) qu&rsquo;elle existe&nbsp;?</li>
+<li>L&rsquo;utilisateur <code>%2$s</code> a-t-il les droits pour utiliser la base de donn&eacute; <code>%1$s</code>&nbsp;?</li>
+<li>Sur certains systèmes, le nom de votre base de données est préfixée de votre identifiant, donc son nom complet peut être <code>identifiant_nomdelabase</code>. Cela peut-il être la cause du problème&nbps;?</li>
 </ul>
-<p>If you don\'t know how to setup a database you should <strong>contact your host</strong>. If all else fails you may find help at the <a href="http://wordpress.org/support/">WordPress Support Forums</a>.</p>'/*/WP_I18N_DB_SELECT_DB*/, $db, DB_USER));
+<p>Si vous ne savez pas comment régler votre base de données, vous devriez <strong>prendre contact avec votre hébergeur</strong>. Si toutes vos tentatives échouent, peut-être trouverez-vous une réponse sur le <a href=\'http://www.wordpress-fr.net/support/\'>forum d&rsquo;entraide en français</a>.</p>'/*/WP_I18N_DB_SELECT_DB*/, $db, DB_USER));
 			return;
 		}
 	}
@@ -488,9 +488,9 @@ class wpdb {
 			return false;
 
 		if ( $caller = $this->get_caller() )
-			$error_str = sprintf(/*WP_I18N_DB_QUERY_ERROR_FULL*/'WordPress database error %1$s for query %2$s made by %3$s'/*/WP_I18N_DB_QUERY_ERROR_FULL*/, $str, $this->last_query, $caller);
+			$error_str = sprintf(/*WP_I18N_DB_QUERY_ERROR_FULL*/'Erreur de la base de données WordPress %1$s pour la requête %2$s faite par %3$s'/*/WP_I18N_DB_QUERY_ERROR_FULL*/, $str, $this->last_query, $caller);
 		else
-			$error_str = sprintf(/*WP_I18N_DB_QUERY_ERROR*/'WordPress database error %1$s for query %2$s'/*/WP_I18N_DB_QUERY_ERROR*/, $str, $this->last_query);
+			$error_str = sprintf(/*WP_I18N_DB_QUERY_ERROR*/'Erreur de la base de données WordPress %1$s pour la requête %2$s'/*/WP_I18N_DB_QUERY_ERROR*/, $str, $this->last_query);
 
 		$log_error = true;
 		if ( ! function_exists('error_log') )
@@ -747,7 +747,7 @@ class wpdb {
 		} elseif ( $output == ARRAY_N ) {
 			return $this->last_result[$y] ? array_values(get_object_vars($this->last_result[$y])) : null;
 		} else {
-			$this->print_error(/*WP_I18N_DB_GETROW_ERROR*/" \$db->get_row(string query, output type, int offset) -- Output type must be one of: OBJECT, ARRAY_A, ARRAY_N"/*/WP_I18N_DB_GETROW_ERROR*/);
+			$this->print_error(/*WP_I18N_DB_GETROW_ERROR*/' $db->get_row(string query, output type, int offset) -- Le type de sortie doit être: OBJECT, ARRAY_A, ARRAY_N'/*/WP_I18N_DB_GETROW_ERROR*/);
 		}
 	}
 
