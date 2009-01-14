@@ -105,7 +105,7 @@ class PhotoQPhoto
 	
 	function generateImgLink($sourceSizeName, $targetSizeName, $attributes, $class)
 	{
-		return '<div '. $attributes . ' url="'.$this->_sizes[$targetSizeName]->getUrl().'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /><script type="text/javascript" charset="utf-8">jQuery.preloadImages("'.$this->_sizes["main"]->getUrl().'");</script></div>';
+		return '<a '. $attributes . ' href="'.$this->_sizes[$targetSizeName]->getUrl().'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /></a>';
 	}
 	
 	/**
@@ -185,9 +185,12 @@ class PhotoQPhoto
 		if (!file_exists($oldPath) && file_exists($this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getPath()))
 			PhotoQHelper::moveFile($this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getPath(), $oldPath);
 		
-		//remove any resized images that have been created
-		foreach($this->_sizes as $size){
-			$size->deleteResizedPhoto();
+		//remove any resized images that have been created unless a corresponding original image exists
+		
+		if(!file_exists($this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getPath())){
+			foreach($this->_sizes as $size){
+				$size->deleteResizedPhoto();
+			}
 		}
 	}
 	

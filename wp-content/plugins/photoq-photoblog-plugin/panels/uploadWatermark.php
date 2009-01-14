@@ -14,7 +14,7 @@
 						Locate Watermark:
 					</th>
 					<td>
-						<input type="file" name="Filedata" id="Filedata" />
+						<input type="file" class="button-secondary action" name="Filedata" id="Filedata" />
 					</td>
 			</tr>
 			</table>
@@ -26,8 +26,10 @@
 		?>
 		
 		<p class="submit">
-			<input type="submit" name="uploadWatermark" 
+			<input type="submit" name="uploadWatermark" class="button-primary"
 				value="<?php _e('Upload', 'PhotoQ') ?> &raquo;" />
+			<input type="button" id="cancelbtn" class="button-secondary action" onclick="window.location = window.location.href" value="Cancel" />		
+			
 		</p>
 	</form>
 </div> 

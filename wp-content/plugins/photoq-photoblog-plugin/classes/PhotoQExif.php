@@ -34,6 +34,7 @@ class PhotoQExif
 		//and finally merge them into a single array
 		$exif = array_merge($ifd0, $subIfd, $makerNote, $gps);
 		
+		
 		//update discovered tags
 		PhotoQExif::_discoverTags($exif);
 		
@@ -71,6 +72,7 @@ class PhotoQExif
 			update_option( "wimpq_exif_tags", $discovered);
 		}else
 			add_option("wimpq_exif_tags", $newTags);
+			
 	}
 	
 	/**
@@ -87,7 +89,7 @@ class PhotoQExif
 					if(is_array($value))
 						$out[$key] = PhotoQExif::_filterUseless($value);
 					else
-						$out[$key] = $value;
+						$out[$key] = PhotoQExif::_sanitizeExifValue($value);
 			}
 		}
 		return $out;
@@ -118,6 +120,11 @@ class PhotoQExif
 		'VerboseOutput',
 		'YCbCrPositioning'
 		);
+	}
+	
+	function _sanitizeExifValue($value)
+	{
+		return preg_replace('#[^(a-zA-Z0-9_\s\.\:\/\,\;\-)]#','',$value);
 	}
 
 	

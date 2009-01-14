@@ -6,8 +6,7 @@ jQuery(document).ready( function() {
 
 function addPostBoxToggle(context) {
 	
-	jQuery('.postbox h3', context).prepend('<a class="togbox">+</a> ');
-    jQuery('.postbox h3', context).click( function() {
+	jQuery('.postbox h3', context).click( function() {
         jQuery(jQuery(this).parent().get(0)).toggleClass('closed');
     });
 	

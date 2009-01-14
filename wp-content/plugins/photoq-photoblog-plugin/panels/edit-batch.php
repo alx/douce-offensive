@@ -58,7 +58,7 @@
 ?>
 	</div>
 		<div>
-			<input type="submit" class="button-secondary" name="save_batch" 
+			<input type="submit" class="button-primary action" name="save_batch" 
 			value="<?php _e('Save Batch Info', 'PhotoQ') ?> &raquo;" />
 		</div>
 	</form>		

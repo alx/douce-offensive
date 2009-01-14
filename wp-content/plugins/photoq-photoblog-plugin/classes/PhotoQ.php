@@ -21,7 +21,7 @@ class PhotoQ
 	 * @var string
 	 * @access private
 	 */
-	var $_version = '1.5.3';
+	var $_version = '1.6.1';
 	
 	/**
 	 * ObjectController managing all the plugins options
@@ -123,7 +123,6 @@ class PhotoQ
 		// setting up database
 		$this->_db =& PhotoQSingleton::getInstance('PhotoQDB');
 		
-		
 		$this->autoUpgrade();
 		
 		//creating queue
@@ -162,6 +161,8 @@ class PhotoQ
 		register_activation_hook(PHOTOQ_PATH . 'whoismanu-photoq.php', array(&$this, 'activatePlugin'));
 		register_deactivation_hook(PHOTOQ_PATH . 'whoismanu-photoq.php', array(&$this, 'deactivatePlugin'));
 
+		
+		add_filter('favorite_actions', array(&$this, 'addFavoriteActions'));
 		/*
 		foreach( $_POST as $key => $value){
 			PhotoQHelper::debug("POST $key: $value <br />");
@@ -186,8 +187,8 @@ class PhotoQ
 	{
 		// Add a new menu under Options:
 		$options = add_options_page(__('PhotoQ Options','PhotoQ'), 'PhotoQ', 8, 'whoismanu-photoq.php', array(&$this, 'options_page'));
-		// Add a new menu under Manage:
-		$manage = add_management_page(__('Manage PhotoQ', 'PhotoQ'), 'PhotoQ', 8, 'whoismanu-photoq.php', array(&$this, 'manage_page'));
+		// Add a new menu under Posts:
+		$manage = add_submenu_page('post-new.php', __('Manage PhotoQ', 'PhotoQ'), 'PhotoQ', 8, 'whoismanu-photoq.php', array(&$this, 'manage_page'));
 		
 		//adding javascript and other stuff to header
 		
@@ -197,10 +198,7 @@ class PhotoQ
 		add_action('admin_print_scripts-' . $manage, array(&$this, 'addHeaderCode'), 1);
 		
 	}
-
-
-
-
+	
 
 	/**
 	 * sink function for the 'add_options_page' hook.
@@ -745,7 +743,7 @@ class PhotoQ
 
 		$closed = $this->_oc->getValue('foldCats') ? 'closed' : ''; 
 		echo '<div class="postbox '.$closed.'">';
-		echo '<h3>Categories</h3>';
+		echo '<h3 class="postbox-handle"><span>Categories</span></h3>';
 		echo '<div class="inside">';
 		$this->category_checklist(0,0,$selectedCats,$q_id);
 		echo '</div></div>';
@@ -760,6 +758,18 @@ class PhotoQ
 	
 		PhotoQHelper::debug('enter cronjob()');
 	
+		//add ftp dir to queue if corresponding option is set
+		if( $this->_oc->getValue('enableFtpUploads') && $this->_oc->getValue('cronFtpToQueue') ){
+			$ftpDir = $this->_oc->getFtpDir();
+			if (is_dir($ftpDir)) {
+				$ftpDirContent = PhotoQHelper::getMatchingDirContent($ftpDir,'#.*\.(jpg|jpeg|png|gif)$#i');
+				foreach ($ftpDirContent as $ftpFile)
+					$this->uploadPhoto(basename($ftpFile), '', '', '', $ftpFile);
+				//reload the queue to get newly uploaded photos
+				$this->_queue->load();
+			}
+		}
+		
 		//echo "Testing Cron Job";
 		//echo "Cron frequency: ".$this->_oc->getValue('cronFreq')." <br />";
 		
@@ -790,8 +800,12 @@ class PhotoQ
 		//echo "Diff: $timeDifferenceHours <br />";
 	
 		if($timeDifferenceHours >= $this->_oc->getValue('cronFreq'))
-		$this->_queue->publishTop();
+			if($this->_oc->getValue('cronPostMulti'))
+				$this->_queue->publishMulti($this->_oc->getValue('postMulti'));
+			else
+				$this->_queue->publishTop();
 	
+			
 		PhotoQHelper::debug('leave cronjob()');
 	}
 	
@@ -835,7 +849,7 @@ class PhotoQ
 	
 			?>
 	
-	<script type="text/javascript">
+			<script type="text/javascript">
 	
 				var swfu; 
 				var uplsize = 0;
@@ -845,7 +859,7 @@ class PhotoQ
 					swfu = new SWFUpload({ 
 						debug: false,
 						upload_url : "<?php echo $uploadLink; ?>", 
-						flash_url : "<?php echo includes_url('js/swfupload/swfupload_f9.swf'); ?>", 
+						flash_url : "<?php echo includes_url('js/swfupload/swfupload.swf'); ?>", 
 						file_size_limit : <?php echo PhotoQHelper::getMaxFileSizeFromPHPINI();?>,	// max allowed by php.ini
 						file_queue_limit: 0,
 						file_types : "*.jpg;*.gif;*.png",
@@ -860,15 +874,20 @@ class PhotoQ
 						upload_progress_handler : uploadProgress,
 						upload_error_handler : uploadError,
 						upload_success_handler : uploadSuccess,
-						upload_complete_handler : uploadComplete
+						upload_complete_handler : uploadComplete,
+						button_text: '<span class="button"><?php _e('Select Photos...'); ?></span>',
+						button_text_style: '.button { color: #ffffff; text-align: center; font-size: 11px; font-weight: bold; font-family:"Lucida Grande","Lucida Sans Unicode",Tahoma,Verdana,sans-serif; }',
+						button_height: "22",
+						button_width: "134",
+						button_image_url: '<?php echo plugins_url('photoq-photoblog-plugin/imgs/upload.png'); ?>',
+						button_placeholder_id: "flash-browse-button"
 					}); 
 					
 				};
 	
 				
 			</script>
-	
-	
+		
 			<?php
 	} //if($this->_oc->getValue('enableBatchUploads'))
 	
@@ -913,6 +932,12 @@ class PhotoQ
 		return true;
 	}
 	
+	function addFavoriteActions($actions){
+		$newActions = array(
+		'post-new.php?page=whoismanu-photoq.php' => array(__('Show PhotoQ'), 'edit_posts')
+		);
+		return array_merge($actions,$newActions);
+	}
     
 	
 	/**
@@ -928,12 +953,14 @@ class PhotoQ
 	{
 		$result = array();
 		foreach( $content as $key => $value){
+			//add thumb column before the title column
+			if($key == "title")
+				$result["photoQPhoto"] = "Photo";
+			
 			$result[$key] = $value;
-			//add the new column after the date column
-			if($key == "date" && $this->_oc->getValue('showThumbs'))
-			$result["photoQPhoto"] = "Photo";
-			if($key == "status")
-			$result["photoQActions"] = "PhotoQ Actions";
+			//add actions after date column
+			if($key == "date")
+				$result["photoQActions"] = "PhotoQ Actions";
 	
 		}
 		return $result;
@@ -1006,8 +1033,10 @@ class PhotoQ
 	 * @return string
 	 */
 	function makeAutoTitle($filename){
+		//remove custom stuff
+		$title = preg_replace('/'.stripslashes($this->_oc->getValue('autoTitleRegex')).'/', '', $filename);
 		//remove suffix
-		$title = preg_replace('/\..*?$/', '', $filename);
+		$title = preg_replace('/\..*?$/', '', $title);
 		//replace underscores and hyphens with spaces
 		$replaceWithWhiteSpace = array('-', '_');
 		$title = str_replace($replaceWithWhiteSpace, ' ', $title);
@@ -1078,7 +1107,7 @@ class PhotoQ
 			$newPath = $destDir . basename($oldPath);
 			//move file if we have permissions, otherwise copy file
 			//suppress warnings if original could not be deleted due to missing permissions
-			$ok = @PhotoQHelper::moveFile($oldPath, $newPath);
+			$ok = @PhotoQHelper::moveFileIfNotExists($oldPath, $newPath);
 			if(!$ok) $file['error'] = "Unable to move $oldPath to $newPath";
 			$file['file'] = $newPath;	
 		}
@@ -1219,7 +1248,7 @@ class PhotoQ
 			}
 			
 			// upgrade to 1.5.2 requires content rebuild because p tags changed to divs
-			if($this->_version == '1.5.3' && $this->_oc->getValue('inlineDescr')){
+			if($this->_version == '1.5.2' && $this->_oc->getValue('inlineDescr')){
 				//get all photo posts, foreach size, rebuild the content
 				foreach ( $this->_db->getAllPublishedPhotos() as $photo ){
 					@$this->rebuildSinglePhoto($photo, array(), false, true, false, '', '');
@@ -1340,7 +1369,8 @@ class PhotoQ
 		$img_url = "../". PhotoQHelper::getRelUrlFromPath($img_path);
 		
 		// output photo information form
-		$path = $this->getAdminThumbURL($img_path);
+		$path = $this->getAdminThumbURL($img_path, $this->_oc->getValue('photoQAdminThumbs-Width'), 
+						$this->_oc->getValue('photoQAdminThumbs-Height'));
 		
 	?>
 		

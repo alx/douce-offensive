@@ -96,7 +96,8 @@ class PhotoQImageSize
 	
 	function getPath()
 	{
-		return $this->_path;
+		return str_replace('\\', '/', $this->_path);
+		//return $this->_path;
 	}
 	
 	function getUrl()

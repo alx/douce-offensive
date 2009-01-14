@@ -28,7 +28,9 @@
 		<?php
 			$submitLabel = isset($_POST['ftp_upload']) ? 'Import/Enter Info &raquo;' : 'Enter Info &raquo;';
 		?>
-		<p style="float: right" class="submit infobutton"><input type="submit" class="button-secondary" name="edit_batch" value="<?php echo $submitLabel; ?>" /></p>
+		<p style="float: right" class="infobutton">
+			<input type="submit" class="button-primary action" name="edit_batch" value="<?php echo $submitLabel; ?>" />
+		</p>
 		</div>
 		<?php if(isset($_POST['ftp_upload'])) $this->showFtpFileList(); ?>
 		</div>
@@ -37,24 +39,29 @@
 	</div>
 	
 <?php if(!isset($_POST['ftp_upload'])): ?>
-	
-	<div class="tablenav">
+	<form action="edit.php?page=whoismanu-photoq.php" method="post" enctype="multipart/form-data">
 		
-		<form action="edit.php?page=whoismanu-photoq.php" method="post" enctype="multipart/form-data">
-			<?php if($this->_oc->getValue('enableFtpUploads')): ?>
-				<input type="submit" name="ftp_upload" style="float: right" class="button-secondary" value="Import from ftp directory..." />
-			<?php endif; ?>
+		<div class="tablenav">
+		
+			<div class="alignleft actions">
 			<?php if($this->_oc->getValue('enableBatchUploads')): ?>
-				<input type="button" id="browsebtn" class="button-secondary" value="Select Photos..." onclick="swfu.selectFiles()" />
+				<div id="flash-browse-button"></div>
 			<?php else: ?>
 				<input type="file" class="button-secondary" name="Filedata" id="Filedata" />
-				<input type="submit" class="button-secondary" value="Upload"/>
+				<input type="submit" class="button-secondary action" value="Upload"/>
 				<input type="hidden" name="batch_upload" value="0">
 			<?php endif; ?>
-				<input type="button" id="cancelbtn" class="button-secondary" onclick="cancelUpload()" value="Cancel" />		
-			
-		</form>
-	</div>
+			</div>
+			<div class="alignleft actions">
+				<input type="button" id="cancelbtn" class="button-secondary action" onclick="cancelUpload()" value="Cancel" />		
+			</div>
+			<div class="alignright actions">
+			<?php if($this->_oc->getValue('enableFtpUploads')): ?>
+				<input type="submit" name="ftp_upload" class="button-secondary action" value="Import from ftp directory..." />
+			<?php endif; ?>
+			</div>
+		</div>
+	</form>
 	
 	<div id="SWFUploadFileListingFiles"></div>
 	

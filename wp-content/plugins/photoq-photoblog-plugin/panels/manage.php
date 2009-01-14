@@ -26,33 +26,33 @@ wp_nonce_field( 'queueReorder', 'queueReorderNonce', false );
 
 <div class="tablenav">
 	
+	<div class="alignleft actions">
+		<input type="submit" class="button-primary action" name="add_entry"
+			value="<?php _e('Add Photos to Queue', 'PhotoQ') ?>" />
 	
-	<input type="submit" style="float: right; margin-left: 5px" class="button-secondary" name="post_first"
-		value="<?php _e('Post Top of Queue...', 'PhotoQ') ?>"
-		onClick="return confirm(
-	'Are you sure you want to publish the first entry of the queue?');" />
+		<input type="submit" class="button-secondary action" name="clear_queue"
+			value="<?php _e('Clear Queue...', 'PhotoQ') ?>"
+			onClick="return confirm(
+		'Are you sure you want to clear the entire queue?');" />
+	</div>
 	
-	<?php 
-		$num2Post = $this->_oc->getValue('postMulti');
-		if(is_numeric($num2Post) && $num2Post > 1):
-			$btnString = "Post Next $num2Post Photos...";
-			if($num2Post >= $qLength)
-				$btnString = 'Post Whole Queue...';
-	?>
-	<input type="submit" style="float: right" class="button-secondary" name="post_multi"
-		value="<?php echo $btnString; ?>"
-		onClick="return confirm(
-	'Are you really sure you want to publish the next entries in the queue?');" />
-	<?php endif;?>
-	
-	
-	<input type="submit" class="button-secondary" name="add_entry"
-		value="<?php _e('Add Photos to Queue', 'PhotoQ') ?>" />
-
-	<input type="submit" class="button-secondary" name="clear_queue"
-		value="<?php _e('Clear Queue...', 'PhotoQ') ?>"
-		onClick="return confirm(
-	'Are you sure you want to clear the entire queue?');" />
+	<div class="alignright actions">
+		<?php 
+			$num2Post = $this->_oc->getValue('postMulti');
+			if(is_numeric($num2Post) && $num2Post > 1):
+				$btnString = "Post Next $num2Post Photos...";
+				if($num2Post >= $qLength)
+					$btnString = 'Post Whole Queue...';
+		?>
+		<input type="submit" class="button-secondary action" name="post_multi"
+			value="<?php echo $btnString; ?>"
+			onClick="return confirm(
+		'Are you really sure you want to publish the next entries in the queue?');" />
+		<?php endif;?>
+		<input type="submit" class="button-secondary action" name="post_first"
+			value="<?php _e('Post Top of Queue...', 'PhotoQ') ?>"
+			onClick="return confirm('Are you sure you want to publish the first entry of the queue?');" />
+	</div>
 	
 </div>
 <div class="clr"></div>

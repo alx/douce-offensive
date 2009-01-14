@@ -363,10 +363,43 @@ function parseCanon($block,&$result,$seek, $globalOffset) {
 	
 	global $exiferFileSize; //Manuel: this makes canon maker notes work
 	
+	
 	$place = 0; //current place
 		
 	if($result['Endien']=="Intel") $intel=1;
 	else $intel=0;
+	
+	
+	/* Manuel: start determine a possible makernote offset given in the makernote trailer */
+	$offsetDelta = 0;
+	
+	//currentOffset of MakerNote starting after TIFF header
+	$blockLenBytes = strlen(bin2hex($block))/2;
+	$currentOffset = ftell($seek)-$blockLenBytes-$globalOffset;
+	
+	//get potential trailer 8bytes from end of MakerNote
+	
+	//first 4 bytes are trailer signature corresponding to TIFF header
+	$trailerId = bin2hex(substr($block,-8, 4));
+	if($intel){
+		$tiffHeader = bin2hex('II'); //Intel
+		// 2 bytes of 0x002a
+		$tiffHeader .= intel2Moto('002a');
+	}else{
+		$tiffHeader = bin2hex('MM'); //Motorola
+		$tiffHeader .= '002a';
+	}	
+	
+	if($trailerId == $tiffHeader){//is it the trailer?
+		//next 4 bytes contain offset value
+		$mnOffset = bin2hex(substr($block,-4));
+		if($intel==1) $mnOffset = intel2Moto($mnOffset);
+		//calculate the delta
+		$offsetDelta = $currentOffset - hexdec($mnOffset);
+	}
+	/* Manuel: end determine makernote offset */
+	
+	
 	
 	$model = $result['IFD0']['Model'];
 	
@@ -374,6 +407,7 @@ function parseCanon($block,&$result,$seek, $globalOffset) {
 	$num = bin2hex(substr($block,$place,2));$place+=2;
 	if($intel==1) $num = intel2Moto($num);
 	$result['SubIFD']['MakerNote']['MakerNoteNumTags'] = hexdec($num);
+	
 	
 	//loop thru all tags  Each field is 12 bytes
 	for($i=0;$i<hexdec($num);$i++) {
@@ -404,7 +438,9 @@ function parseCanon($block,&$result,$seek, $globalOffset) {
 		} else {
 			$value = bin2hex($value);
 			if($intel==1) $value = intel2Moto($value);
-			$v = fseek($seek,$globalOffset+hexdec($value));  //offsets are from TIFF header which is 12 bytes from the start of the file
+			//offsets are from TIFF header which is 12 bytes from the start of the file
+			//Manuel: also account for $offsetDelta given by the makernote offset in TIFF trailer
+			$v = fseek($seek,$globalOffset+hexdec($value)+$offsetDelta);  
 			
 			if($v==0 && $bytesofdata < $exiferFileSize) { //Manuel: this makes canon maker notes work
 				$data = fread($seek, $bytesofdata);

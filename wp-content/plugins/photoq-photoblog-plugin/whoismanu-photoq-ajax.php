@@ -3,7 +3,8 @@
 // first lines to include all the stuff from admin-ajax.php 
 define('DOING_AJAX', true);
 
-require_once('../../../wp-config.php');
+require_once('../../../wp-load.php');
+//require_once('../../../wp-config.php');
 require_once('../../../wp-admin/includes/admin.php');
 
 
@@ -13,6 +14,7 @@ if ( !is_user_logged_in() )
 // end stuff from admin-ajax.php
 
 PhotoQHelper::debug('got ajax call');
+
 foreach( $_POST as $key => $value)
 	PhotoQHelper::debug("POST $key: $value");
 
@@ -59,9 +61,8 @@ case 'edit' :
 	?>
 		
 				<div class="submit">
-					<input type="submit" class="submit-btn" name="save_batch" 
-					value="<?php _e('Save Changes', 'PhotoQ') ?>" />
-					<input type="submit" class="submit-btn" onClick="window.location = window.location.href;" 
+					<input type="submit" class="button-primary submit-btn" name="save_batch" value="<?php _e('Save Changes', 'PhotoQ') ?>" />
+					<input type="submit" class="button-secondary submit-btn" onClick="window.location = window.location.href;" 
 					value="<?php _e('Cancel', 'PhotoQ') ?>" />
 				</div>
 			</div>

@@ -116,6 +116,21 @@ class PhotoQHelper
 	}
 	
 	/**
+	 * Same as above but returns error if file already exists at destination.
+	 *
+	 * @param string $oldfile The path to the file to be moved.
+	 * @param string $newfile The path where $oldfile should be moved to.
+	 * @return boolean TRUE if file successfully moved
+	 */
+	function moveFileIfNotExists($oldfile, $newfile)
+	{
+		if(!file_exists($newfile))
+			return PhotoQHelper::moveFile($oldfile,$newfile);
+		else
+			return FALSE;
+	}
+	
+	/**
 	 * PHP built-in array_combine only works for PHP5. 
 	 * This function should do more or less the same and
 	 * also work with PHP4.

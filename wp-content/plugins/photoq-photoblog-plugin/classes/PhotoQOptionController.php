@@ -56,7 +56,7 @@ class PhotoQOptionController extends OptionController
 		//define general tests not associated to options but that should be passed
 		$this->addTest(new RO_SafeModeOffInputTest());
 		$this->addTest(new RO_GDAvailableInputTest());
-		$this->addTest(new RO_WordPressVersionInputTest('2.5.1','2.6-beta3'));
+		$this->addTest(new RO_WordPressVersionInputTest('2.7','2.7'));
 		
 		
 		$exif =& new RO_ChangeTrackingContainer('exifOptions');
@@ -194,47 +194,103 @@ class PhotoQOptionController extends OptionController
 		
 		
 		
-		$this->registerOption(
+		$cronOptions =& new CompositeOption('cronJobs');
+		$cronOptions->addChild(
 			new TextFieldOption(
 				'cronFreq',
 				'23',
-				'',
+				'Cronjob runs every ',
 				'',
 				'hours',
 				'3',
 				'5'
 			)
 		);
-
-		$showThumbs =& new CheckBoxOption(
-			'showThumbs',
-			'1',
-			'Show thumbs in post management admin panel. '
+		$cronOptions->addChild(
+			new CheckBoxOption(
+				'cronPostMulti',
+				'0',
+				'Use settings of second post button for automatic posting.',
+				'<p>', '</p>'
+			)
 		);
-		$showThumbs->addChild(
+		$cronOptions->addChild(
+			new CheckBoxOption(
+				'cronFtpToQueue',
+				'0',
+				'When cronjob runs, automatically add FTP uploads to queue.',
+				'<p>', '</p>'
+			)
+		);
+		$this->registerOption($cronOptions);
+
+		$adminThumbs =& new CompositeOption('showThumbs', '1');
+		$adminThumbs->addChild(
 			new TextFieldOption(
 				'showThumbs-Width',
 				'120',
 				'',
-				' Maximum ',
+				'Thumbs shown in list of published photos are maximum ',
 				'px wide, ',
 				'3',
 				'3'
 			)
 		);
-		$showThumbs->addChild(
+		$adminThumbs->addChild(
 			new TextFieldOption(
 				'showThumbs-Height',
 				'60',
 				'',
 				' ',
-				'px high',
+				'px high. <br/>',
 				'3',
 				'3'
 			)
 		);
-		$this->registerOption($showThumbs);
-
+		$adminThumbs->addChild(
+			new TextFieldOption(
+				'photoQAdminThumbs-Width',
+				'200',
+				'',
+				'Thumbs shown in PhotoQ edit dialogs are maximum ',
+				'px wide, ',
+				'3',
+				'3'
+			)
+		);
+		$adminThumbs->addChild(
+			new TextFieldOption(
+				'photoQAdminThumbs-Height',
+				'90',
+				'',
+				' ',
+				'px high.',
+				'3',
+				'3'
+			)
+		);
+		$this->registerOption($adminThumbs);
+		
+		$this->registerOption( 
+			new TextFieldOption(
+				'autoTitleRegex',
+				'', 'Custom Filter:', 
+				'', 
+				'<br/>
+				<span class="setting-description">An auto title is a title that is generated automatically from the filename. 
+				By default PhotoQ creates auto titles by removing the suffix from the filename, 
+				replacing hyphens and underscores with spaces and by capitalizing the first 
+				letter of every word. You can specify an additional custom filter to remove more from the filename above. 
+				Perl regular expressions are allowed, parts of filenames that match the regex are removed (regex special
+				chars <code>. \ + * ? [ ^ ] $ ( ) { } = ! < > | :</code> need to be escaped with a backslash).
+				Note that the custom filter is applied first, before any of the default replacements.
+				<br/>
+				Examples: <code>IMG</code> to remove the string "IMG" from anywhere within the filename, 
+				<code>^IMG</code> to remove "IMG" from beginning of filename.</span>
+				'
+			)
+		);
+		
 		$enableFtp =& new CheckBoxOption(
 			'enableFtpUploads',
 			'0',
@@ -963,8 +1019,8 @@ class PhotoQViewOption extends RO_ChangeTrackingContainer
 				', link having following attributes: ',
 				'',
 				'<br />
-				(Allows interaction with JS libraries such as Lightbox and 
-				Shutter Reloaded without modifying templates.)</td></tr>',
+				<span class="setting-description">Allows interaction with JS libraries such as Lightbox and 
+				Shutter Reloaded without modifying templates.</span></td></tr>',
 				'40'
 			)
 		);

@@ -26,7 +26,7 @@ class CompositeOption extends ReusableOption
 	/**
 	 * PHP4 type constructor
 	 */
-	function CompositeOption($name, $defaultValue, $label = '', 
+	function CompositeOption($name, $defaultValue = 1, $label = '', 
 					$textBefore = '', $textAfter = '')
 	{
 		$this->__construct($name, $defaultValue, $label, $textBefore, $textAfter);
@@ -36,7 +36,7 @@ class CompositeOption extends ReusableOption
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($name, $defaultValue, $label = '', 
+	function __construct($name, $defaultValue = 1, $label = '', 
 					$textBefore = '', $textAfter = '')
 	{	
 		parent::__construct($name, $defaultValue, $label, $textBefore, $textAfter);

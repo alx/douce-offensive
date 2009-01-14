@@ -4,21 +4,17 @@
 		<h2>PhotoQ Options</h2>
 		
 		<p class="submit top-savebtn">
-			<input type="submit" name="info_update" 
-				value="<?php _e('Save Changes', 'PhotoQ') ?> &raquo;" />
+			<input type="submit" name="info_update" class="button-primary"
+				value="<?php _e('Save Changes', 'PhotoQ') ?>" />
 		</p>
 			
 		
-			
-			<div>
-			&nbsp;
-			</div>
 				
 			<div id="poststuff">
 			
 			
 			<div  class="postbox ">
-			<h3><?php _e('Image sizes', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Image sizes', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			
 			
@@ -56,7 +52,7 @@
 			</div>
 			
 			<div  class="postbox ">
-			<h3><?php _e('Views', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Views', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table noborder">
 				<tr valign="top">
@@ -77,7 +73,7 @@
 			
 			
 			<div  class="postbox closed">
-			<h3><?php _e('Exif', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Exif', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 				<tr valign="top">
@@ -99,7 +95,7 @@
 			
 			
 			<div  class="postbox closed">
-			<h3><?php _e('Watermarking', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Watermarking', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table noborder">
 			<tr valign="top">
@@ -122,7 +118,7 @@
 			
 			
 			<div  class="postbox closed">
-			<h3><?php _e('Meta Fields', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Meta Fields', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 				<tr valign="top">
@@ -181,7 +177,7 @@
 			</div>
 		
 			<div  class="postbox closed">
-			<h3><?php _e('Further Options', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Further Options', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 				
@@ -190,11 +186,12 @@
 				$furtherOptions = array(
 					'imgdir' => __('Image Directory:', 'PhotoQ'),
 					'imagemagickPath' => __('ImageMagick Path:', 'PhotoQ'),
-					'cronFreq' => __('Cron Job Frequency:', 'PhotoQ'),
+					'cronJobs' => __('Automatic Posting:', 'PhotoQ'),
 					'qPostAuthor' => __('PhotoQ Post Author:', 'PhotoQ'),
 					'qPostDefaultCat' => __('PhotoQ Default Category:', 'PhotoQ'),
 					'foldCats' => __('Fold Categories:', 'PhotoQ'),
-					'showThumbs' => __('Managing Posts:', 'PhotoQ'),
+					'showThumbs' => __('Admin Thumbs:', 'PhotoQ'),
+					'autoTitleRegex' => __('Auto Titles:', 'PhotoQ'),
 					'enableFtpUploads' => __('FTP Upload:', 'PhotoQ'),
 					'postMulti' => __('Second Post Button:', 'PhotoQ'),
 					'deleteImgs' => __('Deleting Posts:', 'PhotoQ'),
@@ -217,7 +214,7 @@
 			</div>
 			
 			<div  class="postbox closed">
-			<h3><?php _e('Upgrading', 'PhotoQ') ?></h3>
+			<h3 class="postbox-handle"><span><?php _e('Upgrading', 'PhotoQ') ?></span></h3>
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 				
@@ -251,8 +248,8 @@
 		?>
 		
 		<p class="submit">
-			<input type="submit" name="info_update" 
-				value="<?php _e('Save Changes', 'PhotoQ') ?> &raquo;" />
+			<input type="submit" name="info_update" class="button-primary"
+				value="<?php _e('Save Changes', 'PhotoQ') ?>" />
 		</p>
 		</div>
 	</form>
