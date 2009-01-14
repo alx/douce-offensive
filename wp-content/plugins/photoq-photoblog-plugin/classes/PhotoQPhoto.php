@@ -105,7 +105,7 @@ class PhotoQPhoto
 	
 	function generateImgLink($sourceSizeName, $targetSizeName, $attributes, $class)
 	{
-		return '<a '. $attributes . ' href="'.$this->_sizes[$targetSizeName]->getUrl().'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /></a>';
+		return '<div '. $attributes . ' url="'.$this->_sizes[$targetSizeName]->getUrl().'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /><script type="text/javascript" charset="utf-8">jQuery.preloadImages("'.$this->_sizes["main"]->getUrl().'");</script></div>';
 	}
 	
 	/**
