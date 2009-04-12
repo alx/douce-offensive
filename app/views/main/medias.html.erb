@@ -1,0 +1,34 @@
+<div class="span-17">
+	
+	<h3>Organiser les Albums</h3>
+	
+	<%= media_gallery_organize :site_id => 1 %>
+	
+</div>
+
+<div class="span-5 last" id="upload">  
+	
+	<h3>Charger un fichier</h3>
+	
+	<form enctype="multipart/form-data" action="<%= url(:media_rocket_upload) %>" name="media_upload" method="post">
+		<input type="hidden" name="site_id" value="1"/>
+		<input type="hidden" name="redirect_to" value="/admin"/>
+		
+		<p><label for="Titre">Titre</label><br/>
+		<input type="text" id="Titre" name="title" class="text"/></p>
+		
+		<p><label for="Description">Description</label><br/>
+		<textarea id="Description" name="description"></textarea></p>
+		
+		<p><label for="Nouvelle Cat&eacute;gorie">Nouvelle Cat&eacute;gorie</label><br/>
+		<input type="text" id="Nouvelle Catégorie" name="gallery_name" class="text"/></p>
+		
+		<%= media_gallery_select ({:site_id => 1, :gallery_label => "Cat&eacute;gorie"}) %>
+		
+		<p><label for="media_file">Fichier<em>*</em></label><br/>
+		<input type="file" id="media_file" name="file" class="required file"/></p>
+		
+		<p><input type="submit" id="media_button" name="submit" value="Charger →"/></p>
+	</form>
+	
+</div>

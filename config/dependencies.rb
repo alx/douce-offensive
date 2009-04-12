@@ -34,5 +34,4 @@ dependency "dm-serializer", dm_gems_version
 
 dependency "merb_datamapper", merb_gems_version
 
-dependency "webbastic",     lego_gems_version
 dependency "media_rocket",  lego_gems_version

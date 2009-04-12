@@ -13,13 +13,16 @@ Merb::Config.use do |c|
   # cookie session store configuration
   c[:session_secret_key]  = '0421c07aa34ce12194e15d8e5831a814ed625ef9'  # required for cookie session store
   c[:session_id_key] = '_douce_session_id' # cookie session id key, defaults to "_session_id"
+  
+  c[:login]     = "douceoffensive"
+  c[:password]  = "tracks"
+  
+  c[:mediarocket_site]    = "douceoffensive"
 end
  
 Merb::BootLoader.before_app_loads do
-  
   Merb::Plugins.config[:merb_slices] = { :queue => [:MerbAuthSlicePassword, 
-                                                    :MediaRocket, 
-                                                    :Webbastic]}
+                                                    :MediaRocket]}
                                                     
 end
  
@@ -30,8 +33,8 @@ Merb::BootLoader.after_app_loads do
   #
   begin
     if User.first.nil?
-      u = User.new(:login => "cbon")
-      u.password = u.password_confirmation = "outandplay"
+      u = User.new(:login => Merb::Config[:login])
+      u.password = u.password_confirmation = Merb::Config[:password]
       u.save
     end
   rescue
@@ -45,9 +48,9 @@ Merb::BootLoader.after_app_loads do
     if MediaRocket::Site
       site = MediaRocket::Site.first
       if site.nil?
-        MediaRocket::Site.create :id => 1, :name => "cbon"
+        MediaRocket::Site.create :id => 1, :name => Merb::Config[:mediarocket_site]
       elsif site.name.nil?
-        site.update_attributes :name => "cbon"
+        site.update_attributes :name => Merb::Config[:mediarocket_site]
       end
     end
   rescue
