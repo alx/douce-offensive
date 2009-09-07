@@ -59,6 +59,7 @@ function display_recent_categories(){
 	
 	foreach ($results as $result) {
 		$catlink = str_replace( '%category%', $result->slug, $wp_rewrite->get_category_permastruct());
+		$catlink = get_option( 'home' ) . user_trailingslashit( $catlink, 'category' );
 		echo "<li><a href='".$catlink."'>".$result->name."</a></li>";
 	}
 }
