@@ -13,7 +13,7 @@
 </div>
 
 <div class="workset">
-	<p><?php echo category_description(); ?></p>
+	<?php echo category_description(); ?>
 </div>
 
 <?php get_footer(); ?>
