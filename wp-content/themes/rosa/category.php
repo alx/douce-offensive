@@ -3,17 +3,17 @@
 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
 <?php
-	echo $photoq->_db->getPublishedPhoto($post->ID)->generateImgTag('main', '');
+	echo PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->generateImgTag('main', '');
 ?>
 
 <?php endwhile; endif; ?>
 
 <div class="textset">
-	<h1></h1>
+	<h1><?php single_cat_title(); ?></h1>
 </div>
 
 <div class="workset">
-	<p></p>
+	<p><?php echo category_description(); ?></p>
 </div>
 
 <?php get_footer(); ?>
