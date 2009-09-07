@@ -1,5 +1,5 @@
 <?php
-class PhotoQQueue
+class PhotoQQueue extends PhotoQObject
 {
 	
 	/**
@@ -10,19 +10,17 @@ class PhotoQQueue
 	 */
 	var $_queuedPhotos;
 	
-	var $_db;
-	
-	//var $_oc;
-	
 	/**
-	 * PHP4 type constructor
+	 * Reference to PhotoQDB singleton
+	 * @var object PhotoQDB
 	 */
-	function PhotoQQueue()
-	{
-		$this->__construct();
-	}
+	var $_db;
 
-
+	/**
+	 * Reference to PhotoQOptionController singleton
+	 * @var object PhotoQOptionController
+	 */
+	var $_oc;
 	/**
 	 * PHP5 type constructor
 	 */
@@ -30,7 +28,7 @@ class PhotoQQueue
 	{
 		
 		$this->_db =& PhotoQSingleton::getInstance('PhotoQDB');
-		//$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
 		
 		//get Queue from DB
 		$this->load();
@@ -41,19 +39,18 @@ class PhotoQQueue
 		$this->_queuedPhotos = array();
 	
 		if($results = $this->_db->getQueueByPosition()){
-			foreach ($results as $qEntry) {
-				$this->addPhoto(
-					new PhotoQQueuedPhoto( $qEntry->q_img_id,
-						$qEntry->q_imgname, $qEntry->q_title, 
-						$qEntry->q_descr, $qEntry->q_slug, 
-						$qEntry->q_tags, $qEntry->q_exif, $qEntry->q_edited
-					)
-				);
+			foreach ($results as $position => $qEntry) {
+				//tags are split by commas surrounded by any kind of space character
+				$this->addPhoto(new PhotoQQueuedPhoto($qEntry->q_img_id,
+						$qEntry->q_title, $qEntry->q_descr, $qEntry->q_exif, '', 
+						$qEntry->q_imgname, preg_split("/[\s]*,[\s]*/", $qEntry->q_tags),
+						$qEntry->q_slug, $qEntry->q_edited, $qEntry->q_fk_author_id, $position
+					));
 			}
 		}
 	}
 	
-	function addPhoto($photo)
+	function addPhoto(&$photo)
 	{
 		array_push($this->_queuedPhotos, $photo);
 	}
@@ -66,17 +63,23 @@ class PhotoQQueue
 	 */
 	function deletePhotoById($id)
 	{
+		global $current_user;
 		foreach($this->_queuedPhotos as $position => $photo) {
     		if($photo->id == $id){
-    			//remove from database
-				$this->_db->deleteQueueEntry($id, $position);
-        		//remove from queue
-    			unset($this->_queuedPhotos[$position]);
-        		//remove from server
-    			return $photo->delete();
+    			//check that user is allowed to delete this one
+    			if ( $current_user->id == $photo->getAuthor() ||  current_user_can('delete_others_posts') ){
+    			
+    				//remove from database
+					$this->_db->deleteQueueEntry($id, $position);
+        			//remove from queue
+    				unset($this->_queuedPhotos[$position]);
+        			//remove from server
+    				return $photo->delete();
+    			}else
+    				return new PhotoQErrorMessage(sprintf(__('You do not have privileges to delete: %s', 'PhotoQ'),$id));	
     		}
     	}
-    	return new PhotoQErrorMessage(__("Could not find photo to delete: $id"));
+    	return new PhotoQErrorMessage(sprintf(__('Could not find photo to delete: %s', 'PhotoQ'),$id));
 	}
 	
 	function deleteAll()
@@ -97,6 +100,37 @@ class PhotoQQueue
 		return count($this->_queuedPhotos);
 	}
 	
+	/**
+	 * Returns the photo at position $pos in the queue.
+	 * @param $pos int	the position to retrieve
+	 * @return object PhotoQQueuedPhoto
+	 */
+	function &getQueuedPhoto($pos)
+	{
+		return $this->_queuedPhotos[$pos];
+	}
+	
+	function &getQueuedPhotoById($id){
+		foreach ( array_keys($this->_queuedPhotos) as $position ) {
+			$photo =& $this->_queuedPhotos[$position];
+    		if($photo->getId() == $id){
+    			return $photo;
+    		}
+    	}
+    	return new PhotoQErrorMessage(sprintf(__('Could not find photo with ID: %s', 'PhotoQ'),$id));
+	}
+	
+	function getQueuedUneditedPhotos(){
+		$unedited = array();
+		foreach ( array_keys($this->_queuedPhotos) as $position ) {
+			$photo =& $this->_queuedPhotos[$position];
+    		if(!$photo->wasEdited()){
+    			array_push($unedited, $photo);
+    		}
+    	}
+    	return $unedited;
+	}
+	
 	
 	/**
 	 * Publish the top of the queue.
@@ -105,16 +139,37 @@ class PhotoQQueue
 	 */
 	function publishTop()
 	{
+		PhotoQHelper::debug('enterPublishTop()');
 		if($this->getLength() == 0){
-			return new PhotoQErrorMessage(__('Queue is empty, nothing to post.'));
+			return new PhotoQErrorMessage(__('Queue is empty, nothing to post.', 'PhotoQ'));
 		}
 		$topPhoto = $this->_queuedPhotos[0];
 		if($postID = $topPhoto->publish()){
-			$this->_db->deleteQueueEntry($topPhoto->id, 1);
-			$statusMsg = '<strong>'.__('Your post has been saved.').'</strong> <a href="'. get_permalink( $postID ).'">'.__('View post').'</a> | <a href="post.php?action=edit&amp;post='.$postID.'">'.__('Edit post').'</a>';
+			PhotoQHelper::debug('publishing ok');
+			$this->_postPublishingActions($topPhoto->id,$postID);
+			$statusMsg = '<strong>'.__('Your post has been saved.', 'PhotoQ').'</strong> <a href="'. get_permalink( $postID ).'">'.__('View post', 'PhotoQ').'</a> | <a href="post.php?action=edit&amp;post='.$postID.'">'.__('Edit post', 'PhotoQ').'</a>';
+			PhotoQHelper::debug('leave PublishTop() returning ok message');
 			return new PhotoQStatusMessage($statusMsg);
 		}else
-			return new PhotoQErrorMessage(__("Publishing Photo did not succeed."));
+			return new PhotoQErrorMessage(__('Publishing Photo did not succeed.', 'PhotoQ'));
+	}
+	
+	/**
+	 * Actions that need to be performed after photo is published.
+	 * @param $topID
+	 * @param $postID
+	 * @return unknown_type
+	 */
+	function _postPublishingActions($topID, $postID){
+		$this->_db->deleteQueueEntry($topID, 1);
+		//if exif is inlined we already need a rebuild to get the post_tag
+		//links needed for the tagsFromExif stuff. These are not available
+		//before the post has been posted (and thus the tags registered).
+		if($this->_oc->getValue('inlineExif')){
+			$photo = &$this->_db->getPublishedPhoto($postID);
+			if($photo)
+				$photo->rebuild(array(),false,true);
+		}
 	}
 	
 	/**
@@ -126,7 +181,7 @@ class PhotoQQueue
 	function publishMulti($num2Post)
 	{
 		if($this->getLength() == 0){
-			return new PhotoQErrorMessage(__('Queue is empty, nothing to post.'));
+			return new PhotoQErrorMessage(__('Queue is empty, nothing to post.', 'PhotoQ'));
 		}
 		$num2Post = min($this->getLength(), $num2Post);
 		
@@ -138,37 +193,13 @@ class PhotoQQueue
 		for ($i = 0; $i<$num2Post; $i++){
 			$topPhoto = $this->_queuedPhotos[$i];
 			if($postID = $topPhoto->publish($postDateFirst + $i))
-				$this->_db->deleteQueueEntry($topPhoto->id, 1);
+				$this->_postPublishingActions($topPhoto->id,$postID);
 			else
-				return new PhotoQErrorMessage(__("Publishing Photo did not succeed."));
+				return new PhotoQErrorMessage(__('Publishing Photo did not succeed.', 'PhotoQ'));
 			
 		}
-		$statusMsg = '<strong>'.__('Your posts have been saved.').'</strong>';
+		$statusMsg = '<strong>'.__('Your posts have been saved.', 'PhotoQ').'</strong>';
 		return new PhotoQStatusMessage($statusMsg);
-	}
-	
-	
-	/**
-	 * Temporary function while refactoring
-	 *
-	 * @return unknown
-	 */
-	function getQueue()
-	{
-		$queue = array();
-		$count = 0;
-		foreach ($this->_queuedPhotos as $qEntry) {
-			$queue[$count]->q_img_id = $qEntry->id;
-			$queue[$count]->q_imgname = $qEntry->imgname;
-			$queue[$count]->q_position = $count + 1;
-			$queue[$count]->q_title = $qEntry->title;
-			$queue[$count]->q_slug = $qEntry->slug;
-			$queue[$count]->q_descr = $qEntry->descr;
-			$queue[$count]->q_tags = $qEntry->tags;
-			$queue[$count]->q_edited = $qEntry->edited;
-			$count++;
-		}
-		return $queue;
 	}
 	
 

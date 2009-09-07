@@ -32,16 +32,6 @@ class TextAreaOption extends ReusableOption
 	 */
 	var $_cols;
 	
-	/**
-	 * PHP4 type constructor
-	 */
-	function TextAreaOption($name, $defaultValue, $label = '',
-				$textBefore = '', $textAfter = '', $rows = 10, $cols = 50)
-	{
-		$this->__construct($name, $defaultValue, $label, $textBefore, 
-							$textAfter, $rows, $cols);
-	}
-	
 	
 	/**
 	 * PHP5 type constructor
@@ -54,16 +44,6 @@ class TextAreaOption extends ReusableOption
 		$this->_cols = $cols;
 	}
 	
-	/**
-	 * Concrete implementation of the accept() method. Calls visitTextArea() on 
-	 * the supplied visitor object.
-	 *
-	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
-	 */
-	function accept(&$visitor)
-	{
-		$visitor->visitTextArea($this);
-	}
 	
 	/**
 	 * Getter for rows field.

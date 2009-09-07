@@ -23,15 +23,6 @@ class CompositeOption extends ReusableOption
 	 */
 	var $_children;
 	
-	/**
-	 * PHP4 type constructor
-	 */
-	function CompositeOption($name, $defaultValue = 1, $label = '', 
-					$textBefore = '', $textAfter = '')
-	{
-		$this->__construct($name, $defaultValue, $label, $textBefore, $textAfter);
-	}
-	
 	
 	/**
 	 * PHP5 type constructor
@@ -44,17 +35,46 @@ class CompositeOption extends ReusableOption
 	}
 	
 	/**
-	 * Let's the visitor visit each of the children.
+	 * First call visitBefore, then visit each of the children
+	 * and finally visitAfter
 	 *
 	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
 	 */
 	function accept(&$visitor)
 	{
-		//foreach ($this->_children as $child){
+
+		//default method that may be defined by visitor to be executed independent of object type
+		if(method_exists($visitor, 'visitDefaultBefore'))
+			call_user_func_array(array(&$visitor, 'visitDefaultBefore'), array(&$this));
+		
+		//call the before method
+		if( $methodBefore = $this->findVisitorMethodToCall('visit', 'Before', $visitor) )
+			call_user_func_array(array(&$visitor, $methodBefore), array(&$this));
+			
+			
+		//pass the visitor to all children
 		foreach ( array_keys($this->_children) as $index ) {
 			$child =& $this->_children[$index];
+			//call the before child method
+			if( $methodBeforeChild = $this->findVisitorMethodToCall('visit', 'BeforeChild', $visitor) )
+				call_user_func_array(array(&$visitor, $methodBeforeChild), array(&$child, &$this) );
+			
 			$child->accept($visitor);
+			
+			//call the after child method
+			if( $methodAfterChild = $this->findVisitorMethodToCall('visit', 'AfterChild', $visitor) )
+				call_user_func_array(array(&$visitor, $methodAfterChild), array(&$child, &$this) );
+			
 		}
+
+		//call the 'after' method on the visitor
+		if( $methodAfter = $this->findVisitorMethodToCall('visit', 'After', $visitor) )
+			call_user_func_array(array(&$visitor, $methodAfter), array(&$this));
+		
+		//default method that may be defined by visitor to be executed independent of object type
+		if(method_exists($visitor, 'visitDefaultAfter'))
+			call_user_func_array(array(&$visitor, 'visitDefaultAfter'), array(&$this));
+		
 	}
 	
 	
@@ -68,6 +88,7 @@ class CompositeOption extends ReusableOption
 	 */
 	function load($storedOptions)
 	{
+		
 		if(is_array($storedOptions)){
 			//pass it on to all the children to give them a chance to load
 			foreach ( array_keys($this->_children) as $index ) {
@@ -98,6 +119,38 @@ class CompositeOption extends ReusableOption
 		return $result;
 	}
 	
+	/**
+	 * Registers form submit buttons if any with the OptionController specified.
+	 * @param $oc
+	 * @return unknown_type
+	 */
+	function registerSubmitButtons(&$oc){
+		foreach ( array_keys($this->_children) as $index ) {
+			$child =& $this->_children[$index];
+			$child->registerSubmitButtons($oc);
+		}
+	}
+	
+	
+	/**
+	 * Assess whether this option changed in the last update. Called from UpdateVisitor.
+	 *
+	 */
+	function updateChangedStatus()
+	{
+		parent::updateChangedStatus();
+		if(!$this->_hasChanged){
+			//it has changed if any of its children have changed
+			foreach ( array_keys($this->_children) as $index ) {
+				$child =& $this->_children[$index];
+				if($child->hasChanged()){
+					$this->_hasChanged = true;
+					break;
+				}
+			}
+		}
+	}
+	
 	
 	/**
 	 * Add an option to the composite.	
@@ -125,6 +178,8 @@ class CompositeOption extends ReusableOption
 			$child =& $this->_children[$index];
 			if($child->getName() == $name){
 				unset($this->_children[$index]);
+				//reindex
+				$this->_children = array_values($this->_children);
 				return true;
 			}
 		}
@@ -142,6 +197,8 @@ class CompositeOption extends ReusableOption
 			$child =& $this->_children[$index];
 			unset($this->_children[$index]);
 		}
+		//re-index the array
+		$this->_children = array_values($this->_children);
 	}
 	
 	/**
@@ -174,12 +231,65 @@ class CompositeOption extends ReusableOption
 		return count($this->_children);
 	}
 	
+	function getChildrenNames()
+	{	
+		$result = array();
+		foreach ( array_keys($this->_children) as $index ) {
+			$child =& $this->_children[$index];
+			$result[] = $child->getName();
+		}
+		return $result;
+	}
+	
 	function &getChild($int)
 	{
 		$option = null;
 		if($int >= 0 && $int < $this->countChildren())
 			$option =& $this->_children[$int];
 		return $option;
+	}
+	
+	/**
+	 * Low level function that allows to query children of composite through a callback function.
+	 * Names of children whose callback returns true are returned in an array.
+	 * @param $hasAttributeCallback the callback function to be called.
+	 * @return array children for which the callback returned true
+	 */
+	function &getChildrenWithAttribute($hasAttributeCallback = 'hasChanged'){
+		$with = array();
+		$numChildren = $this->countChildren();
+		for ($i = 0; $i < $numChildren; $i++){
+			$current =& $this->getChild($i);
+			if(method_exists($current, $hasAttributeCallback)){
+				if($current->$hasAttributeCallback())
+					$with[] =& $current;
+			}else
+				die('PhotoQOptionController: method callback with name ' . $hasAttributeCallback . 'does not exist');
+		}
+		return $with;
+	}
+	
+	/**
+	 * Low level function that allows to query children of composite through a callback function.
+	 * Names of children whose callback returns true are returned in an array.
+	 * @param $hasAttributeCallback the callback function to be called.
+	 * @return array names of image sizes for which the callback returned true
+	 */
+	function getChildrenNamesWithAttribute($hasAttributeCallback = 'hasChanged'){
+		$with = array();
+		foreach($this->getChildrenWithAttribute($hasAttributeCallback) as $current)
+			$with[] = $current->getName();
+			
+		return $with;
+	}
+	
+	/**
+	 * Returns an array containing names of children that changed during
+	 * last update.
+	 * @return array
+	 */
+	function getChangedChildrenNames(){
+		return $this->getChildrenNamesWithAttribute();
 	}
 	
 	/**

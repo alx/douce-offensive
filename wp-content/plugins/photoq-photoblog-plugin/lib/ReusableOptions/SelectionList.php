@@ -47,6 +47,7 @@ class SelectionList extends CompositeOption
 	 */
 	function load($storedOptions)
 	{
+			
 		if(is_array($storedOptions)){
 			if(array_key_exists($this->_name, $storedOptions)){
 				$this->setValue($storedOptions[$this->_name]);
@@ -73,8 +74,10 @@ class SelectionList extends CompositeOption
 				$selected =& $selectedChildren[$index];
 				$result = array_merge($selected->store(), $result);
 			}
+		}elseif(!$this->countChildren()){ //no children yet, keep the preassigned value
+			$result[$this->_name] = $this->getValue();
 		}else{
-			$this->setValue('');
+			$this->setValue('');//nothing selected
 			$result[$this->_name] = $this->getValue();
 		}
 		return $result;
@@ -86,13 +89,13 @@ class SelectionList extends CompositeOption
 	 * @return object SelectableOption		The selected SelectableOption
 	 * @access private
 	 */
-	function &_getSelectedChildren(){
+	function &_getSelectedChildren($flag = true){
 		$selected = array();
 		$numChildren = $this->countChildren();
 		for ($i = 0; $i < $numChildren; $i++){
 			$current =& $this->getChild($i);
-			if((is_a($current, 'SelectableOption') 
-				|| is_a($current, 'SelectableCompositeOption')) && $current->isSelected()){
+			if((is_a($current, 'SelectableOption')
+				|| is_a($current, 'SelectableCompositeOption')) && $current->isSelected() == $flag){
 				$selected[] =& $current;
 				
 			}

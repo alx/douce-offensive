@@ -11,7 +11,7 @@
  * @author  M. Flury
  * @package ReusableOptions
  */
-class OptionVisitor
+class OptionVisitor extends ReusableOptionObject
 {
 	
 	/**

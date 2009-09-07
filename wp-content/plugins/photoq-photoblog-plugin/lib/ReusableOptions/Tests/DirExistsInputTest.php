@@ -24,10 +24,10 @@ class DirExistsInputTest extends InputTest
 	/**
 	 * PHP4 type constructor
 	 */
-	function DirExistsInputTest($dir = '', $errMsgPrefix = '', $customErrMsg = '')
+	/*function DirExistsInputTest($dir = '', $errMsgPrefix = '', $customErrMsg = '')
 	{
 		$this->__construct($dir, $errMsgPrefix, $customErrMsg);
-	}
+	}*/
 	
 	
 	/**

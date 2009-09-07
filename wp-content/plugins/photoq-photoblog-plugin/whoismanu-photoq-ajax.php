@@ -23,18 +23,21 @@ switch ( $_POST['action'] ) :
 case 'reorder' :
 	check_ajax_referer( 'queueReorder', 'queueReorderNonce' );
 	
+	if(!current_user_can( 'reorder_photoq' ))
+		die(__('You do not have sufficient privileges to perform this task', 'PhotoQ'));
+		
 	PhotoQHelper::debug('reordering queue');
 	PhotoQHelper::debug(sizeof($_POST['photoq']));
-	//get the current queue and check that both arrays have same size
-	$queue = $photoq->_queue->getQueue();
-	$q_length = sizeof($queue);
-	sizeof($_POST['photoq']) == $q_length or die('1');
+	//get length of queue and check that both arrays have same size
+	$qLength = $photoq->_queue->getLength();
+	sizeof($_POST['photoq']) == $qLength or die('1');
 		
 	PhotoQHelper::debug('sanity check passed');
 	
 	global $wpdb;
-	for($i=0; $i<$q_length; $i++){
-		if($_POST['photoq'][$i] != $queue[$i]->q_img_id){			
+	for($i=0; $i<$qLength; $i++){
+		$currentPhoto =& $photoq->_queue->getQueuedPhoto($i);
+		if( $_POST['photoq'][$i] != $currentPhoto->getId() ){			
 			$wpdb->query("UPDATE $photoq->QUEUE_TABLE SET q_position = '".($i+1)."' WHERE q_img_id = '" . attribute_escape($_POST['photoq'][$i]) . "'");
 		}
 	}
@@ -44,7 +47,16 @@ case 'reorder' :
 
 	
 case 'edit' :
-	$wimpq_photo = $wpdb->get_row("SELECT * FROM $photoq->QUEUE_TABLE WHERE q_img_id = '".attribute_escape($_POST['id'])."'");	
+	global $current_user;
+	
+	$photoToEdit = $photoq->_queue->getQueuedPhotoById(attribute_escape($_POST['id']));	
+	
+	//the user tries do something he is not allowed to do
+	if ( $current_user->id != $photoToEdit->getAuthor() &&  !current_user_can('edit_others_posts') ){
+		die(__('You do not have sufficient privileges to perform this task', 'PhotoQ'));	
+	}
+	
+	
 	PhotoQHelper::debug('starting ajax editing');
 		
 	?>
@@ -54,15 +66,15 @@ case 'edit' :
 	<?php 
 	PhotoQHelper::debug('started form');
 		if ( function_exists('wp_nonce_field') )
-			wp_nonce_field('photoq-saveBatch');
+			wp_nonce_field('photoq-saveBatch','saveBatchNonce');
 	PhotoQHelper::debug('passed nonce');				
-		$photoq->showPhotoInfo($wimpq_photo);		
+		$photoToEdit->showPhotoEditForm();		
 	PhotoQHelper::debug('showed photo');	
 	?>
 		
 				<div class="submit">
 					<input type="submit" class="button-primary submit-btn" name="save_batch" value="<?php _e('Save Changes', 'PhotoQ') ?>" />
-					<input type="submit" class="button-secondary submit-btn" onClick="window.location = window.location.href;" 
+					<input type="submit" class="button-secondary submit-btn" onclick="window.location = window.location.href;" 
 					value="<?php _e('Cancel', 'PhotoQ') ?>" />
 				</div>
 			</div>
@@ -70,6 +82,25 @@ case 'edit' :
 	
 	<?php
 	PhotoQHelper::debug('form over');
+	
+	break;
+	
+case 'batchProcessing' :
+	check_ajax_referer( "photoq-batchProcess" );
+	PhotoQHelper::debug('starting batch with id: '. $_POST['id']);
+	$photoqBatchResult = $photoq->executeBatch($_POST['id']);
+	
+	PhotoQHelper::debug('executed');
+	
+	$photoqErrMsg = PhotoQErrorHandler::showAllErrorsExcept($photoqErrStack, array(PHOTOQ_QUEUED_PHOTO_NOT_FOUND), false);
+	
+	echo '{
+     "percentage": "'.$photoqBatchResult->getPercentage() * 100 .'",
+     "message": "'.$photoqBatchResult->getMessage().'",
+     "errorMessage": "'.addslashes($photoqErrMsg).'"
+ 	}';
+	
+	break;
 	
 endswitch;
 

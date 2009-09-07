@@ -15,16 +15,6 @@ class AuthorDropDownList extends DropDownList
 {
 
 	/**
-	 * PHP4 type constructor
-	 */
-	function AuthorDropDownList($name, $defaultValue = '', $label = '', 
-					$textBefore = '', $textAfter = '')
-	{
-		$this->__construct($name, $defaultValue, $label, $textBefore, $textAfter);
-	}
-	
-	
-	/**
 	 * PHP5 type constructor
 	 */
 	function __construct($name, $defaultValue = '', $label = '', 

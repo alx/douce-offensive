@@ -12,7 +12,7 @@
  * @author  M.Flury
  * @package PhotoQ
  */
-class PhotoQ
+class PhotoQ extends PhotoQObject
 {
 
 	/**
@@ -21,19 +21,17 @@ class PhotoQ
 	 * @var string
 	 * @access private
 	 */
-	var $_version = '1.6.1';
+	var $_version = '1.8';
 	
 	/**
-	 * ObjectController managing all the plugins options
-	 * @var Object
-	 * @access private
+	 * Reference to OptionControllor singleton
+	 * @var object PhotoQOptionController
 	 */
 	var $_oc;
 
 	/**
-	 * Database object managing access to database
-	 * @var Object
-	 * @access private
+	 * Reference to PhotoQDB singleton
+	 * @var object PhotoQDB
 	 */
 	var $_db;
 	
@@ -44,7 +42,14 @@ class PhotoQ
 	 * @access private
 	 */
 	var $_queue;
-
+	
+	/**
+	 * Reference to ErrorStack singleton
+	 * @var object PEAR_ErrorStack
+	 */
+	var $_errStack;
+	
+	
 	/**
 	 * Name of main photoq database table, holds posts in queue
 	 * @var string
@@ -72,16 +77,15 @@ class PhotoQ
 	 * @access public
 	 */
 	var $QUEUEMETA_TABLE;
-
-
+	
 	/**
-	 * PHP4 type constructor
+	 * Name of wordpress posts database table
+	 * @var string
+	 * @access public
 	 */
-	function PhotoQ()
-	{
-		$this->__construct();
-	}
-
+	var $POSTS_TABLE;
+	
+	
 
 	/**
 	 * PHP5 type constructor
@@ -91,104 +95,92 @@ class PhotoQ
 
 		global $wpdb;
 		
-		//load the helpers first so that we can start logging debug messages
-		require_once(PHOTOQ_PATH.'classes/PhotoQHelpers.php');
+		
+		//get the PhotoQ error stack for easy access
+		$this->_errStack = &PEAR_ErrorStack::singleton('PhotoQ');
 		
 		PhotoQHelper::debug('-----------start plugin-------------');
 		// load text domain for localization
-		load_plugin_textdomain('PhotoQ');
+		load_plugin_textdomain('PhotoQ', '', 'photoq-photoblog-plugin/lang');
 
 		// set names of database tables used and created by photoq
 		$this->QUEUEMETA_TABLE = $wpdb->prefix."photoqmeta";
 		$this->QUEUE_TABLE = $wpdb->prefix."photoq";
 		$this->QFIELDS_TABLE = $wpdb->prefix."photoqfields";
 		$this->QCAT_TABLE = $wpdb->prefix."photoq2cat";
-		
-		// import libraries
-		require_once(PHOTOQ_PATH.'lib/ReusableOptions/OptionController.php');
-		//import other PhotoQ classes
-		require_once(PHOTOQ_PATH.'classes/PhotoQOptionController.php');
-		require_once(PHOTOQ_PATH.'classes/PhotoQDB.php');
-		require_once(PHOTOQ_PATH.'classes/PhotoQQueue.php');
-		require_once(PHOTOQ_PATH.'classes/PhotoQPhoto.php');
-		require_once(PHOTOQ_PATH.'classes/PhotoQExif.php');
-		
-		
-		require_once(PHOTOQ_PATH.'classes/PhotoQImageSize.php');
-		
-		
-		// setting up options
-		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		$this->POSTS_TABLE = $wpdb->prefix."posts";
 		
 		// setting up database
 		$this->_db =& PhotoQSingleton::getInstance('PhotoQDB');
 		
-		$this->autoUpgrade();
+		// setting up options
+		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		
+		$this->_autoUpgrade();
 		
 		//creating queue
 		$this->_queue =& PhotoQSingleton::getInstance('PhotoQQueue');
-			
+		
+		
 		// actions and filters are next
 
-		// Insert the add_admin_pages() sink into the plugin hook list for 'admin_menu'
-		add_action('admin_menu', array(&$this, 'add_admin_pages'));
+		// Insert the _actionAddAdminPages() sink into the plugin hook list for 'admin_menu'
+		add_action('admin_menu', array(&$this, '_actionAddAdminPages'));
 
 		// function executed when a post is deleted
-		add_action ( 'delete_post', array(&$this, 'cleanUp'));
+		add_action ( 'delete_post', array(&$this, '_actionCleanUp'));
 
+		// Hook into the 'wp_dashboard_setup' action to setup the photoq dashboard widget
+		add_action('wp_dashboard_setup', array(&$this, '_actionAddDashboardWidget') );
+		add_action('admin_print_styles-index.php', array(&$this, '_actionEnqueueDashboardStyles'), 1);
+		
 		// the next two hooks are used to show a thumb in the manage post section
-		add_filter('manage_posts_columns', array(&$this, 'addThumbToListOfPosts'));
-		add_action('manage_posts_custom_column', array(&$this, 'insertThumbIntoListOfPosts'), 10, 2);
+		add_filter('manage_posts_columns', array(&$this, '_filterAddThumbToListOfPosts'));
+		add_action('manage_posts_custom_column', array(&$this, '_actionInsertThumbIntoListOfPosts'), 10, 2);
 
-		//add_filter('the_content', array(&$this, 'modifyContentOnTheFly'));
-		//add_filter('the_excerpt', array(&$this, 'modifyExcerptOnTheFly'));
 		
+		// filter to show change photo form in post editing
+		add_filter('edit_form_advanced', array(&$this, '_filterShowChangePostedPhotoBox'));
+
+		// Only show description in content field when editing
+		add_filter('edit_post_content', array(&$this, '_filterPrepareEditorContent'), 100, 2);
+		// Get description back
+		add_filter('wp_insert_post_data', array(&$this, '_filterPostProcessEditedPost'), 100, 2);
 		
-		//this one is called whenever a post was edited. what we then do is to sync the content
-		//and the custom fields. ideally we would like to do this via content_save_pre instead
-		//of the edit_post action but unfortunately content_save_pre is called in db context when
-		//a post is updated and in this context it doesn't pass the post_id.
-		add_action('edit_post', array(&$this, 'syncContent'), 100, 2);
-		
-		//if inline descriptions are used, the description has to be edited in the wp editor
-		//it the users still modifies the custom field, we put it back to what it was the next
-		//time the editor is loaded (we have to do it like this because there are no hooks for
-		//field updates in wordpress yet.
-		if($this->_oc->getValue('inlineDescr'))
-			add_action('content_edit_pre', array(&$this, 'syncField'), 100, 2);
-		
-		
+				
 		register_activation_hook(PHOTOQ_PATH . 'whoismanu-photoq.php', array(&$this, 'activatePlugin'));
 		register_deactivation_hook(PHOTOQ_PATH . 'whoismanu-photoq.php', array(&$this, 'deactivatePlugin'));
 
 		
-		add_filter('favorite_actions', array(&$this, 'addFavoriteActions'));
-		/*
-		foreach( $_POST as $key => $value){
-			PhotoQHelper::debug("POST $key: $value <br />");
+		add_filter('favorite_actions', array(&$this, '_filterAddFavoriteActions'));
+		add_filter('contextual_help', array(&$this, '_filterAddContextualHelp'), 100, 2);
+		
+
+		/*foreach( $_POST as $key => $value){
+			PhotoQHelper::debug("POST $key: ".print_r($value,true)." <br />");
 			}
 
 		foreach( $_GET as $key => $value){
-			PhotoQHelper::debug("GET $key: $value <br />");
+			PhotoQHelper::debug("GET $key: ".print_r($value,true)." <br />");
 			}
+		*/
 		
 		PhotoQHelper::debug('leave __construct()');
-		*/
+		
 	}
 	
-	
-
 
 	/**
 	 * this is the sink function for the 'admin_menu' hook.
 	 * It hooks up the options and management admin panels.
 	 */
-	function add_admin_pages()
+	function _actionAddAdminPages()
 	{
+		global $post;
 		// Add a new menu under Options:
-		$options = add_options_page(__('PhotoQ Options','PhotoQ'), 'PhotoQ', 8, 'whoismanu-photoq.php', array(&$this, 'options_page'));
+		$options = add_options_page(__('PhotoQ Options','PhotoQ'), 'PhotoQ', 'manage_photoq_options', 'whoismanu-photoq.php', array(&$this, 'options_page'));
 		// Add a new menu under Posts:
-		$manage = add_submenu_page('post-new.php', __('Manage PhotoQ', 'PhotoQ'), 'PhotoQ', 8, 'whoismanu-photoq.php', array(&$this, 'manage_page'));
+		$manage = add_submenu_page('post-new.php', __('Manage PhotoQ', 'PhotoQ'), 'PhotoQ', 'access_photoq', 'whoismanu-photoq.php', array(&$this, 'manage_page'));
 		
 		//adding javascript and other stuff to header
 		
@@ -197,7 +189,159 @@ class PhotoQ
 		add_action('admin_print_scripts-' . $manage, array(&$this, 'addCSS'), 1);
 		add_action('admin_print_scripts-' . $manage, array(&$this, 'addHeaderCode'), 1);
 		
+		//load the scripts and styles of the OptionController
+		add_action("admin_print_styles-$options", array(&$this->_oc, 'enqueueStyles'), 1);
+		add_action("admin_print_scripts-$options", array(&$this->_oc, 'enqueueScripts'), 1);
+		
 	}
+	
+	/**
+	 * Registers the photoq dashboard widget
+	 * @return unknown_type
+	 */
+	function _actionAddDashboardWidget() {
+		if(current_user_can( 'access_photoq' ))
+			wp_add_dashboard_widget('dashboard_photoq', 'PhotoQ', array(&$this,'showPhotoQDashboard'));
+	}
+	
+	/**
+	 * Load the CSS style-sheets needed
+	 * @return unknown_type
+	 */
+	function _actionEnqueueDashboardStyles()
+	{
+		wp_enqueue_style('photoq-dashboard', plugins_url('photoq-photoblog-plugin/css/photoq-dashboard.css'));	
+	}
+
+	/**
+	 * Callback function that displays the dashboard widget
+	 * @return unknown_type
+	 */
+	function showPhotoQDashboard() {
+		$qLen = $this->_queue->getLength();
+		printf(__('Number of photos in the queue: %s', 'PhotoQ'), "<b>$qLen</b>");
+		if($qLen){
+			echo '<h5>' . __('Next Photos to be published', 'PhotoQ').':</h5>';
+			$noTop = min(3,$qLen);
+			echo '<div class="table"><table><tbody>';
+			for ($i = 0; $i < $noTop; $i++){
+				$currentPhoto =& $this->_queue->getQueuedPhoto($i);
+				$first = $i == 0 ? ' class="first"' : '';
+				echo '<tr'.$first.'><td><img src="'.
+				$currentPhoto->getAdminThumbURL(
+				$this->_oc->getValue('showThumbs-Width'),
+				$this->_oc->getValue('showThumbs-Height')
+				).'" alt="'.$currentPhoto->getTitle().'" />
+					</td>
+					<td>'.$currentPhoto->getTitle().'</td>
+					</tr>';
+			}
+			echo '</tbody></table></div>';
+		}
+		echo '<form method="post" action="edit.php?page=whoismanu-photoq.php">';
+		if($qLen)
+			$go2QBtn = '<input type="submit" class="button" name="show"
+				value="'. __('Edit Queue', 'PhotoQ').'" />';
+			echo $go2QBtn;
+		
+		$add2QBtn = '<input type="submit" class="button-primary action" name="add_entry"
+			value="'. __('Add Photos to Queue', 'PhotoQ').'" />';
+		echo $add2QBtn.'</form>';
+		echo '<br class="clear"/>';
+	}
+		
+	
+	
+	
+	/**
+	 * Injects a form to change the photo above the wordpress wysywig editor.
+	 * The technique used here was shamelessly copied from the yapb plugin. So
+	 * kudos to its author johannes jarolim for figuring this one out :-)
+	 * @return unknown_type
+	 */
+	function _filterShowChangePostedPhotoBox(){
+		global $post;
+		if($this->isPhotoPost($post->ID)){
+			$photo =& $this->_db->getPublishedPhoto($post->ID);
+			
+			//we are ready to show the form
+			require_once(PHOTOQ_PATH.'panels/changePostedPhotoForm.php');
+		}
+	}
+
+	
+	/**
+	 * A posted photo is being edited. Keep only its description in the editor.
+	 * @param $data
+	 * @param $postID
+	 * @return unknown_type
+	 */
+	function _filterPrepareEditorContent($data, $postID)
+	{
+		PhotoQHelper::debug('enter _filterPrepareEditorContent()');
+		if($this->isPhotoPost($postID) && $this->_oc->isManaged('content')){
+			$post = get_post($postID);
+			$photo =& new PhotoQPublishedPhoto($post->ID, $post->post_title);
+			$data = $photo->getDescription();	
+		}
+		PhotoQHelper::debug('leave _filterPrepareEditorContent()');
+		return $data;
+	}
+	
+	/**
+	 * Runs if photo post is saved in editor. Is executed before the database write.
+	 * We here sync all the fields and update images if any were changed.
+	 * @param $data
+	 * @param $postarr
+	 * @return unknown_type
+	 */
+	function _filterPostProcessEditedPost($data, $postarr)
+	{
+		PhotoQHelper::debug('enter _filterPostProcessEditedPost()');
+		
+		if($_POST['saveAfterEdit']){//only execute if we come from the editor
+			$postID = $postarr['ID'];
+			
+			// verify this came from our screen and with proper authorization,
+			// because save_post can be triggered at other times
+			if ( !wp_verify_nonce( $_POST['photoqEditPostFormNonce'], 'photoqEditPost'.$postID )) {
+				return $data;
+			}
+
+			PhotoQHelper::debug('passed check of nonce');
+
+			if ( 'page' == $_POST['post_type'] ) {
+				if ( !current_user_can( 'edit_page', $postID ))
+				return $data;
+			} else {
+				if ( !current_user_can( 'edit_post', $postID ))
+				return $data;
+			}
+
+			PhotoQHelper::debug('passed authentication');
+			
+			// OK, we're authenticated we can now start to change post data
+			if($this->isPhotoPost($postID)){
+				$post = get_post($postID);
+				$photo =& new PhotoQPublishedPhoto($post->ID, $post->post_title);
+			
+				//upload a new photo if any
+				if(array_key_exists('Filedata', $_FILES) && !empty($_FILES['Filedata']['name'])){
+					//PhotoQHelper::debug(print_r($_FILES,true));
+					//PhotoQHelper::debug('path: ' . $photo->getOriginalDir());
+	 				if($newPath = $this->_handleUpload($photo->getOriginalDir())){
+	 					$photo->replaceImage($newPath);
+	 				}
+		 		}
+		 		//sync the content to description and put photos back into content and excerpt
+				$data = $photo->syncPostUpdateData($data);
+			}
+			
+		}
+		PhotoQHelper::debug('leave _filterPostProcessEditedPost()');
+		return $data;
+	}
+		
 	
 
 	/**
@@ -206,162 +350,213 @@ class PhotoQ
 	 */
 	function options_page()
 	{
-		$oldImgDir = $this->_oc->getImgDir();
+		
+		
+
 		/*foreach( $_POST as $key => $value){
 			echo "$key: $value <br />";
 		}*/
 		$this->createDirIfNotExists($this->_oc->getCacheDir(), true);
-		
-		if (isset($_POST['info_update']) || isset($_POST['addImageSize'])) {
-			//check for correct nonce first
-			check_admin_referer('photoq-updateOptions');
-			
-			$this->_oc->update();
-			
-			
-			$statusMsg = __('Options saved.');
 
+
+		//we are inserting a field into the database
+		if (isset($_POST['showWatermarkUploadPanel'])) {
+			check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+			//show watermark upload panel
+			require_once(PHOTOQ_PATH.'panels/uploadWatermark.php');
+
+		}elseif (isset($_POST['showUpgradePanel'])) {
+			check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+			//show upgrade panel
+			require_once(PHOTOQ_PATH.'panels/upgrade.php');
+
+		}elseif (isset($_POST['showMoveImgDirPanel'])) {
+			check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+			//show upgrade panel
+			require_once(PHOTOQ_PATH.'panels/upgrade-move-imgdir.php');
+
+		}else{ //all of these show the options panel
+
+			//was there a full rebuild requested by the user?
+			$rebuildAll = isset($_POST['rebuildAll']);
+			
+			// are we importing settings from XML?
+			if(isset($_POST['importXML'])){
+				check_admin_referer('photoqImportXML-nonce','photoqImportXML-nonce');
+				$xmlFilename = esc_attr($_POST['presetFile']);
+				//if the xml is successfully imported, rebuild everything
+				if($this->_oc->importFromXML($xmlFilename)){
+					$rebuildAll = true;
+				}else
+					$this->_errStack->push(PHOTOQ_XML_IMPORT_FAILED, 'error', array('filename' => $xmlFilename));
+			}
+			
+			$oldImgDir = $this->_oc->getImgDir();
+
+			//creating batch processor
+			$bp =& new PhotoQBatchProcessor($this);
+
+			//boolean indicating whether a watermark is being uploaded
+			$watermarkUpoaded = isset($_POST['uploadWatermark']);
+
+			if ( $this->_oc->wasFormSubmitted() || isset($_POST['addImageSize']) ) {
+				
+				//var_dump($this->_oc->_options['views']->_children[0]->_children[0]->_children[3]->_children[0]);
+				//var_dump($this->_oc);
+				$this->_oc->update();		
+				
+				//var_dump($this->_oc->_options['views']->_children[0]->_children[0]->_children[3]->_children[0]->_value);
+				
+				
+				//var_dump($this->_oc);	
+				$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), __('Options saved.', 'PhotoQ'));
+			}
+			elseif($watermarkUpoaded){
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				$this->uploadWatermark();
+			}
+				
 			//check whether imgdir changed. if so we have to move all the existing stuff and rebuild the content
 			/* //rolled back, coming only in next release
 			if($this->_oc->hasChanged('imgDirOption')){
-				//$oldImgDir = $this->_oc->getOldValues('imgDirOption');
-				//$oldImgDir = $oldImgDir['imgdir']['imgdir'];
+			//$oldImgDir = $this->_oc->getOldValues('imgDirOption');
+			//$oldImgDir = $oldImgDir['imgdir']['imgdir'];
 				
-				$this->moveOldImgDir($oldImgDir);
+			$this->moveOldImgDir($oldImgDir);
 			}*/
 			
-			//check whether views or image sizes changed. If so rebuild the thumbs and update the posts accordingly.
+			//check whether image sizes changed. If so rebuild the thumbs and update the posts accordingly.
 			$changedSizes = $this->_oc->getChangedImageSizeNames();
-			//if the watermark changed we refresh all images
-			if($this->_oc->hasChanged('watermarkOptions'))
+		
+			//if the watermark changed we refresh all images that have watermarks plus all
+			//images that were changed by sth else. 
+			if($this->_oc->hasChanged('watermarkOptions') || $watermarkUpoaded)
+				$changedSizes = array_unique(array_merge($changedSizes, $this->_oc->getImageSizeNamesWithWatermark()));
+				
+			//if full rebuild was selected we rebuild everything
+			if($rebuildAll)
 				$changedSizes = $this->_oc->getImageSizeNames();
-			if(!empty($changedSizes) || $this->_oc->hasChanged(array('contentView','excerptView','exifOptions','originalFolder'))){
 				
-				$this->rebuildPublished($changedSizes, $this->_oc->hasChanged('exifOptions'),
-				!empty($changedSizes) || $this->_oc->hasChanged(array('contentView','excerptView')) ||
-				( $this->_oc->hasChanged('exifOptions') && $this->_oc->getValue('inlineExif')),
-				$this->_oc->hasChanged('originalFolder'));
+
+			
+			if(!empty($changedSizes) || $this->_oc->hasChanged(array('views','exifTags','exifDisplay','originalFolder'))){
 				
-				if(!empty($changedSizes))
-					$statusMsg .= '<br />' . __(' Updated following image sizes: ') . implode(", ", $changedSizes);
+				//we need to rebuild photos/posts. this is time consuming -> prepare for batch processing
+			
+				//first determine what needs to be rebuilt
+				$updateExif = $rebuildAll ? true : $this->_oc->hasChanged('exifTags') || $this->_oc->hasChanged('exifDisplay');
+				$addDelTagFromExifArray = $this->_oc->getAddedDeletedTagsFromExif();
 				
-				$statusMsg .= '<br />' . __(' Updated all published Photos. ');
+				$updateOriginalFolder = $rebuildAll ? true : $this->_oc->hasChanged('originalFolder');
+				
+				
+				$changedViews = $this->_oc->getChangedViewNames($changedSizes, $updateExif, $updateOriginalFolder);
+				//if full rebuild was selected we rebuild everything
+				if($rebuildAll)
+					$changedViews = $this->_oc->getViewNames();
+			
+				//$updateContent = $rebuildAll ? true : !empty($changedSizes) || $this->_oc->hasChanged(array('contentView','excerptView')) ||
+				//				( $this->_oc->hasChanged('exifTags') && $this->_oc->getValue('inlineExif') );		
+				
+				PhotoQHelper::debug('update exif: ' .$updateExif.' update original folder: '. $updateOriginalFolder);
+				PhotoQHelper::debug('changed exif: ' .$this->_oc->hasChanged('exifTags').' changed content:' . $this->_oc->hasChanged('contentView') .' changed excerpt: '. $this->_oc->hasChanged('excerptView'));
+				
+				//these two operations should not take too long so do them outside the batch
+				if($publishedPhotoIDs = $this->_db->getAllPublishedPhotoIDs()){
+					$oldNewFolderName = $this->_rebuildFileSystem($updateOriginalFolder, $changedSizes);
+
+					//create the array of operations this batch consists of and register it  with the batch processor
+					$batchOperations = array(
+					array(
+						'batchRebuildPublished',
+					array(	$publishedPhotoIDs,
+					$changedSizes, $updateExif,
+					$changedViews, $updateOriginalFolder,
+					$oldNewFolderName[0], $oldNewFolderName[1],
+					$addDelTagFromExifArray[0],$addDelTagFromExifArray[1]
+					),
+					array()
+					)
+					);
+					
+					PhotoQHelper::debug('registering batch sets');
+					if( $bp->registerSet(new PhotoQBatchSet($batchOperations)) ){
+						if(!empty($changedSizes))
+							$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), __('Updating following image sizes:', 'PhotoQ') . ' ' . implode(", ", $changedSizes));
+						if(!empty($changedViews))
+							$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), __('Updating following views:', 'PhotoQ') . ' ' . implode(", ", $changedViews));
+							
+						$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), __('Updating all published Photos...', 'PhotoQ') );
+					}
+				}
 			}
-		
-			$saveStatus = new PhotoQStatusMessage($statusMsg);
-			$saveStatus->show();
+					
 
-		}
-		
-		//we are inserting a field into the database
-		if (isset($_POST['showWatermarkUploadPanel'])) {
-			check_admin_referer('photoq-updateOptions');
-			//show watermark upload panel
-			require_once(PHOTOQ_PATH.'panels/uploadWatermark.php');
-		
-		}elseif (isset($_POST['showUpgradePanel'])) {
-			check_admin_referer('photoq-updateOptions');
-			//show upgrade panel
-			require_once(PHOTOQ_PATH.'panels/upgrade.php');
-		
-		}elseif (isset($_POST['showMoveImgDirPanel'])) {
-			check_admin_referer('photoq-updateOptions');
-			//show upgrade panel
-			require_once(PHOTOQ_PATH.'panels/upgrade-move-imgdir.php');
-		
-		}else{
+			if(isset($_POST['upgradePhotoQ'])){
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				$this->upgradeFrom12();
+			}
 
-		if(isset($_POST['upgradePhotoQ'])){
-			check_admin_referer('photoq-updateOptions');
-			$status = $this->upgradeFrom12();
-		}
-		
-		elseif(isset($_POST['moveOldImgDir'])){
-			check_admin_referer('photoq-updateOptions');
-			$status = $this->moveOldImgDir();
-		}
-		
-		elseif(isset($_POST['removeOldYMFolders'])){
-			check_admin_referer('photoq-updateOptions');
-			foreach($this->getOldYMFolders() as $path)
+			/*elseif(isset($_POST['moveOldImgDir'])){
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				$status = $this->moveOldImgDir();
+			}*/
+
+			elseif(isset($_POST['removeOldYMFolders'])){
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				foreach($this->getOldYMFolders() as $path)
 				PhotoQHelper::recursiveRemoveDir($path);
-			
-			$status = new PhotoQStatusMessage(__('Cleaned old folder structure.'));
-		}
-			
-		elseif(isset($_POST['uploadWatermark'])){
-			check_admin_referer('photoq-updateOptions');
-			$status = $this->uploadWatermark();
-		}
-
-		//we are inserting a field into the database
-		elseif (isset($_POST['addField'])) {
-			check_admin_referer('photoq-updateOptions');
-			$this->_db->insertField(attribute_escape($_POST['newFieldName']));
-		
-		} 
-		
-		//we are renaming a field
-		elseif(isset($_POST['rename_field'])){
-			//check for correct nonce first
-			check_admin_referer('photoq-updateOptions');
-
-			$this->_db->renameField(attribute_escape($_POST['field_id']), attribute_escape($_POST['field_name']));
-		}
-
-
-		//we are deleting a field from the database
-		elseif (isset($_GET['action']) && $_GET['action'] == 'delete') {
-			//check for correct nonce first
-			check_admin_referer('photoq-deleteField'.attribute_escape($_GET['entry']));
-
-			$this->_db->removeField( attribute_escape($_GET['entry']) );
-		}
-			
-		elseif (isset($_POST['addImageSize'])) {
-			//check for correct nonce first
-			check_admin_referer('photoq-updateOptions');
-			
-			//name has to be save to create directories and not empty.
-			$name = preg_replace('/[^a-zA-Z0-9_\-]/','_',$_POST['newImageSizeName']);
-			if(!empty($name))
-				$status = $this->_oc->addImageSize($name);
-			else
-				$status = new PhotoQErrorMessage(__('Please choose a valid name for your image size.'));
-				
-		}
-			
-		elseif (isset($_GET['action']) && $_GET['action'] == 'deleteImgSize') {
-			//check for correct nonce first
-			check_admin_referer('photoq-deleteImgSize'.attribute_escape($_GET['entry']));
-			$status = $this->_oc->removeImageSize($_GET['entry']);
-		}
-
-		//show status of above operations up to here
-		if(isset($status)) $status->show();
-
-		
-		//do the input validation and show errors if any
-		$validationErrors = $this->_oc->validate();
-
-		if(count($validationErrors)){
-			$errMsg = '<ul>';
-			foreach($validationErrors as $valError){
-				$errMsg .= "<li>$valError</li>";
+				$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), 
+											__('Cleaned old folder structure.'));
 			}
-			$errMsg .= '</ul>';
+
+			//we are inserting a field into the database
+			elseif (isset($_POST['addField'])) {
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				$this->_db->insertField(esc_attr($_POST['newFieldName']), $this->_oc->getValue('fieldAddPosted'));
+			}
+
+			//we are renaming a field
+			elseif(isset($_POST['rename_field'])){
+				//check for correct nonce first
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				$this->_db->renameField(esc_attr($_POST['field_id']), esc_attr($_POST['field_name']));
+			}
+
+			//we are deleting a field from the database
+			elseif (isset($_GET['action']) && $_GET['action'] == 'delete') {
+				//check for correct nonce first
+				check_admin_referer('photoq-deleteField'.esc_attr($_GET['entry']));
+				$this->_db->removeField( esc_attr($_GET['entry']) );
+			}
+				
+			//show status of above operations up to here
+			if(isset($status)) $status->show();
+
+			//do input validation on options
+			$this->_oc->validateOptions();
+
+			//make sure we have freshest data possible.
+			$this->_oc->initRuntime();
 			
-			$status =& new PhotoQErrorMessage(__($errMsg));
-
-			$status->show();
-
-		}
-		
-		//make sure we have freshest data possible.
-		$this->_oc->initRuntime();
-		
-		//show options panel//
-		require_once(PHOTOQ_PATH.'panels/options.php');
+			//check whether there are batches to be processed
+			if($bp->haveBatch()){
+				//there are -> show progress bar and
+				//communicate the id of the current batch to the javascript
+				?>
+				
+				<script type="text/javascript">
+					var batchId =  <?php echo $bp->getId(); ?>;
+					var ajaxNonce = "<?php echo wp_create_nonce( 'photoq-batchProcess' ); ?>";
+					var ajaxUrl = "<?php echo plugins_url('photoq-photoblog-plugin/whoismanu-photoq-ajax.php'); ?>";
+				</script>
+				<?php
+			}
+				
+			PhotoQErrorHandler::showAllErrors($this->_errStack);
+			
+			//show options panel
+			require_once(PHOTOQ_PATH.'panels/options.php');
 		}
 
 	}
@@ -389,7 +584,9 @@ class PhotoQ
 			PhotoQHelper::debug('manage_page: load edit-batch panel');
 			if(isset($_POST['ftpFiles'])){
 				foreach ($_POST['ftpFiles'] as $ftpFile)
-					$status = $this->uploadPhoto(basename($ftpFile), '', '', '', $ftpFile);
+					$this->uploadPhoto(basename($ftpFile), '', $this->_oc->getValue('qPostDefaultTags'), '', $ftpFile);
+				//refresh the queue
+				$this->_queue->load();
 			}
 			require_once(PHOTOQ_PATH.'panels/edit-batch.php');
 			PhotoQHelper::debug('manage_page: edit-batch panel loaded');
@@ -399,9 +596,12 @@ class PhotoQ
 			if($_POST['batch_upload']){ //check for correct nonce first
 				check_admin_referer('photoq-uploadBatch');
 			}
-			$status = $this->uploadPhoto($_FILES['Filedata']['name'], '', '', '');
+			$this->uploadPhoto($_FILES['Filedata']['name'], '', $this->_oc->getValue('qPostDefaultTags'), '');
 			if(!$_POST['batch_upload']){
-				$status->show();
+				//show errors if any
+				PhotoQErrorHandler::showAllErrors($this->_errStack);
+				//refresh the queue as a photo was added
+				$this->_queue->load();
 				require_once(PHOTOQ_PATH.'panels/edit-batch.php');
 			}
 		}else{
@@ -410,71 +610,85 @@ class PhotoQ
 				PhotoQHelper::debug('manage_page: start saving batch');
 	
 				//check for correct nonce first
-				check_admin_referer('photoq-saveBatch');
+				check_admin_referer('photoq-saveBatch','saveBatchNonce');
 	
 				//uploaded file info is stored in arrays
-				$no_upl = count(attribute_escape($_POST['img_title']));
+				$no_upl = count(PhotoQHelper::arrayAttributeEscape($_POST['img_title']));
+				
 				
 				$qLength = $this->_queue->getLength();
 	
 				for ($i = 0; $i<$no_upl; $i++) {
-					$this->update_queue(attribute_escape($_POST['img_id'][$i]), attribute_escape($_POST['img_title'][$i]), $_POST['img_descr'][$i], attribute_escape($_POST['tags_input'][$i]), attribute_escape($_POST['img_slug'][$i]), attribute_escape($_POST['img_position'][$i]), attribute_escape($_POST['img_position'][$i]), attribute_escape($_POST['img_parent'][$i]), $qLength, $i);
+					$this->update_queue(esc_attr($_POST['img_id'][$i]), esc_attr($_POST['img_title'][$i]), $_POST['img_descr'][$i], esc_attr($_POST['tags_input'][$i]), esc_attr($_POST['img_slug'][$i]), esc_attr($_POST['img_author'][$i]), esc_attr($_POST['img_position'][$i]), esc_attr($_POST['img_position'][$i]), esc_attr($_POST['img_parent'][$i]), $qLength, $i);
 				}
 	
 				PhotoQHelper::debug('manage_page: batch saved');
 					
 			}
 				
-			if (isset($_POST['submit_entry'])) {
-				$status = $this->uploadPhoto(attribute_escape($_POST['img_title']), $_POST['img_descr'], attribute_escape($_POST['tags_input']), attribute_escape($_POST['img_slug']));
-			}
-				
 			if (isset($_POST['update_queue'])) {
 				//check for correct nonce first
 				check_admin_referer('photoq-updateQueue');
-				$this->update_queue(attribute_escape($_POST['img_id']), attribute_escape($_POST['img_title']), $_POST['img_descr'], attribute_escape($_POST['tags_input']), attribute_escape($_POST['img_slug']), attribute_escape($_POST['img_position']), attribute_escape($_POST['img_old_position']),attribute_escape($_POST['img_parent'][0]), attribute_escape($_POST['q_length']));
+				$this->update_queue(esc_attr($_POST['img_id']), esc_attr($_POST['img_title']), $_POST['img_descr'], esc_attr($_POST['tags_input']), esc_attr($_POST['img_slug']), esc_attr($_POST['img_author']), esc_attr($_POST['img_position']), esc_attr($_POST['img_old_position']),esc_attr($_POST['img_parent'][0]), esc_attr($_POST['q_length']));
 			}
 				
 			if (isset($_GET['action']) && $_GET['action'] == 'delete') {
 				//check for correct nonce first
-				check_admin_referer('photoq-deleteQueueEntry' . attribute_escape($_GET['entry']));
-				$status = $this->_queue->deletePhotoById(attribute_escape($_GET['entry']));
+				check_admin_referer('photoq-deleteQueueEntry' . esc_attr($_GET['entry']));
+				$status = $this->_queue->deletePhotoById(esc_attr($_GET['entry']));
 			}
 			
 			if (isset($_GET['action']) && $_GET['action'] == 'rebuild') {
 				//check for correct nonce first
-				$postID = attribute_escape($_GET['id']);
+				$postID = esc_attr($_GET['id']);
 				check_admin_referer('photoq-rebuildPost' . $postID);
-				$this->rebuildSinglePhoto($this->_db->getPublishedPhoto($postID),$this->_oc->getImageSizeNames());
+				$photo = &$this->_db->getPublishedPhoto($postID);
+				if($photo)
+					$photo->rebuild($this->_oc->getImageSizeNames());
 				$status =& new PhotoQStatusMessage(__("Photo post with id $postID rebuilt."));
 			}
-				
+
+			//the donation dialog appeared and the user either clicked on the "No, Thanks" or "Already Donated" link
+			if (isset($_GET['action']) && ($_GET['action'] == 'nothanks') || ($_GET['action'] == 'alreadydid')){
+				update_option('wimpq_posted_since_reminded', 0);
+				$reminderThreshold = get_option('wimpq_reminder_threshold');
+				$then = get_option('wimpq_last_reminder_reset');
+				if($_GET['action'] == 'alreadydid' && time() - $then > 86400)
+					$reminderThreshold *= 2; //don't bother guys who donated too often, exponential increase
+				update_option('wimpq_reminder_threshold', $reminderThreshold);
+				update_option('wimpq_last_reminder_reset', time());
+			}
+			
+			//the first photo of the queue is being published
 			if (isset($_POST['post_first'])) {
 				//check for correct nonce first
-				check_admin_referer('photoq-manageQueue');
+				check_admin_referer('photoq-manageQueue', 'manageQueueNonce');
 				$status = $this->_queue->publishTop();
 			}
 			
 			if (isset($_POST['post_multi'])) {
 				//check for correct nonce first
-				check_admin_referer('photoq-manageQueue');
+				check_admin_referer('photoq-manageQueue', 'manageQueueNonce');
 				$status = $this->_queue->publishMulti($this->_oc->getValue('postMulti'));
 			}
 				
 			if (isset($_POST['clear_queue'])) {
 				//check for correct nonce first
-				check_admin_referer('photoq-manageQueue');
+				check_admin_referer('photoq-manageQueue', 'manageQueueNonce');
 				$this->_queue->deleteAll();
 			}
 				
-			/*get the queue*/
+			//refresh the queue as it might have changed because of above operations
 			$this->_queue->load();
-			$queue = $this->_queue->getQueue();
-			$qLength = $this->_queue->getLength();
-				
-				
+			
+			//show donation reminder
+			$this->_showReminder();
+			
 			//show status message if any
 			if(isset($status)) $status->show();
+			
+			//show errors if any
+			PhotoQErrorHandler::showAllErrors($this->_errStack);
 				
 			/*show the manage panel*/
 			require_once(PHOTOQ_PATH.'panels/manage.php');
@@ -490,55 +704,39 @@ class PhotoQ
 	/******************** options page ********************/
 	/******************************************************/
 	
-	/***** functions to handle meta field stuff on options page *****/
-	
-	/*display the list of currently used metafields*/
-	function list_metafields($page, $q_entry = 0)
+	/*
+	 * display the list of currently used metafields
+	 */
+	function showMetaFields()
 	{
-	
-		$results = $this->_db->getAllFields();
-	
-		if($results){
+		if($results = $this->_db->getAllFields()){
 			$i = 0; //used to alternate styles
 			foreach ($results as $field_entry) {
-				if($page == 'manage'){ //we are on the manage page
-					echo '<div class="info_unit">'.$field_entry->q_field_name.':<br /><textarea style="font-size:small;" name="'.$field_entry->q_field_name.'" cols="30" rows="3"  class="uploadform"></textarea></div>';
-				}elseif($page == 'edit_queue'){ //we are editing the queue
-					//get posted values if any from common info
-					$field_value = $_POST[$field_entry->q_field_name][0];
-					if(empty($field_value)){
-						//get the stored values
-						$field_value = $this->_db->getFieldValue($q_entry, $field_entry->q_field_id);
-					}
-					echo '<div class="info_unit">'.$field_entry->q_field_name.':<br /><textarea style="font-size:small;" name="'.$field_entry->q_field_name.'[]" cols="30" rows="3"  class="uploadform">'.$field_value.'</textarea></div>';
-				}else{ //we are on the options page
-					echo '<tr valign="top"';
-					if(($i+1)%2) {echo ' class="alternate"';}
-					echo '>';
-					if ($_GET['action'] == 'rename' && $_GET['entry'] == $field_entry->q_field_id ) {
-						echo '<td><p><input type="text" name="field_name" size="15" value="'.$field_entry->q_field_name.'"/></p></td>';
-						echo '<td><input type="hidden" name="field_id" size="15" value="'.$field_entry->q_field_id.'"/>&nbsp;</td><td><p><input type="submit" class="button-secondary" name="rename_field" value="Rename field &raquo;" /></p></td>';
-					}else{
-						echo '<td>'.$field_entry->q_field_name.'</td>';
-						echo '<td><a href="options-general.php?page=whoismanu-photoq.php&amp;action=rename&amp;entry='.$field_entry->q_field_id.'" class="edit">Rename</a></td>';
-	
-						$delete_link = 'options-general.php?page=whoismanu-photoq.php&amp;action=delete&amp;entry='.$field_entry->q_field_id;
-						$delete_link = ( function_exists('wp_nonce_url') ) ? wp_nonce_url($delete_link, 'photoq-deleteField' . $field_entry->q_field_id) : $delete_link;
-						echo '<td><a href="'.$delete_link.'" class="delete" onclick="return confirm(\'Are you sure?\');">Delete</a></td>';
-					}
-					echo '</tr>';
+
+				echo '<tr valign="top"';
+				if(($i+1)%2) {echo ' class="alternate"';}
+				echo '>';
+				if ($_GET['action'] == 'rename' && $_GET['entry'] == $field_entry->q_field_id ) {
+					echo '<td><p><input type="text" name="field_name" size="15" value="'.$field_entry->q_field_name.'"/></p></td>';
+					echo '<td><input type="hidden" name="field_id" size="15" value="'.$field_entry->q_field_id.'"/>&nbsp;</td><td><p><input type="submit" class="button-secondary" name="rename_field" value="Rename field &raquo;" /></p></td>';
+				}else{
+					echo '<td>'.$field_entry->q_field_name.'</td>';
+					echo '<td><a href="options-general.php?page=whoismanu-photoq.php&amp;action=rename&amp;entry='.$field_entry->q_field_id.'" class="edit">Rename</a></td>';
+
+					$delete_link = 'options-general.php?page=whoismanu-photoq.php&amp;action=delete&amp;entry='.$field_entry->q_field_id;
+					$delete_link = ( function_exists('wp_nonce_url') ) ? wp_nonce_url($delete_link, 'photoq-deleteField' . $field_entry->q_field_id) : $delete_link;
+					echo '<td><a href="'.$delete_link.'" class="delete" onclick="return confirm(\'Are you sure?\');">Delete</a></td>';
 				}
+				echo '</tr>';
+
 				$i++;
 			}
-				
+
 		}else{
-			echo '<tr valign="top"><td colspan="3">No fields so far. You can add some if you like.</td></tr>';
+			echo '<tr valign="top"><td colspan="3">'. __('No fields so far. You can add some if you like.','PhotoQ').'</td></tr>';
 		}
-	
-	
 	}
-
-
+	
 	
 	/******************************************************/
 	/******************** manage page *********************/
@@ -550,56 +748,65 @@ class PhotoQ
 	//uploads a photo, creates thumbnail and puts it to the end of the queue
 	function uploadPhoto($title, $descr, $tags, $slug, $oldPath = '')
 	{
-		global $wpdb;
+		global $wpdb, $user_ID;
 	
-		PhotoQHelper::debug('enter uploadPhoto()');
+		PhotoQHelper::debug('enter uploadPhoto() ' . $title);
 	
+		//get the current user
+		if ( empty($post_author) )
+			$post_author = $user_ID;
+			
+		//we still didn't get an author -> set it to default
+		if ( empty($post_author) )
+			$post_author = $this->_oc->getValue('qPostAuthor');
+		
+		
 		//put uploaded file into qdir
-		$file = $this->handleUpload($this->_oc->getQDir(), $oldPath);
+		$file = $this->_handleUpload($this->_oc->getQDir(), $oldPath);
+		
+		//PhotoQHelper::debug(print_r($file,true));
 		
 		//check for errors
-		if ( isset($file['error']) ) return new PhotoQErrorMessage($file['error']);
-
-		PhotoQHelper::debug('uploadPhoto: upload ok');
-
-
-		//get return values
-		$file = $file['file'];
-		$filename = basename($file);
-		
-		//make nicer titles
-		$title = $this->makeAutoTitle($title);
-		
-		
+		if ( !$file )
+			return false;
+				
 		//get exif meta data
 		$exif = serialize(PhotoQExif::readExif($file));
 
+		PhotoQHelper::debug('uploadPhoto: got EXIF');
+		
+		$filename = basename($file);
+		
+		//make nicer titles
+		$title = addslashes($this->makeAutoTitle($title));
+		
+		PhotoQHelper::debug('uploadPhoto: created auto title');
+		
 		//add photo to queue
-		$wpdb->query("INSERT INTO $this->QUEUE_TABLE (q_title, q_imgname, q_position, q_slug, q_descr, q_tags, q_exif) VALUES ('$title', '$filename', '".($this->_queue->getLength()+1)."', '$slug', '$descr', '$tags', '$exif')");
+		if(!$result = $wpdb->query("INSERT INTO $this->QUEUE_TABLE (q_title, q_imgname, q_position, q_slug, q_descr, q_tags, q_exif, q_fk_author_id) VALUES ('$title', '$filename', '".($this->_queue->getLength()+1)."', '$slug', '$descr', '$tags', '$exif', '$post_author')"))
+			return false;
+		
+					
 		//get the id assigned to this entry
 		$imgID = mysql_insert_id();
 	
 		
-		PhotoQHelper::debug('uploadPhoto: post added to DB');
+		PhotoQHelper::debug('uploadPhoto: post added to DB. ID: '.$imgID);
 		
 
 		// Insert categories
-		$post_categories = apply_filters('category_save_pre', attribute_escape($_POST['post_category']));
+		$post_categories = apply_filters('category_save_pre', PhotoQHelper::arrayAttributeEscape($_POST['post_category']));
 
 		// Check to make sure there is a category, if not just set it to some default
 		if (!$post_categories) $post_categories[] = $this->_oc->getValue('qPostDefaultCat');
+		
 		foreach ($post_categories as $post_category) {
 			// Double check it's not there already
 			$exists = $wpdb->get_row("SELECT * FROM $this->QCAT_TABLE WHERE q_fk_img_id = $imgID AND category_id = $post_category");
 
-			if (!$exists) {
-				$wpdb->query("
-					INSERT INTO $this->QCAT_TABLE
-					(q_fk_img_id, category_id)
-					VALUES
-					($imgID, $post_category)
-				");
-			}
+			if (!$exists)
+				$this->_db->insertCategory($imgID, $post_category);
+		
 		}
 
 		//handle the fields
@@ -619,13 +826,13 @@ class PhotoQ
 	
 		PhotoQHelper::debug('leave uploadPhoto()');
 		
-		return new PhotoQStatusMessage(__('Successfully uploaded. \'' . $filename . '\' added to queue at position ' . ($this->_queue->getLength() + 1) . '.', 'PhotoQ'));
+		return new PhotoQStatusMessage(sprintf(_c('Successfully uploaded. \'%1$s\' added to queue at position %2$d.|filename postion'), $filename, $this->_queue->getLength() + 1), 'PhotoQ');
 
 	}
 
 		
 	//updates a queue entry
-	function update_queue($id, $title, $descr, $tags, $slug, $position, $old_position, $parent, $qLength, $pnum = 0)
+	function update_queue($id, $title, $descr, $tags, $slug, $authorID, $position, $old_position, $parent, $qLength, $pnum = 0)
 	{
 		global $wpdb;
 		PhotoQHelper::debug('enter update_queue()');
@@ -642,15 +849,18 @@ class PhotoQ
 			$wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = q_position-1 WHERE q_position <= '$position' AND q_position > '$old_position'");
 		}
 	
-		$wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = '$position', q_title = '$title', q_descr = '$descr', q_tags = '$tags', q_slug = '$slug', q_edited = 1 WHERE q_img_id = $id");
+		$wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = '$position', q_title = '$title', q_descr = '$descr', q_tags = '$tags', q_slug = '$slug', q_fk_author_id = '$authorID', q_edited = 1 WHERE q_img_id = $id");
 	
 		/*update categories*/
 		//$q_id = preg_replace('/\./','_',$id); //. in post vars become _
 	
-		$post_categories = apply_filters('category_save_pre', attribute_escape($_POST['post_category'][$id]));
 		// Now it's category time!
+		// Check to make sure there is a category, if not just set it to some default
+		$post_categories = $_POST['post_category'][$id];
+		if (!$post_categories) $post_categories[] = $this->_oc->getValue('qPostDefaultCat');
+		$post_categories = apply_filters('category_save_pre', PhotoQHelper::arrayAttributeEscape($post_categories));
 		// First the old categories
-		$old_categories = $wpdb->get_col("SELECT category_id FROM $this->QCAT_TABLE WHERE q_fk_img_id = $id");
+		$old_categories = $this->_db->getCategoriesByImgId($id);
 		// Delete any?
 		foreach ($old_categories as $old_cat) {
 			if (!is_array($post_categories) || !in_array($old_cat, $post_categories)) // If a category was there before but isn't now
@@ -661,7 +871,7 @@ class PhotoQ
 		if(is_array($post_categories)){
 			foreach ($post_categories as $new_cat) {
 				if (!in_array($new_cat, $old_categories))
-				$wpdb->query("INSERT INTO $this->QCAT_TABLE (q_fk_img_id, category_id) VALUES ($id, $new_cat)");
+					$this->_db->insertCategory($id, $new_cat);
 			}
 		}
 		
@@ -687,69 +897,7 @@ class PhotoQ
 	}
 
 	
-	/** category functions **/
 	
-	function category_checklist( $post_id = 0, $descendants_and_self = 0, $selected_cats = false, $q_id ) {
-		$walker = new Walker_PhotoQ_Category_Checklist($q_id);
-		$descendants_and_self = (int) $descendants_and_self;
-	
-		$args = array();
-		
-		
-		$args['selected_cats'] = array();
-		if ( is_array( $selected_cats ) )
-			$args['selected_cats'] = $selected_cats;
-		$args['popular_cats'] = get_terms( 'category', array( 'fields' => 'ids', 'orderby' => 'count', 'order' => 'DESC', 'number' => 10, 'hierarchical' => false ) );
-		
-		$categories = get_categories('get=all');
-		
-		$args = array($categories, 0, $args);
-		$output = call_user_func_array(array(&$walker, 'walk'), $args);
-	
-		echo $output;
-	}
-	
-	
-	function dropdown_categories($q_id = 0, $default = 0) {
-		
-		global $wpdb;
-		
-		
-		$selectedCats = array();
-		//first check for common info
-		if ( isset($_POST['post_category']) )
-		{
-			$selectedCats = $_POST['post_category'][0];
-		}
-		else if ($q_id) {
-			$selectedCats = $wpdb->get_col("
-			SELECT category_id
-			FROM $this->QCAT_TABLE
-			WHERE $this->QCAT_TABLE.q_fk_img_id = $q_id
-			 ");
-	
-			if(count($selectedCats) == 0)
-			{
-			 	// No selected categories, strange
-			 	$selectedCats[] = $default;
-			}
-	
-		} else {
-			$selectedCats[] = $default;
-		}
-		
-		$q_id = preg_replace('/\./','_',$q_id); //. in post vars become _
-		
-
-		$closed = $this->_oc->getValue('foldCats') ? 'closed' : ''; 
-		echo '<div class="postbox '.$closed.'">';
-		echo '<h3 class="postbox-handle"><span>Categories</span></h3>';
-		echo '<div class="inside">';
-		$this->category_checklist(0,0,$selectedCats,$q_id);
-		echo '</div></div>';
-	}
-	
-	/** end category functions **/
 
 	//called by cronjob file
 	function cronjob()
@@ -780,7 +928,7 @@ class PhotoQ
 		//echo "Current time: $currentTime <br>";
 		//echo 'Current time: '. date('Y-m-d H:i:s', $currentTime) ."<br />";
 	
-		$lastTime = $wpdb->get_var("SELECT post_date FROM `wp_posts` WHERE post_status = 'publish' ORDER BY post_date DESC");
+		$lastTime = $wpdb->get_var("SELECT post_date FROM $this->POSTS_TABLE WHERE post_status = 'publish' ORDER BY post_date DESC");
 		if($lastTime){
 			//echo "last string: ". $lastTime ."<br />";
 			$lastTime = strtotime($lastTime);
@@ -811,13 +959,13 @@ class PhotoQ
 	
 	/*sink function executed whenever a post is deleted. Takes post id as argument.
 	 Deletes the corresponding image and thumb files from server if post is deleted.*/
-	function cleanUp($id)
+	function _actionCleanUp($id)
 	{
 		//only do this when specific option is set
 		if($this->_oc->getValue('deleteImgs')){
 			if($this->isPhotoPost($id)){
 				$post = get_post($id);
-				$photo = new PhotoQPublishedPhoto($post->ID, $post->title);
+				$photo =& new PhotoQPublishedPhoto($post->ID, $post->title);
 				$photo->delete();
 			}
 		}
@@ -833,10 +981,28 @@ class PhotoQ
 		if (function_exists('wp_enqueue_script')) {
 			if($this->_oc->getValue('enableBatchUploads')){
 				wp_enqueue_script('swfu-callback', plugins_url('photoq-photoblog-plugin/js/swfu-callback.js'),array('jquery','swfupload'),'20080217');
+				wp_localize_script( 'swfu-callback', 'swfuCallbackL10n', array(
+	  				'cancelConfirm' => __('Are you sure you want to cancel the upload?', 'PhotoQ'),
+					'allUp' => __('All files uploaded.', 'PhotoQ'),
+					'select' => __('Select Photos...', 'PhotoQ'),
+					'uploading' => __('Uploading', 'PhotoQ'),
+					'file' => __('The file', 'PhotoQ'),
+					'isZero' => __('has a size of zero.', 'PhotoQ'),
+					'invType' => __('has an invalid filetype.', 'PhotoQ'),
+					'exceed' => __('exceeds the upload file size limit of', 'PhotoQ'),
+					'ini' => __('KB in your php.ini config file.', 'PhotoQ'),
+					'tooMany' => __('You have attempted to queue too many files.', 'PhotoQ'),
+					'queueEmpty' => __('Upload Queue is empty', 'PhotoQ'),
+					'addMore' => __('Add more...', 'PhotoQ'),
+					'queued' => __('photos queued for upload', 'PhotoQ'),
+					'cancelled' => __('cancelled', 'PhotoQ')
+				));
 			}
 			
 			wp_enqueue_script('ajax-queue', plugins_url('photoq-photoblog-plugin/js/ajax-queue.js'), array('jquery-ui-sortable'),'20080302');
-			
+			wp_localize_script('ajax-queue', 'ajaxQueueL10n', array(
+				'allowReorder' => current_user_can( 'reorder_photoq' )
+			));
 		}
 	
 			
@@ -850,7 +1016,8 @@ class PhotoQ
 			?>
 	
 			<script type="text/javascript">
-	
+				//<![CDATA[
+			
 				var swfu; 
 				var uplsize = 0;
 				
@@ -875,7 +1042,7 @@ class PhotoQ
 						upload_error_handler : uploadError,
 						upload_success_handler : uploadSuccess,
 						upload_complete_handler : uploadComplete,
-						button_text: '<span class="button"><?php _e('Select Photos...'); ?></span>',
+						button_text: '<span class="button"><?php _e('Select Photos...', 'PhotoQ'); ?><\/span>',
 						button_text_style: '.button { color: #ffffff; text-align: center; font-size: 11px; font-weight: bold; font-family:"Lucida Grande","Lucida Sans Unicode",Tahoma,Verdana,sans-serif; }',
 						button_height: "22",
 						button_width: "134",
@@ -885,7 +1052,8 @@ class PhotoQ
 					
 				};
 	
-				
+				//]]>
+							
 			</script>
 		
 			<?php
@@ -913,9 +1081,19 @@ class PhotoQ
 		<?php
 		
 		wp_enqueue_script('mini-postbox', plugins_url('photoq-photoblog-plugin/js/mini-postbox.js'), array('jquery'),'20080808');
-			
+		wp_enqueue_script('batch-progress', plugins_url('photoq-photoblog-plugin/js/batch-progress.js'), array('jquery'),'20090316');	
+		wp_localize_script( 'batch-progress', 'batchProgressL10n', array(
+	  		'abortStr' => __('Aborting batch processing due to following error:', 'PhotoQ'),
+			'doneStr' => __('Updating done.', 'PhotoQ'),
+			'waitStr1' => _c('Please wait, updating', 'PhotoQ'),
+			'waitStr2' => _c('complete.', 'PhotoQ')
+		));
+		?>
 		
+		
+		<?php 
 	}
+	
 	
 	/**
 	 * Checks whether a post is a photo post. A post is considered a photopost if it has a custom
@@ -932,11 +1110,29 @@ class PhotoQ
 		return true;
 	}
 	
-	function addFavoriteActions($actions){
+	/**
+	 * Adds a link to the photo queue to the favorites action menu
+	 * @param $actions
+	 * @return unknown_type
+	 */
+	function _filterAddFavoriteActions($actions){
 		$newActions = array(
-		'post-new.php?page=whoismanu-photoq.php' => array(__('Show PhotoQ'), 'edit_posts')
+		'post-new.php?page=whoismanu-photoq.php' => array(__('Show PhotoQ','PhotoQ'), 'edit_posts')
 		);
 		return array_merge($actions,$newActions);
+	}
+	
+	/**
+	 * Adds a link to the contextual help menu
+	 * @param $actions
+	 * @return unknown_type
+	 */
+	function _filterAddContextualHelp($text, $screen){
+		if($screen == 'settings_page_whoismanu-photoq' || $screen = 'posts_page_whoismanu-photoq'){
+			$text .= '<br/><a href="http://www.whoismanu.com/photoq-wordpress-photoblog-plugin/" target="_blank">'.__('PhotoQ Documentation','PhotoQ').'</a><br/>';
+			$text .= '<a href="http://www.whoismanu.com/forum/" target="_blank">'.__('PhotoQ Support Forum','PhotoQ').'</a>';
+		}
+		return $text;
 	}
     
 	
@@ -949,7 +1145,7 @@ class PhotoQ
 	 * @returns string          the list of column headers including the new column.
 	 * @access public
 	 */
-	function addThumbToListOfPosts($content)
+	function _filterAddThumbToListOfPosts($content)
 	{
 		$result = array();
 		foreach( $content as $key => $value){
@@ -959,7 +1155,7 @@ class PhotoQ
 			
 			$result[$key] = $value;
 			//add actions after date column
-			if($key == "date")
+			if( $key == "date"  && current_user_can( 'access_photoq' ) )
 				$result["photoQActions"] = "PhotoQ Actions";
 	
 		}
@@ -975,17 +1171,16 @@ class PhotoQ
 	 * @param string $postID	  The id of the post for which we want to show the photo
 	 * @access public
 	 */
-	function insertThumbIntoListOfPosts($colName, $postID){
+	function _actionInsertThumbIntoListOfPosts($colName, $postID){
 		if($colName == "photoQPhoto"){
 			if($this->isPhotoPost($postID)){
-				$post = get_post($postID);
+				$photo =& $this->_db->getPublishedPhoto($postID);
 				echo '<img src="'. 
-					$this->getAdminThumbURL(
-						get_post_meta($post->ID, 'photoQPath', true), 
+					$photo->getAdminThumbURL(
 						$this->_oc->getValue('showThumbs-Width'), 
 						$this->_oc->getValue('showThumbs-Height')
-					).'" alt="'.$post->post_title.'" />';
-				//$post->post_excerpt;
+					).'" alt="'.$photo->getTitle().'" />';
+				
 			}else
 				echo "No Photo";
 		}
@@ -997,33 +1192,8 @@ class PhotoQ
 			}
 		}
 	}
-	
-	
-	function syncContent($postID, $post)
-	{
-		PhotoQHelper::debug('enter syncContent()');
-		PhotoQHelper::debug('post id: ' . $postID);	
-		if($this->isPhotoPost($postID)){
-			PhotoQHelper::debug('post id: ' . $postID);	
-			$photo = new PhotoQPublishedPhoto($post->ID, $post->post_title);
-			$photo->syncContent($post->post_content);
-		}
-		PhotoQHelper::debug('leave syncContent()');
-	}
-	
-	
-	function syncField($data, $postID)
-	{
-		PhotoQHelper::debug('enter syncField()');
-		if($this->isPhotoPost($postID)){
-			$post = get_post($postID);
-			$photo = new PhotoQPublishedPhoto($post->ID, $post->post_title);
-			$data = $photo->syncField($data);	
-		}
-		PhotoQHelper::debug('leave syncField()');
-		return $data;
-	}
-	
+		
+		
 	/**
 	 * Generates automatic title form filename. Removes suffix,
 	 * replaces underscores by spaces and capitalizes only first
@@ -1042,7 +1212,40 @@ class PhotoQ
 		$title = str_replace($replaceWithWhiteSpace, ' ', $title);
 		//proper capitalization
 		$title = ucwords(strtolower($title));
-		return $title;
+		
+		PhotoQHelper::debug('makeAutoTitle: standard stuff and custom filter done ' . $title);
+		
+		//uncapitalize user defined words
+		$noCaps = explode(',', str_replace(' ', '', $this->_oc->getValue('autoTitleNoCaps')));
+		foreach($noCaps as $toLower){
+			$title = PhotoQHelper::strIReplace(' '.$toLower.' ', strtolower(' '.$toLower.' '), $title);
+		}
+		
+		PhotoQHelper::debug('makeAutoTitle: uncapped user defined ' . $title);
+		
+		//uncapitalize short words
+		$words = explode(' ', $title);
+		$titleLen = count($words);
+		for($i = 0; $i < $titleLen; $i++){
+			if(strlen($words[$i]) <= $this->_oc->getValue('autoTitleNoCapsShortWords'))
+				$words[$i] = strtolower($words[$i]);
+			if($i == $titleLen-1)//capitalize last word
+				$words[$i] = ucfirst($words[$i]);
+		}
+		$title = implode(' ', $words);
+		
+		PhotoQHelper::debug('makeAutoTitle: uncapped short ' . $title);
+		
+		//recapitalize user defined excepted words
+		$caps = explode(',', str_replace(' ', '', $this->_oc->getValue('autoTitleCaps')));
+		foreach($caps as $toUpper){
+			$title = PhotoQHelper::strIReplace(' '.$toUpper.' ', strtoupper(' '.$toUpper.' '), $title);
+		}
+		
+		PhotoQHelper::debug('makeAutoTitle: leaving now ' . $title);
+		
+		//recapitalize first letter of name
+		return ucfirst($title);
 	}
 	
 	/**
@@ -1068,8 +1271,9 @@ class PhotoQ
 	 * @param string $oldPath
 	 * @return array	containing info on uploaded file.
 	 */
-	function handleUpload($destDir, $oldPath = ''){
-		
+	function _handleUpload($destDir, $oldPath = ''){
+		$destDir = rtrim($destDir,'/\\');
+		PhotoQHelper::debug('destDir: '. $destDir);
 		if($oldPath === ''){
 			/*try to use the functions provided by wordpress, however there is no way to
 				specify the upload path other than changing the option, so we do this */
@@ -1100,24 +1304,40 @@ class PhotoQ
 			//upload the thing
 			$file = wp_handle_upload($_FILES['Filedata'], $overrides);
 			
+			//PhotoQHelper::debug(print_r($file, true));
+	
 			//reset upload options to saved ones
 			update_option('upload_path', $oldUploadPath);
 			update_option('uploads_use_yearmonth_folders',$oldYMFolders);
 		}else{ /* ftp upload */
-			$newPath = $destDir . basename($oldPath);
+			$newPath = $destDir . '/' . basename($oldPath);
 			//move file if we have permissions, otherwise copy file
 			//suppress warnings if original could not be deleted due to missing permissions
 			$ok = @PhotoQHelper::moveFileIfNotExists($oldPath, $newPath);
 			if(!$ok) $file['error'] = "Unable to move $oldPath to $newPath";
 			$file['file'] = $newPath;	
 		}
-		return $file;
+		
+		
+		//check for errors
+		if ( isset($file['error']) ){// return new PhotoQErrorMessage($file['error']);
+			$this->_errStack->push(PHOTOQ_FILE_UPLOAD_FAILED,'error', array('errMsg' => $file['error']));
+			return false;
+		}
+		
+	
+		//get the path to the new file
+		$path = $file['file'];
+		
+		PhotoQHelper::debug('uploadPhoto: upload ok, path: '. $path);
+		
+		
+		return $path;
 	}
 	
 	/**
 	 * Handles uploading of a new watermark image.
 	 *
-	 * @return object	status message.
 	 */
 	function uploadWatermark(){
 		//watermark images can have different suffixes, but we only want one watermark file at a time.
@@ -1126,21 +1346,24 @@ class PhotoQ
 		PhotoQHelper::recursiveRemoveDir($wmDir);
 		PhotoQHelper::createDir($wmDir);
 		//put uploaded file into watermark directory
-		$file = $this->handleUpload($wmDir);
-		$pathParts = PhotoQHelper::pathInfo($file['file']);
-		$newPath = preg_replace("#".$pathParts['filename']."#", 'watermark', $file['file']);
-		PhotoQHelper::moveFile($file['file'], $newPath);
-		
-		if(get_option( "wimpq_watermark" ))
-				update_option( "wimpq_watermark", $newPath);
+		if(!$file = $this->_handleUpload($wmDir)){
+			//$this->_errStack->push(PHOTOQ_FILE_UPLOAD_FAILED,'error', array('errMsg' => $file['error']));
+			delete_option( 'wimpq_watermark' );
+		}else{
+			$pathParts = PhotoQHelper::pathInfo($file);
+			$newPath = preg_replace("#".$pathParts['filename']."#", 'watermark', $file);
+			PhotoQHelper::moveFile($file, $newPath);
+
+			if(get_option( 'wimpq_watermark' ))
+				update_option('wimpq_watermark', $newPath);
 			else
-				add_option("wimpq_watermark", $newPath);
-		
-		$this->rebuildPublished($this->_oc->getImageSizeNames(), false, false, false);
-		$statusMsg = __(' New Watermark successfully uploaded. Photos updated.');
-		
-		$status = new PhotoQStatusMessage($statusMsg);
-		return $status;
+				add_option('wimpq_watermark', $newPath);
+
+			//this is now done via batch processing
+			//$this->rebuildPublished($this->_oc->getImageSizeNamesWithWatermark(), false, false, false);
+			$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(),
+				__('New Watermark successfully uploaded. Updating image sizes including watermark...'));
+		}
 	}
 	
 	/**
@@ -1150,7 +1373,7 @@ class PhotoQ
 	function showCurrentWatermark(){
 		$path = get_option( "wimpq_watermark" );
 		if(!$path)
-			_e(' None ', 'PhotoQ');
+			_e('None', 'PhotoQ');
 		else{
 			$size = getimagesize($path);
 			echo '<img class="watermark" width="'.$size[0].'" height="'.$size[1].'" alt="PhotoQ Watermark" src="../'. PhotoQHelper::getRelUrlFromPath($path) .'" />';
@@ -1181,9 +1404,72 @@ class PhotoQ
 		return array($this->_oc->getImgDir().$oldName, $this->_oc->getImgDir().$newName);
 	}
 	
-	function rebuildPublished($changedSizes, $updateExif, $updateContent, $updateOriginalFolder)
+	/**
+	 * This function is called when rebuilding all published photos via batch processing
+	 * that spreads the rebuilding over several http calls to prevent script timeouts. 
+	 * the state contains the number of photos that were already processed in previous calls,
+	 * this persistent info allows us to keep track of what still needs to be done.
+	 * @param $ids Array contains ids of all published photoq posts
+	 * @param $changedSizes
+	 * @param $updateExif
+	 * @param $changedViews
+	 * @param $updateOriginalFolder
+	 * @param $oldFolder
+	 * @param $newFolder
+	 * @param $state
+	 * @return unknown_type
+	 */
+	function batchRebuildPublished($ids, $changedSizes, $updateExif, $changedViews,
+		$updateOriginalFolder, $oldFolder, $newFolder, $addedTags, $deletedTags, &$state){
+
+		//PhotoQHelper::debug('enter batchRebuildPublished()');
+		
+		if(empty($state))
+			$state = array('numProcessed' => 0);
+		else
+			$state['numProcessed']++;
+
+		//get the id of the photo to be rebuilt in this function call
+		$currentId = $ids[$state['numProcessed']];
+
+		//if we are changing original dir it is normal to get some photo not found errors
+		//we therefore silence these in this case
+		if($updateOriginalFolder)
+			$this->_errStack->pushCallback(array('PhotoQErrorHandler', 'mutePHOTOQ_PHOTO_NOT_FOUND'));
+		
+		//rebuild it
+		$photo = &$this->_db->getPublishedPhoto($currentId);
+		
+		//PhotoQHelper::debug('photo: ' . $photo->getTitle());
+		//re-enable all errors
+		//if($updateOriginalFolder)
+		//	$this->_errStack->popCallback();
+		
+		if($photo)
+			$photo->rebuild($changedSizes, $updateExif, $changedViews,
+				$updateOriginalFolder, $oldFolder, $newFolder, $addedTags, $deletedTags);
+				
+		//PhotoQHelper::debug('leave batchRebuildPublished()');
+		//the percentage of job done is given by the ratio of processed and total published
+		return new PhotoQBatchStatus(($state['numProcessed']+1)/count($ids),$state);
+			
+			
+	}
+	
+	function rebuildPublished($changedSizes, $updateExif, $changedViews, $updateOriginalFolder)
 	{
 		$publishedPhotos = $this->_db->getAllPublishedPhotos();
+		
+		$oldNewFolderName = $this->_rebuildFileSystem($updateOriginalFolder, $changedSizes);
+
+		//get all photo posts, foreach size, rebuild the photo
+		foreach ( $publishedPhotos as $photo ){
+			$photo->rebuild( $changedSizes, $updateExif, $changedViews, 
+				$updateOriginalFolder, $oldNewFolderName[0], $oldNewFolderName[1]);
+		}
+	}
+	
+	function _rebuildFileSystem($updateOriginalFolder,$changedSizes){
 		
 		$oldNewFolderName = array('','');
 		if($updateOriginalFolder){
@@ -1195,43 +1481,41 @@ class PhotoQ
 		foreach ($changedSizes as $changedSize){
 			PhotoQHelper::recursiveRemoveDir($this->_oc->getImgDir() . $changedSize . '/');
 		}
-
-		//get all photo posts, foreach size, rebuild the photo
-		foreach ( $publishedPhotos as $photo ){
-			$this->rebuildSinglePhoto($photo, $changedSizes, $updateExif, $updateContent, 
-				$updateOriginalFolder, $oldNewFolderName[0], $oldNewFolderName[1]);
-		}
+		PhotoQHelper::debug('oldNewFolderName: ' . print_r($oldNewFolderName,true));
+		
+		return $oldNewFolderName;
 	}
 	
-	function rebuildSinglePhoto($photo, $changedSizes, $updateExif = true, $updateContent = true,
-		$updateOriginalFolder = false, $oldFolder = '', $newFolder = ''){
-		
-			
-		if($updateOriginalFolder)
-			$photo->updatePath($oldFolder,$newFolder);	
-			
-		foreach ($changedSizes as $changedSize){
-			$photo->rebuildByName($changedSize);
-		}
-		if(count($changedSizes) || $updateOriginalFolder)
-			$photo->updateSizesField();
-		
-		//update the formatted exif field
-		if($updateExif){
-			$photo->updateExif();
-		}
-		//also update the post content like we do for view changes
-		if( $updateContent )
-			$photo->updatePost();
-		
-	}
+	
 	
 	/**
 	 * Runs any automatic upgrading things when changing between versions.
 	 *
 	 */
-	function autoUpgrade(){
+	function _autoUpgrade(){
+		
 		if($this->_version != get_option( "wimpq_version" )){
+
+			// upgrade to 1.8. the structure of views changed, we don't want to force a rebuild on our users
+			// so we deal with it here, adjusting the old views to the new ones
+			$oldOptionArray = get_option('wimpq_options');
+			if(!isset($oldOptionArray['views'])){				
+				$views = array();
+				$views['views'] = array('content' => 0, 'excerpt' => 0);
+				//copy the old settings over
+				$views['content'] = $oldOptionArray['contentView'];
+				$views['excerpt'] = $oldOptionArray['excerptView'];
+				//store the new views setting
+				$oldOptionArray['views'] = $views;
+				//remove the old guys
+				unset($oldOptionArray['contentView']);
+				unset($oldOptionArray['excerptView']);
+
+				update_option('wimpq_options', $oldOptionArray);
+
+				//reload to make the changes active
+				$this->_oc->load();
+			}
 			
 			// upgrade to 1.5.2 requires removing content of old photoq cache directory
 			// if upgrading from 1.5 ...
@@ -1251,7 +1535,7 @@ class PhotoQ
 			if($this->_version == '1.5.2' && $this->_oc->getValue('inlineDescr')){
 				//get all photo posts, foreach size, rebuild the content
 				foreach ( $this->_db->getAllPublishedPhotos() as $photo ){
-					@$this->rebuildSinglePhoto($photo, array(), false, true, false, '', '');
+					@$photo->rebuild( array(), false, true, false, '', '');
 				}
 			}
 			
@@ -1296,7 +1580,7 @@ class PhotoQ
 		}
 		//get all photo posts, foreach size, rebuild the photo
 		foreach ( $this->_db->getAllPublishedPhotos() as $photo ){
-			$this->rebuildSinglePhoto($photo, array(), false, true, 
+			$photo->rebuild( array(), false, true, 
 				true, ($oldImgDir).$this->_oc->ORIGINAL_IDENTIFIER, $this->_oc->getImgDir().$this->_oc->ORIGINAL_IDENTIFIER);
 		}
 		
@@ -1346,7 +1630,7 @@ class PhotoQ
 	
 	function showFtpFileList(){
 		$ftpDir = $this->_oc->getFtpDir();
-		echo '<p>Import the following photos from <code>'. $ftpDir . '</code>:</p>';
+		echo '<p>' . sprintf(__('Import the following photos from: %s', 'PhotoQ'), "<code> $ftpDir </code>") . '</p>';
 		if (!is_dir($ftpDir)) {
     		$errMsg = new PhotoQErrorMessage("The directory <code>". $ftpDir . "</code> does not exist on your server.");
 			$errMsg->show();
@@ -1357,61 +1641,35 @@ class PhotoQ
 		
 			}
 	}
-
+	
 	/**
-	 * Shows the edit/enter info form for one photo.
-	 *
-	 * @param mixed $wimpq_photo	The photo to be edited.
+	 * If more than 50 photos have been posted since the last time the reminder has been shown and if more than 100 days
+	 * have elapsed since then, the reminder is shown.
+	 * @return unknown_type
 	 */
-	function showPhotoInfo($wimpq_photo)
-	{
-		$img_path = $this->_oc->getQDir() . $wimpq_photo->q_imgname;
-		$img_url = "../". PhotoQHelper::getRelUrlFromPath($img_path);
-		
-		// output photo information form
-		$path = $this->getAdminThumbURL($img_path, $this->_oc->getValue('photoQAdminThumbs-Width'), 
-						$this->_oc->getValue('photoQAdminThumbs-Height'));
-		
-	?>
-		
-		<div class="main info_group">
-			<div class="info_unit"><a class="img_link" href="<?php echo $img_url; ?>" title="Click to see full-size photo" target="_blank"><img src='<?php echo $path; ?>' alt='<?php echo $wimpq_photo->q_imgname; ?>' /></a></div>
-			<div class="info_unit"><label>Title:</label><br /><input type="text" name="img_title[]" size="30" value="<?php echo $wimpq_photo->q_title; ?>" /></div>
-			<div class="info_unit"><label>Description:</label><br /><textarea style="font-size:small;" name="img_descr[]" cols="30" rows="3"><?php echo $wimpq_photo->q_descr; ?></textarea></div>
+	function _showReminder(){
+		$postedSinceLastReminder = get_option('wimpq_posted_since_reminded');
+		$reminderThreshold = get_option('wimpq_reminder_threshold');
+		if($reminderThreshold < 50)
+			$reminderThreshold = 50;
+		$then = get_option('wimpq_last_reminder_reset');
+		$now = time();
+		if($postedSinceLastReminder > $reminderThreshold && $now - $then > 100 * 86400){
+			$ppBtn = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+						<input type="hidden" name="cmd" value="_s-xclick" />
+						<input type="hidden" name="hosted_button_id" value="467690" />
+						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_SM.gif" name="submit" alt="PayPal - The safer, easier way to pay online!" />
+						<img alt="PayPal - The safer, easier way to pay online!" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
+					</form>';
 			
-			<?php //this makes it retro-compatible
-				if(function_exists('get_tags_to_edit')): ?>
-			<div class="info_unit"><label><?php _e('Tags (separate multiple tags with commas: cats, pet food, dogs):'); ?></label><br /><input type="text" name="tags_input[]" class="tags-input" id="tags-input" size="50" value="<?php echo $wimpq_photo->q_tags; ?>" /></div>
-			<?php endif; ?>
-			
-			<div class="info_unit"><label>Slug:</label><br /><input type="text" name="img_slug[]" size="12" value="<?php echo $wimpq_photo->q_slug; ?>" /></div>
-			<input type="hidden" name="img_id[]" value="<?php echo $wimpq_photo->q_img_id; ?>" />
-			<input type="hidden" name="img_position[]" value="<?php echo $wimpq_photo->q_position; ?>" />
-		</div>
-		<?php
-			echo '<div class="info_group">';
-			$this->list_metafields('edit_queue',$wimpq_photo->q_img_id);
-			echo '</div>';
-		?>
-		<ul class="wimpq_cats info_group"><?php $this->dropdown_categories($wimpq_photo->q_img_id,$this->_oc->getValue('qPostDefaultCat')); ?></ul>
-		<div class="clr"></div>
-	<?php
-		
+			echo '<div class="updated fade">';
+			echo '<p>'.__('PhotoQ is free software. Still, countless of hours went into its development and made PhotoQ what it is today. Have you ever thought of giving something back?', 'PhotoQ').'</p>';
+			echo '<p>'.__('A donation is an easy way of showing the developer your appreciation.', 'PhotoQ').'</p>';
+			echo '<br/><div class="donate">'.__('Yes, I support PhotoQ and would like to make a donation','PhotoQ').': </div><div class="donate ppal">'.$ppBtn.'</div><div class="nothanks"><a href="edit.php?page=whoismanu-photoq.php&amp;action=nothanks">'.__('No, thanks','PhotoQ').'</a></div><div class="nothanks"><a href="edit.php?page=whoismanu-photoq.php&amp;action=alreadydid">'.__('I already donated','PhotoQ').'</a></div>';
+			echo '<br class="clr" /></div>';
+		}
 	}
-	
-	function getAdminThumbURL($imgPath, $width = 200, $height = 90)
-	{
-		$phpThumbLocation = PhotoQHelper::getRelUrlFromPath(PHOTOQ_PATH.'lib/phpThumb_1.7.8/phpThumb.php?');
-		$phpThumbParameters = 'src=../../../../../'.PhotoQHelper::getRelUrlFromPath($imgPath).'&amp;h='.$height.'&amp;w='.$width;
-		
-		$imagemagickPath = 
-			( $this->_oc->getValue('imagemagickPath') ? $this->_oc->getValue('imagemagickPath') : null );
-		if($imagemagickPath)
-			$phpThumbParameters .= '&amp;impath='.$imagemagickPath;
-		$imagesrc = $phpThumbLocation.$phpThumbParameters;
-		return get_option('siteurl').'/'.$imagesrc;
-	}
-	
+
 	/**
 	 * Hook called upon activation of plugin. 
 	 * Installs/Upgrades the database tables.
@@ -1443,54 +1701,25 @@ class PhotoQ
 	{
 		return $this->_version;
 	}
+	
+	
+	/**
+	 * Process previously stored BatchSets
+	 * @param $id integer	The id of the batch to be executed
+	 * @return PhotoQBatchResult the result of the operation
+	 */
+	function executeBatch($id){
+		PhotoQHelper::debug('enter executeBatch()');
+		$timer =& PhotoQSingleton::getInstance('PhotoQTimers');
+		$timer->start('batchProcessing');
+		$bp =& new PhotoQBatchProcessor($this, $id);
+		PhotoQHelper::debug('calling process()');
+		return $bp->process();
+	}
 
 
 }//End Class PhotoQ
 
-/**
- * My own category walker visitor object that will output categories in array syntax such that we can 
- * have multiple category dropdown lists on the same page.
- */
-class Walker_PhotoQ_Category_Checklist extends Walker {
-	var $tree_type = 'category';
-	var $db_fields = array ('parent' => 'parent', 'id' => 'term_id'); //TODO: decouple this
-	var $q_id;
-	/**
-	 * PHP4 type constructor
-	 */
-	function Walker_PhotoQ_Category_Checklist($q_id)
-	{
-		$this->__construct($q_id);
-	}
 
-	/**
-	 * PHP5 type constructor
-	 */
-	function __construct($q_id)
-	{
-		$this->q_id = $q_id;
-	}
-
-	function start_lvl(&$output, $depth, $args) {
-		$indent = str_repeat("\t", $depth);
-		$output .= "$indent<ul class='wimpq_subcats'>\n";
-	}
-
-	function end_lvl(&$output, $depth, $args) {
-		$indent = str_repeat("\t", $depth);
-		$output .= "$indent</ul>\n";
-	}
-
-	function start_el(&$output, $category, $depth, $args) {
-		extract($args);
-
-		$class = in_array( $category->term_id, $popular_cats ) ? ' class="popular-category"' : '';
-		$output .= "\n<li id='category-$category->term_id-".$this->q_id."'$class>" . '<label for="in-category-' . $category->term_id . '-'.$this->q_id.'" class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="post_category['.$this->q_id.'][]" id="in-category-' . $category->term_id . '-'.$this->q_id.'"' . (in_array( $category->term_id, $selected_cats ) ? ' checked="checked"' : "" ) . '/> ' . wp_specialchars( apply_filters('the_category', $category->name )) . '</label>';
-	}
-
-	function end_el(&$output, $category, $depth, $args) {
-		$output .= "</li>\n";
-	}
-}
 
 ?>

@@ -15,18 +15,6 @@ class CheckBoxOption extends CompositeOption
 {
 	
 	/**
-	 * Concrete implementation of the accept() method. Calls visitCheckBox() on 
-	 * the supplied visitor object.
-	 *
-	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
-	 */
-	function accept(&$visitor)
-	{
-		$visitor->visitCheckBox($this);
-		parent::accept($visitor);
-	}
-	
-	/**
 	 * Check whether we find a value for this option in the array pulled from 
 	 * the database. If so adopt this value. Pass the array on to all the children
 	 * such that they can do the same.

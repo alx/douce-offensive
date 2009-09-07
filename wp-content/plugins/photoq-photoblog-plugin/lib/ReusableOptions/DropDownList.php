@@ -14,19 +14,7 @@
 class DropDownList extends SelectionList
 {
 
-	/**
-	 * Concrete implementation of the accept() method. Calls visitDropDownList() on
-	 * the supplied visitor object.
-	 *
-	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
-	 */
-	function accept(&$visitor)
-	{
-		$visitor->visitDropDownListBefore($this);
-		parent::accept($visitor);
-		$visitor->visitDropDownListAfter($this);
-	}
-
+	
 	
 	/**
 	 * Populate List with children given by name-value array.
@@ -36,7 +24,7 @@ class DropDownList extends SelectionList
 	 */
 	function populate($nameValueArray)
 	{
-		//populate the list with all ImageSizes
+		//populate the list with all child options
 		foreach ($nameValueArray as $name => $value){
 			$this->addChild(
 			new DropDownOption(

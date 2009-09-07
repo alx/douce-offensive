@@ -4,16 +4,16 @@ function fileQueueError(file, error_code, message) {
 
 		switch (error_code) {
 		case SWFUpload.QUEUE_ERROR.ZERO_BYTE_FILE:
-			error_name = "The file " + file.name + " has a size of zero.";
+			error_name = swfuCallbackL10n.file + " " + file.name + " " + swfuCallbackL10n.isZero;
 			break;
 		case SWFUpload.QUEUE_ERROR.FILE_EXCEEDS_SIZE_LIMIT:
-			error_name = "The file " + file.name + " exceeds the upload file size limit of " + this.getSetting('file_size_limit') + "KB in your php.ini config file.";
+			error_name = swfuCallbackL10n.file + " " + file.name + swfuCallbackL10n.exceed + " " + this.getSetting('file_size_limit') + swfuCallbackL10n.ini;
 			break;
 		case SWFUpload.ERROR_CODE_QUEUE_LIMIT_EXCEEDED:
-			error_name = "You have attempted to queue too many files.";
+			error_name = swfuCallbackL10n.tooMany;
 			break;
 		case SWFUpload.QUEUE_ERROR.INVALID_FILETYPE:
-			error_name = "The file " + file.name + " has an invalid filetype.";
+			error_name = swfuCallbackL10n.file + " " + file.name + " " + swfuCallbackL10n.invType;
 			break;
 		default:
 			error_name = message;
@@ -34,7 +34,7 @@ function fileQueued(file) {
 		uplsize += Math.round(file.size/1024);
 		
 		if ( jQuery("#SWFUploadFileListingFiles ul").length == 0 ){
-			jQuery("#SWFUploadFileListingFiles").append("<h4 id='queueinfo' class='thead'>Upload Queue is empty</h4><ul></ul>");
+			jQuery("#SWFUploadFileListingFiles").append("<h4 id='queueinfo' class='thead'>"+swfuCallbackL10n.queueEmpty+"</h4><ul></ul>");
 		}
 		jQuery("#SWFUploadFileListingFiles")
 			.children("ul:first")
@@ -50,11 +50,11 @@ function fileQueued(file) {
 function fileDialogComplete(queuelength) {
 	try {
 		if (queuelength > 0) {
-			jQuery("#queueinfo").text(queuelength + " photos queued for upload ( " + uplsize + "KB )");
+			jQuery("#queueinfo").text(queuelength + " " + swfuCallbackL10n.queued + "( " + uplsize + "KB )");
 	
 			jQuery("#" + swfu.movieName + "UploadBtn").css("display", "inline");
-			jQuery(".browsebtn").text("Add more...");
-	
+			jQuery(".browsebtn").text(swfuCallbackL10n.addMore);
+			jQuery("#ftpUploadBtn").css("display", "none");
 			//start auto upload
 			this.startUpload();
 		}
@@ -71,7 +71,7 @@ function uploadFileCancelled(file, queuelength) {
 
 function uploadStart(file) {
 	try{
-		jQuery("#queueinfo").text("Uploading " + file.name);
+		jQuery("#queueinfo").text(swfuCallbackL10n.uploading + " " + file.name);
 		jQuery("#" + file.id).addClass("fileUploading");
 	} catch (ex) {
 		this.debug(ex);
@@ -93,17 +93,17 @@ function uploadError(file, error_code, message) {
 		switch (error_code) {
 		case SWFUpload.UPLOAD_ERROR.FILE_CANCELLED:
 			try {
-				jQuery("#"+file.id).text(file.name + " - cancelled")
+				jQuery("#"+file.id).text(file.name + " - " + swfuCallbackL10n.cancelled)
 					.attr("class","SWFUploadFileItem uploadCancelled")
 						.slideUp("fast",function(){
 			   				jQuery(this).remove();
 			 			});
 				uplsize -= Math.round(file.size/1024);
-				jQuery("#queueinfo").text(this.getStats().files_queued + " photos queued for upload ( " + uplsize + "KB )");
+				jQuery("#queueinfo").text(this.getStats().files_queued + " " + swfuCallbackL10n.queued + "( " + uplsize + "KB )");
 				if(!this.getStats().files_queued){
 					jQuery("#" + swfu.movieName + "UploadBtn").css("display","none");
 					jQuery("#SWFUploadFileListingFiles").empty();
-					jQuery(".browsebtn").text("Select Photos...");
+					jQuery(".browsebtn").text(swfuCallbackL10n.select);
 				}
 			}
 			catch (ex1) {
@@ -165,12 +165,8 @@ function uploadComplete(file) {
 		if (this.getStats().files_queued > 0) {
 			this.startUpload();
 		} else {
-			jQuery("#queueinfo").text("All files uploaded...");
+			jQuery("#queueinfo").text(swfuCallbackL10n.allUp);
 			jQuery("#commonInfo").slideDown('slow');
-			/*if ( jQuery(".infobutton #batchedit").length == 0 ){
-				jQuery(".infobutton")
-					.append('<input type="submit" class="button-secondary" name="edit_batch" value="Enter Info &raquo;" />')
-			}*/
 		}
 	} catch (ex) {
 		this.debug(ex);
@@ -182,7 +178,7 @@ function cancelUpload() {
 	try{
 		var queuelength = swfu.getStats().files_queued;
 		if(queuelength){	
-			if(confirm('Are you sure you want to cancel the upload?')){
+			if(confirm(swfuCallbackL10n.cancelConfirm)){
 				swfu.stopUpload();
 				for(var index=0; index<queuelength; index++) {
 					swfu.cancelUpload();

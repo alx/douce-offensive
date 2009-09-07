@@ -33,10 +33,10 @@ class RO_WordPressVersionInputTest extends InputTest
 	/**
 	 * PHP4 type constructor
 	 */
-	function RO_WordPressVersionInputTest($lowerBound, $upperBound = '', $errMsgPrefix = '', $customErrMsg = '')
+	/*function RO_WordPressVersionInputTest($lowerBound, $upperBound = '', $errMsgPrefix = '', $customErrMsg = '')
 	{
 		$this->__construct($lowerBound, $upperBound, $errMsgPrefix, $customErrMsg);
-	}
+	}*/
 	
 	
 	/**

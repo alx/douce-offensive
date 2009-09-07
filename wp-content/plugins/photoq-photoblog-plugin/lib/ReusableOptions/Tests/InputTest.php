@@ -10,7 +10,7 @@
  * @author  M.Flury
  * @package ReusableOptions
  */
-class InputTest
+class InputTest extends ReusableOptionObject
 {
 
 	/**
@@ -30,10 +30,10 @@ class InputTest
 	/**
 	 * PHP4 type constructor
 	 */
-	function InputTest($errMsgPrefix = '', $customErrMsg = '')
+	/*function InputTest($errMsgPrefix = '', $customErrMsg = '')
 	{
 		$this->__construct($errMsgPrefix, $customErrMsg);
-	}
+	}*/
 	
 	
 	/**
@@ -58,7 +58,7 @@ class InputTest
 	}
 	
 	/**
-	 * Replace default error message with custome one, and append prefix if any
+	 * Replace default error message with custom one, and append prefix if any
 	 *
 	 * @param string $errMsg	The unformated error message.
 	 * @return string			The formated error message.

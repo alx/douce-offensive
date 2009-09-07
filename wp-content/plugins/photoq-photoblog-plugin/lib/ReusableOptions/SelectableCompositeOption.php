@@ -19,15 +19,6 @@ class SelectableCompositeOption extends CompositeOption
 	 */
 	var $_selected;
 	
-	/**
-	 * PHP4 type constructor
-	 */
-	function SelectableCompositeOption($name, $defaultValue, $label = '', 
-					$textBefore = '', $textAfter = '')
-	{
-		$this->__construct($name, $defaultValue, $label, $textBefore, $textAfter);
-	}
-	
 	
 	/**
 	 * PHP5 type constructor
@@ -71,6 +62,34 @@ class SelectableCompositeOption extends CompositeOption
 	{		
 		return $this->_selected;
 	}
+	
+	
+	/**
+	 * Assess whether this option changed in the last update. Called from UpdateVisitor.
+	 * A Selectable Composite changed if it changed itself or if it is selected and a child changed.
+	 */
+	function updateChangedStatus()
+	{
+		//needed because stuff from database can be differently attribute escaped than input data
+		$a = (is_string($this->_value)) ? stripslashes($this->_value) : $this->_value;
+		$b = (is_string($this->_oldValues)) ? stripslashes($this->_oldValues) : $this->_oldValues;
+		
+		$this->_hasChanged = ($a != $b);
+		
+		if(!$this->_hasChanged && $this->isSelected()){
+			//it has changed if any of its children have changed
+			foreach ( array_keys($this->_children) as $index ) {
+				$child =& $this->_children[$index];
+				if($child->hasChanged()){
+					$this->_hasChanged = true;
+					break;
+				}
+			}
+		}
+		
+
+	}
+	
 
 }
 

@@ -1,6 +1,6 @@
 <div class="wrap">
 		
-		<h2>PhotoQ Options</h2>
+		<h2><?php _e('PhotoQ Options', 'PhotoQ'); ?></h2>
 			<form method="post" action="options-general.php?page=whoismanu-photoq.php"  enctype="multipart/form-data">		
 			
 			<h3><?php _e('Move Image Directory to wp-content', 'PhotoQ') ?></h3>

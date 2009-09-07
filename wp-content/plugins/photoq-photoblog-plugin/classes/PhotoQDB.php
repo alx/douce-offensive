@@ -1,5 +1,5 @@
 <?php
-class PhotoQDB
+class PhotoQDB extends PhotoQObject
 {
 	/**
 	 * The wordpress database object to interface with wordpress database
@@ -9,11 +9,10 @@ class PhotoQDB
 	var $_wpdb;
 	
 	/**
-	 * ObjectController managing all the plugins options
-	 * @var Object
-	 * @access private
+	 * Reference to ErrorStack singleton
+	 * @var object PEAR_ErrorStack
 	 */
-	var $_oc;
+	var $_errStack;
 
 	/**
 	 * Name of main photoq database table, holds posts in queue
@@ -43,6 +42,13 @@ class PhotoQDB
 	 */
 	var $QUEUEMETA_TABLE;
 	
+	/**
+	 * Name of photoq database table that is used to keep batch processing data persistent.
+	 * @var string
+	 * @access public
+	 */
+	var $QBATCH_TABLE;
+	
 		/**
 	 * Name of wordpress posts database table
 	 * @var string
@@ -56,17 +62,6 @@ class PhotoQDB
 	 * @access public
 	 */
 	var $POSTMETA_TABLE;
-
-	
-	/**
-	 * PHP4 type constructor
-	 *	
-	 * @access public
-	 */
-	function PhotoQDB()
-	{
-		$this->__construct();
-	}
 	
 	
 	/**
@@ -78,18 +73,23 @@ class PhotoQDB
 	{
 		global $wpdb;
 		
+		//get the PhotoQ error stack for easy access
+		$this->_errStack = &PEAR_ErrorStack::singleton('PhotoQ');
+		
 		
 		// set wordpress database
 		$this->_wpdb =& $wpdb;
 		
 		// some methods need access to options so instantiate an OptionController
-		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		//don't do this here, otherwise we cannot use the db object inside the oc constructor
+		//$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
 		
 		// set names of database tables used and created by photoq
 		$this->QUEUEMETA_TABLE = $wpdb->prefix."photoqmeta";
 		$this->QUEUE_TABLE = $wpdb->prefix."photoq";
 		$this->QFIELDS_TABLE = $wpdb->prefix."photoqfields";
 		$this->QCAT_TABLE = $wpdb->prefix."photoq2cat";
+		$this->QBATCH_TABLE = $wpdb->prefix."photoqbatch";
 		
 		// set names of wordpress database tables used by photoq
 		$this->POSTS_TABLE = $wpdb->prefix."posts";
@@ -103,64 +103,106 @@ class PhotoQDB
 	 * @param string $name		The name of the field to be created.
 	 * @access public
 	 */
-	function insertField($name)
+	function insertField($name, $add2published = true)
 	{
-		// TODO: prohibit two fields with same name
-		
-		//remove whitespace as this will also be used as mysql column header
-		$name = preg_replace('/\s+/', '_', $name);
-		$this->_wpdb->query("
-			INSERT INTO $this->QFIELDS_TABLE (q_field_name) VALUES ('$name')
-		");
-	
-		//get the id assigned to this entry
-		$fieldID = mysql_insert_id();
-	
-		//add also to metatable for all entries in the queue
-		$results = $this->_wpdb->get_results("
-			SELECT
-			q_img_id
-			FROM
-			$this->QUEUE_TABLE
-			WHERE
-			1
-		");
-	
-		if($results){
-				
-			foreach ($results as $queueEntry) {
-	
-				$insertQuery = "
-					INSERT INTO $this->QUEUEMETA_TABLE 
-					(q_fk_img_id, q_fk_field_id, q_field_value)
-					VALUES ('$queueEntry->q_img_id', $fieldID, '')
-				";
-				$this->_wpdb->query($insertQuery);
+		//only add if field doesn't exist yet
+		if(in_array($name, $this->getFieldNames()))
+			$this->_errStack->push(PHOTOQ_FIELD_EXISTS,'error', array('fieldname' => $name));
+		else{
+			// instantiate an OptionController
+			$oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+
+			//do not add if a view with same name exists
+			$viewNames = $oc->getViewNames();
+			if(in_array($name, $viewNames)){
+				$this->_errStack->push(PHOTOQ_VIEW_EXISTS,'error', array('viewname' => $name));
+					
+			}else{ // now we can add the field
+					
+				//remove whitespace as this will also be used as mysql column header
+				$name = preg_replace('/\s+/', '_', $name);
+				$this->_wpdb->query("INSERT INTO $this->QFIELDS_TABLE (q_field_name) VALUES ('$name')");
+
+				//get the id assigned to this entry
+				$fieldID = mysql_insert_id();
+
+				//add also to metatable for all entries in the queue
+				$results = $this->_wpdb->get_results("
+					SELECT
+					q_img_id
+					FROM
+					$this->QUEUE_TABLE
+					WHERE
+					1
+				");
+
+			if($results){
+
+				foreach ($results as $queueEntry) {
+
+					$insertQuery = "
+						INSERT INTO $this->QUEUEMETA_TABLE 
+						(q_fk_img_id, q_fk_field_id, q_field_value)
+						VALUES ('$queueEntry->q_img_id', $fieldID, '')
+					";
+					$this->_wpdb->query($insertQuery);
+				}
+
+			}
+
+			if($add2published){
+				$this->addFieldToPublishedPosts($name);
 			}
 				
+			$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), sprintf(__('The field with name "%s" was successfully added.', 'PhotoQ'), $name));
+			}
 		}
+	}
 
-		// TODO: this should only be done for photoq posts
-		if($this->_oc->getValue('fieldAddPosted')){
-			//finally do the same for all posts that have already been posted
-			//add also to metatable for all entries in the queue
-			$results = $this->_wpdb->get_results("
-				SELECT ID FROM $this->POSTS_TABLE WHERE 1
+	/**
+	 * Adds a custom field with name "$name" to all published photoq posts.
+	 * Only adds to a post if a field with the same name does not yet exist for this post.
+	 * @param $name	String	the name of the field to be added
+	 * @return unknown_type
+	 */
+	function addFieldToPublishedPosts($name){
+		//select all photoq posts that do not have the new field yet
+		$results = $this->_wpdb->get_results(
+			"SELECT ID FROM $this->POSTS_TABLE, $this->POSTMETA_TABLE WHERE 
+				ID = post_id && meta_key = 'photoQPath' && ID NOT IN 
+					(SELECT post_id FROM $this->POSTMETA_TABLE WHERE `meta_key` = '$name')
 			");
-				
-			if($results){
-				foreach ($results as $postEntry) {			
-					$insertQuery = "
+		//add the field to each of these posts
+		if($results){
+			foreach ($results as $postEntry) {
+				$insertQuery = "
 						INSERT INTO $this->POSTMETA_TABLE 
 						(post_id, meta_key, meta_value)
 						VALUES ($postEntry->ID, '$name', ''
 					)";
-					$this->_wpdb->query($insertQuery);
-				}
+				$this->_wpdb->query($insertQuery);
 			}
 		}
 	}
 	
+	/**
+	 * Delete a custom field with name "$name" from all published photoq posts.
+	 * @param $name	String	the name of the field to be deleted
+	 * @return unknown_type
+	 */
+	function deleteFieldFromPublishedPosts($name){
+		// this is a bit messy but we have to use the workaround from here 
+		// http://www.xaprb.com/blog/2006/06/23/how-to-select-from-an-update-target-in-mysql/
+		$deleteQuery = "DELETE FROM $this->POSTMETA_TABLE WHERE 
+			meta_key = '$name' && post_id IN 
+				(SELECT ID FROM 
+					(SELECT ID, post_id, meta_key FROM $this->POSTS_TABLE, $this->POSTMETA_TABLE) AS photoQposts
+				WHERE ID = post_id && meta_key = 'photoQPath')"; 
+		$this->_wpdb->query($deleteQuery);
+	}
+
+
+
 	/**
 	 * Remove a custom field from the database.
 	 * 
@@ -169,19 +211,25 @@ class PhotoQDB
 	 */	
 	function removeField($id)
 	{	
+		// instantiate an OptionController
+		$oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		
 		//get the name before deleting
-		$oldName = $this->_wpdb->get_var("SELECT q_field_name FROM $this->QFIELDS_TABLE WHERE q_field_id = $id");
+		$name = $this->_wpdb->get_var("SELECT q_field_name FROM $this->QFIELDS_TABLE WHERE q_field_id = $id");
 	
-		/*delete DB entry*/
+		//delete DB entry
 		$this->_wpdb->query("DELETE FROM $this->QFIELDS_TABLE WHERE q_field_id = '$id'");
 	
-		/*delete also from metatable*/
+		//delete also from metatable
 		$this->_wpdb->query("DELETE FROM $this->QUEUEMETA_TABLE WHERE q_fk_field_id = '$id'");
 	
-		if($this->_oc->getValue('fieldDeletePosted')){
+		if($oc->getValue('fieldDeletePosted')){
 			//delete from already posted posts
-			$this->_wpdb->query("DELETE FROM $this->POSTMETA_TABLE WHERE meta_key = '$oldName'");
+			$this->deleteFieldFromPublishedPosts($name);
+			//$this->_wpdb->query("DELETE FROM $this->POSTMETA_TABLE WHERE meta_key = '$name'");
 		}
+		
+		$this->_errStack->push(PHOTOQ_INFO_MSG,'info', array(), sprintf(__('The field with name "%s" was successfully deleted.', 'PhotoQ'), $name));
 	
 	} 
 	
@@ -196,6 +244,9 @@ class PhotoQDB
 	{
 		// TODO: prohibit two fields with same name
 
+		// instantiate an OptionController
+		$oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		
 		//get the old name
 		$oldName = $this->_wpdb->get_var("SELECT q_field_name FROM $this->QFIELDS_TABLE WHERE q_field_id = $id");
 	
@@ -205,7 +256,7 @@ class PhotoQDB
 		//update DB entry
 		$this->_wpdb->query("UPDATE $this->QFIELDS_TABLE SET q_field_name = '$newName' WHERE q_field_id = '$id'");
 	
-		if($this->_oc->getValue('fieldRenamePosted')){
+		if($oc->getValue('fieldRenamePosted')){
 			//update already posted posts
 			$this->_wpdb->query("UPDATE $this->POSTMETA_TABLE SET meta_key = '$newName' WHERE meta_key = '$oldName'");
 		}
@@ -218,6 +269,16 @@ class PhotoQDB
 			SELECT * FROM $this->QFIELDS_TABLE
 			WHERE 1 ORDER BY q_field_name
 		");
+	}
+	
+	function getFieldNames()
+	{
+		$fields = $this->getAllFields();
+		$result = array();
+		foreach ($fields as $field) {
+			$result[] = $field->q_field_name;
+		}
+		return $result;
 	}
 	
 	/**
@@ -243,19 +304,37 @@ class PhotoQDB
 		$results = $this->_wpdb->get_results("
 			SELECT ID, post_title, meta_value FROM $this->POSTS_TABLE, $this->POSTMETA_TABLE 
 			WHERE $this->POSTS_TABLE.ID = $this->POSTMETA_TABLE.post_id AND $this->POSTMETA_TABLE.meta_key = 'photoQPath'");
-		foreach ($results as $result){
-			$photos[] = new PhotoQPublishedPhoto($result->ID, $result->post_title, '', '', $result->meta_value);
-		}
+		foreach ($results as $result)
+			$photos[] =& new PhotoQPublishedPhoto($result->ID, $result->post_title, '', '', $result->meta_value);
 		
 		return $photos;
 	}
 	
-	function getPublishedPhoto($postID)
+	function getAllPublishedPhotoIDs()
+	{
+		return $this->_wpdb->get_col("
+			SELECT ID FROM $this->POSTS_TABLE, $this->POSTMETA_TABLE 
+			WHERE $this->POSTS_TABLE.ID = $this->POSTMETA_TABLE.post_id AND $this->POSTMETA_TABLE.meta_key = 'photoQPath'");
+		
+	}
+	
+	/**
+	 * 
+	 * @param $postID
+	 * @return object PhotoQPublishedPhoto
+	 */
+	function &getPublishedPhoto($postID)
 	{
 		$result = $this->_wpdb->get_row("
 			SELECT post_title, meta_value FROM $this->POSTS_TABLE, $this->POSTMETA_TABLE 
 			WHERE $this->POSTS_TABLE.ID = '$postID' AND $this->POSTS_TABLE.ID = $this->POSTMETA_TABLE.post_id AND $this->POSTMETA_TABLE.meta_key = 'photoQPath'");
-		return new PhotoQPublishedPhoto($postID, $result->post_title, '', '', $result->meta_value);
+		if(is_null($result)){
+			$this->_errStack->push(PHOTOQ_POST_NOT_FOUND,'error', array('id' => $postID));
+			return NULL;
+		}
+		
+		return new PhotoQPublishedPhoto($postID, $result->post_title, '', '', $result->meta_value, '', PhotoQHelper::getArrayOfTagNames($postID));
+		
 	}
 	
 	/**
@@ -269,9 +348,8 @@ class PhotoQDB
 		$results = $this->_wpdb->get_results("
 			SELECT ID, post_title, meta_value FROM $this->POSTS_TABLE, $this->POSTMETA_TABLE 
 			WHERE $this->POSTS_TABLE.ID = $this->POSTMETA_TABLE.post_id AND $this->POSTMETA_TABLE.meta_key = 'path'");
-		foreach ($results as $result){
-			$photos[] = new PhotoQImportedPhoto($result->ID, $result->post_title, '', $result->meta_value);
-		}
+		foreach ($results as $result)
+			$photos[] =& new PhotoQImportedPhoto($result->ID, $result->post_title, '', $result->meta_value);
 		
 		return $photos;
 	}
@@ -288,6 +366,26 @@ class PhotoQDB
 		1
 		ORDER BY q_position
 		");
+	}
+	
+	function getQueueIDTagPairs()
+	{
+		return $this->_wpdb->get_results("
+		SELECT
+		q_img_id, q_tags
+		FROM
+		$this->QUEUE_TABLE
+		WHERE
+		1
+		");
+	}
+	
+	function getAllQueuedPhotoIDs(){
+		return $this->_wpdb->get_col("SELECT q_img_id FROM $this->QUEUE_TABLE WHERE 1");
+	}
+	
+	function updateTags($imgId, $tags){
+		$this->_wpdb->query("UPDATE $this->QUEUE_TABLE SET q_tags = '$tags' WHERE q_img_id = '$imgId'");
 	}
 	
 	
@@ -309,6 +407,69 @@ class PhotoQDB
 		return $this->_wpdb->get_col("SELECT category_id
 		FROM $this->QCAT_TABLE
 		WHERE q_fk_img_id = $id");
+	}
+
+	function insertCategory($id, $catId)
+	{
+		$this->_wpdb->query("
+			INSERT INTO $this->QCAT_TABLE
+			(q_fk_img_id, category_id)
+			VALUES
+			($id, $catId)
+		");
+	}
+	
+	
+	
+	/**
+	 * Insert a new batch into the database and return its id.
+	 * @return unknown_type
+	 */
+	function insertBatch(){
+		//$_SERVER['REQUEST_TIME'] not available in PHP4
+		$timestamp = isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time();
+		
+		if(!$this->_wpdb->query('INSERT INTO '.$this->QBATCH_TABLE.' (timestamp) VALUES ('.$timestamp.')'))
+			return FALSE;
+		
+		//get the id assigned to this newly created entry
+		return mysql_insert_id();
+	}
+	
+	/**
+	 * Update batch with given id in the database
+	 * @param $id
+	 * @param $batchSets
+	 * @return unknown_type
+	 */
+	function updateBatch($id, $batchSets){
+		//PhotoQHelper::debug('updateBatch: before ' . print_r(($batchSets),true));
+		//PhotoQHelper::debug('updateBatch: serialized ' . print_r(serialize($batchSets),true));
+		//PhotoQHelper::debug('updateBatch: unserialized ' . print_r(unserialize(serialize($batchSets)),true));
+		$this->_wpdb->query("UPDATE $this->QBATCH_TABLE SET batch='".serialize($batchSets)."' WHERE bid = '$id'");
+	}
+	
+	/**
+	 * Remove batch with specified id from the database
+	 * @param $id int	id to remove
+	 * @return unknown_type
+	 */
+	function deleteBatch($id){
+		//also remove those that are older than 1 day
+		$this->_wpdb->query("DELETE FROM $this->QBATCH_TABLE WHERE bid = '$id' OR timestamp < " . (time() - 86400) );
+	}
+	
+	/**
+	 * Returns the batch sets associated with batch of given id.
+	 * @param $id
+	 * @return unknown_type
+	 */
+	function getBatchSets($id){
+		$setObj = ($this->_wpdb->get_row("SELECT batch FROM $this->QBATCH_TABLE WHERE bid='$id'"));
+		PhotoQHelper::debug('db getBatchSets: ' . print_r(($setObj->batch),true));
+		PhotoQHelper::debug('db getBatchSets unser: ' . print_r(unserialize($setObj->batch),true));
+		
+		return unserialize($setObj->batch);
 	}
 	
 	/**
@@ -362,6 +523,10 @@ class PhotoQDB
 	function upgrade($currentVersion)
 	{
 		global $wpdb;
+		
+		//update roles and capabilities
+		$this->_setupRoles();
+		
 		//these steps are required to upgrade to 1.5.2 with the new q_img_id key
 		//because the standard wordpress delta does not do the job correctly.
 		
@@ -447,10 +612,11 @@ class PhotoQDB
 		q_title varchar(200) default '',
 		q_imgname varchar(200) NOT NULL default '',
 		q_slug varchar(200) default '',
-		q_descr text default '',
-		q_tags text default '',
-		q_exif text default '',
-		q_edited bit default 0,
+		q_descr text,
+		q_tags text,
+		q_exif text,
+		q_edited tinyint default 0,
+		q_fk_author_id bigint(20) unsigned NOT NULL default '0',
 		PRIMARY KEY  (q_img_id)
 		) $charset_collate;";
 		$this->_upgradeDB($this->QUEUE_TABLE, $sql, $currentVersion);
@@ -488,7 +654,54 @@ class PhotoQDB
 		) $charset_collate;";
 		$this->_upgradeDB($this->QUEUEMETA_TABLE, $sql, $currentVersion);
 		
+		
+		$sql = "
+		CREATE TABLE $this->QBATCH_TABLE (
+		bid int(10) NOT NULL AUTO_INCREMENT,
+		timestamp int(11) NOT NULL,
+		batch longtext,
+		PRIMARY KEY  (bid)
+		) $charset_collate;";
+		$this->_upgradeDB($this->QBATCH_TABLE, $sql, $currentVersion);
+	
 	}
+	
+	
+	/**
+	 * Define what role has what capability. Called on database upgrades
+	 * @return unknown_type
+	 */
+	function _setupRoles(){
+		$capRolesArray = array(
+			'access_photoq' => array('administrator','editor','author'),
+			'manage_photoq_options' => array('administrator'),
+			'use_primary_photoq_post_button' => array('administrator','editor','author'),
+			'use_secondary_photoq_post_button' => array('administrator', 'editor'),
+			'reorder_photoq' => array('administrator', 'editor', 'author')
+		);
+
+		//remove any old capabilities that might interfere with the above
+		$photoQRoles = array('administrator','editor','author');
+		$photoQCaps = array_keys($capRolesArray);
+		foreach($photoQRoles as $roleName){
+			foreach($photoQCaps as $capName){
+				$currentRole = get_role($roleName);
+				if(!empty($currentRole))
+					$currentRole->remove_cap($capName);	
+			}
+		}
+		
+		//add the capabilities
+		foreach($capRolesArray as $capName => $roleNames){
+			foreach ($roleNames as $roleName){
+				$currentRole = get_role($roleName);
+				if ( !empty( $currentRole ) )
+				$currentRole->add_cap($capName);
+			}
+		}
+	}
+	
+		
 	
 	/**
 	 * Upgrades the Wordpress Database Table. 

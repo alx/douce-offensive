@@ -4,7 +4,7 @@
  * This class deals with EXIF meta data embedded in the photos.
  *
  */
-class PhotoQExif
+class PhotoQExif extends PhotoQObject
 {
 	
 	/**
@@ -42,21 +42,56 @@ class PhotoQExif
 		return $exif;
 	}
 	
-	function getFormattedExif($exif, $tags){
-		
+	/**
+	 * Creates the formatted exif list. Only tags selected in PhotoQ 
+	 * and that are present in the current photo are displayed. 
+	 * TagsFromExif are shown as links to the corresponding tag pages.
+	 * @param $exif	the full exif data array of this post
+	 * @param $tags the exif tags that are selected in photoq
+	 * @param $tagsFromExif	the exif tags that were chosen as post_tags via tagFromExif
+	 * @return string	formatted exif outpout in form of unordered html list
+	 */
+	function getFormattedExif($exif, $tags, $tagsFromExif, $displayNames, $displayOptions){
+		if(!empty($tags) && !is_array($tags)){
+			//is it a comma separated list?
+			$tags = array_unique(explode(',',$tags));
+		}
 		if(!is_array($tags) || count($tags) < 1 ){
+			//still nothing?
 			$result = '';
 		}else{
-			$result = '<ul class="photoQExifInfo">';
+			$result = $displayOptions['before'];//'<ul class="photoQExifInfo">';
 			$foundOne = false; //we don't want to print <ul> if there is no exif in the photo
 			foreach($tags as $tag){
 				if(array_key_exists($tag, $exif)){
 					$foundOne = true;
-					$result .= '<li class="photoQExifInfoItem">
-					<span class="photoQExifTag">'.$tag.':</span> <span class="photoQExifValue">'.$exif[$tag].'</span></li>';
+					if(empty($displayOptions['elementFormatting']))//go with default
+						$displayOptions['elementFormatting'] = '<li class="photoQExifInfoItem"><span class="photoQExifTag">[key]:</span> <span class="photoQExifValue">[value]</span></li>';
+							
+					$displayName = $tag;
+					//do we need to display a special name
+					if(!empty($displayNames[$tag]))
+						$displayName = $displayNames[$tag];
+					
+					$value = $exif[$tag];
+					
+					//do we need a tag link?
+					if(in_array($tag, $tagsFromExif)){
+						//yes, so try to get an id and then the link
+						$term = get_term_by('name', $value, 'post_tag');
+						if($term)
+							$value = '<a href="'.get_tag_link($term->term_id).'">'.$value.'</a>';
+					}
+
+					$result .= PhotoQHelper::formatShorttags($displayOptions['elementFormatting'], array('key' => $displayName, 'value' => $value));
+					$result .= $displayOptions['elementBetween'];
 				}
 			}
-			$result .= '</ul>';
+			//remove last occurrence of elementBetween
+			$result = preg_replace('/'.preg_quote($displayOptions['elementBetween']).'$/','',$result);
+			$result .= $displayOptions['after'];//'</ul>';
+			
+			
 			if(!$foundOne)
 				$result = '';
 		}
@@ -107,7 +142,8 @@ class PhotoQExif
 		return array(
 		'Bytes',
 		'CFAPattern',
-		'ComponentsConfiguration',				
+		'ComponentsConfiguration',	
+		'CustomerRender',			
 		'ExifInteroperabilityOffset',
 		'ExifOffset',
 		'GPSInfo',

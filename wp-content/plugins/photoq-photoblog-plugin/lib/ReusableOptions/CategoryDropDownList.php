@@ -13,15 +13,6 @@
  */
 class CategoryDropDownList extends DropDownList
 {
-
-	/**
-	 * PHP4 type constructor
-	 */
-	function CategoryDropDownList($name, $defaultValue = '', $label = '', 
-					$textBefore = '', $textAfter = '')
-	{
-		$this->__construct($name, $defaultValue, $label, $textBefore, $textAfter);
-	}
 	
 	
 	/**

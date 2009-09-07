@@ -1,6 +1,6 @@
 <?php
 
-class PhotoQPhoto
+class PhotoQPhoto extends PhotoQObject
 {
 	
 	/**
@@ -15,72 +15,135 @@ class PhotoQPhoto
 	var $_exifFullFieldName = 'photoQExifFull';
 	var $_exifFieldName = 'photoQExif';
 	var $_sizesFieldName = 'photoQImageSizes';
+	var $_DEFAULT_VIEWS = array('content', 'excerpt');
 	
+	/**
+	 * Reference to OptionControllor singleton
+	 * @var object PhotoQOptionController
+	 */
 	var $_oc;
+	
+	/**
+	 * Reference to PhotoQDB singleton
+	 * @var object PhotoQDB
+	 */
 	var $_db;
+	
+	/**
+	 * Reference to ErrorStack singleton
+	 * @var object PEAR_ErrorStack
+	 */
+	var $_errStack;
+	
 	var $_sizes = array();
 	var $_path;
 	var $_width;
 	var $_height;
-	var $_yearMonthDir;	
+	var $_yearMonthDir;
+	
+	/**
+	 * The tag names of this photos. Now an array instead of comma separated list
+	 * as this is often easier to handle
+	 * @var array
+	 */
+	var $_tags;
+	
+	var $id;
 	var $title;
 	var $descr;
 	var $imgname;
 	var $exif;
-	var $niceExif;
 		
-	//var $logger;
-	
-	/**
-	 * PHP4 type constructor
-	 */
-	function PhotoQPhoto($imgname, $title, $descr, $exif, $path = '')
-	{
-		$this->__construct($imgname, $title, $descr, $exif, $path);
-	}
-
 
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($imgname, $title, $descr, $exif, $path = '')
+	function __construct($id, $title, $descr, $exif, $path, $imgname, 
+		$tags = '', $slug = '', $edited = false)
 	{
-		$this->imgname = $imgname;
-		$this->title = $title;
-		$this->descr = $descr;
-		$this->exif = maybe_unserialize($exif);
 		
+		//get the PhotoQ error stack for easy access
+		$this->_errStack = &PEAR_ErrorStack::singleton('PhotoQ');
 		
-		//$conf = array('mode' => 0777, 'timeFormat' => '%X %x');
-		//$this->logger = &Log::singleton('file', PHOTOQ_PATH.'log/test.log', '', $conf);
-		
+		//get the other singletons
 		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
 		$this->_db =& PhotoQSingleton::getInstance('PhotoQDB');
 		
-		$this->niceExif = PhotoQExif::getFormattedExif($this->exif,$this->_oc->getValue('exifTags'));
+		
+		$this->id = $id;
+		$this->imgname = $imgname;
+		$this->_tags = $tags;
+		
+		$this->title = $title;
+		$this->descr = $descr;
+		$this->exif = maybe_unserialize($exif);
 		
 		if(empty($path))
 			$this->_path = $this->_oc->getQDir() . $this->imgname;
 		else
 			$this->_path = $path;
-		
-		
-		//set original width and height
-		$imageAttr = getimagesize($this->_path);
-		$this->_width = $imageAttr[0];
-		$this->_height = $imageAttr[1];
-		
-		//add all the image sizes
-		foreach (array_keys($this->_oc->getValue('imageSizes')) as $sizeName){
-			$this->_sizes[$sizeName] = PhotoQImageSize::createInstance($sizeName, $this->imgname, $this->_yearMonthDir, $this->_width, $this->_height);
-		}
-		//add the original
-		$this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER] = PhotoQImageSize::createInstance($this->_oc->ORIGINAL_IDENTIFIER, $this->imgname, $this->_yearMonthDir, $this->_width, $this->_height);
+
+		//mute this one because it can issue warnings if the original does not exist.
+		@$this->initImageSizes();
 		
 	}
 	
 	/**
-	 * Deletes this photo from the server.
+	 * Use this one (factory pattern) to create instances of this class. 
+	 * Returns NULL if there was an error creating the object
+	 * @param unknown_type $name
+	 */
+	/*function &createInstance($class, $id, $title, $descr = '', $exif = '', 
+		$path = '', $imgname = '', $slug = '', $tags = '', $edited = false)
+	{
+		
+		// If the class exists, return a new instance of it.
+        if (class_exists($class)) {
+            $obj = &new $class($id, $title, $descr, $exif, $path, $imgname, $slug, $tags, $edited );
+            //here come the init functions that can go wrong and produce errors
+            if(@$obj->initImageSizes())
+            	return $obj;
+        }
+		
+        return NULL;
+    }*/
+	
+	/**
+	 * we move this function out of the constructor because it can fail. The clean way would
+	 * be to throw an exception which is not possible in PHP4. We therefore might have to resort
+	 * to a factory method and do error checking there.
+	 */
+	function initImageSizes(){
+		
+		if(file_exists($this->_path)){
+			//set original width and height
+			$imageAttr = getimagesize($this->_path);
+			$this->_width = $imageAttr[0];
+			$this->_height = $imageAttr[1];
+		}else{//we have a problem the photo does not exist at the specified location
+			$this->_raisePhotoNotFoundError();
+			$this->_width = 0;
+			$this->_height = 0;
+		}
+		//add all the image sizes
+		foreach ($this->_oc->getImageSizeNames() as $sizeName){
+			$this->_sizes[$sizeName] =& PhotoQImageSize::createInstance($sizeName, $this->imgname, $this->_yearMonthDir, $this->_width, $this->_height);
+		}
+		//add the original
+		$this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER] =& PhotoQImageSize::createInstance($this->_oc->ORIGINAL_IDENTIFIER, $this->imgname, $this->_yearMonthDir, $this->_width, $this->_height);
+		
+	}
+	
+	function _raisePhotoNotFoundError(){
+		$this->_errStack->push(PHOTOQ_PHOTO_NOT_FOUND,'error', array('title' => $this->title, 'imgname' => $this->imgname, 'path' => $this->_path));
+	}
+	
+	function _raiseSizeNotDefinedError($sizeName){
+		$this->_errStack->push(PHOTOQ_SIZE_NOT_DEFINED,'error', array('sizename' => $sizeName));
+	}
+	
+	/**
+	 * Deletes image files associated with this photo from the server.
 	 *
 	 * @return object PhotoQStatusMessage
 	 */
@@ -91,9 +154,9 @@ class PhotoQPhoto
 		if(file_exists($this->_path))
 			$deleted = unlink($this->_path);
 		if(!$deleted)
-			$status = new PhotoQErrorMessage(__("Could not delete photo $this->imgname from server. Please delete manually."));
+			$status = new PhotoQErrorMessage(sprintf(__("Could not delete photo %s from server. Please delete manually.", 'PhotoQ'), $this->imgname));
 		else
-			$status = new PhotoQStatusMessage(__('Entry successfully removed from queue. Corresponding files deleted from server.'));
+			$status = new PhotoQStatusMessage(__('Entry successfully removed from queue. Corresponding files deleted from server.', 'PhotoQ'));
 		return $status;
 	}
 	
@@ -105,8 +168,77 @@ class PhotoQPhoto
 	
 	function generateImgLink($sourceSizeName, $targetSizeName, $attributes, $class)
 	{
-		return '<div '. $attributes . ' url="'.$this->_sizes[$targetSizeName]->getUrl().'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /><script type="text/javascript" charset="utf-8">jQuery.preloadImages("'.$this->_sizes["main"]->getUrl().'");</script></div>';
+		return '<a '. $attributes . ' href="'.$this->_sizes[$targetSizeName]->getUrl().'" title="'.$this->title.'"><img width="'.$this->_sizes[$sourceSizeName]->getScaledWidth().'" height="'.$this->_sizes[$sourceSizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sourceSizeName]->getUrl().'" class="'.$class.'" /></a>';
 	}
+	
+	function generateFreeformView($template){
+		$result = $template;
+		$simpleReplacements = array(
+			'title' => $this->title,
+			'descr' => $this->descr,
+			'exif' => $this->getNiceExif(),
+			//'tags' => $this->getTagString()
+		);
+		
+		//handle the meta fields
+		$fields = $this->_db->getAllFields();
+		foreach ($fields as $field) {
+			$simpleReplacements[$field->q_field_name] = $this->getField($field->q_field_name, $field->q_field_id);
+		}
+		
+		$result = PhotoQHelper::formatShorttags($result, $simpleReplacements);
+		
+		$sizeReplacements = array('Url', 'Path', 'Width', 'Height');
+		//foreach($simpleReplacements as $replKey => $replVal)
+		//	$result = preg_replace('/\['.preg_quote($replKey).'\]/', $replVal, $result);
+		
+		foreach($sizeReplacements as $repl)
+			$result = preg_replace_callback('/\[img'.preg_quote($repl).'\|(.+?)\]/', array(&$this, 'get'.$repl.'FromMatchedSize'), $result);
+			
+		
+		return $result;
+	}
+	
+	function getUrlFromMatchedSize($matches){
+		if(isset($this->_sizes[$matches[1]]))
+			return $this->_sizes[$matches[1]]->getUrl();
+		else{
+			$this->_raiseSizeNotDefinedError($matches[1]);
+			return '';
+		}
+	}
+	
+	function getPathFromMatchedSize($matches){
+		if(isset($this->_sizes[$matches[1]]))
+			return $this->_sizes[$matches[1]]->getPath();
+		else{
+			$this->_raiseSizeNotDefinedError($matches[1]);
+			return '';
+		}
+	}
+	
+	function getWidthFromMatchedSize($matches){
+		if(isset($this->_sizes[$matches[1]]))
+			return $this->_sizes[$matches[1]]->getScaledWidth();
+		else{
+			$this->_raiseSizeNotDefinedError($matches[1]);
+			return '';
+		}
+	}
+	
+	function getHeightFromMatchedSize($matches){
+		if(isset($this->_sizes[$matches[1]]))
+			return $this->_sizes[$matches[1]]->getScaledHeight();
+		else{
+			$this->_raiseSizeNotDefinedError($matches[1]);
+			return '';
+		}
+	}
+	
+	
+	
+	
+
 	
 	/**
 	 * Generates the data stored in the_content or the_excerpt.
@@ -116,10 +248,12 @@ class PhotoQPhoto
 	 */
 	function generateContent($viewName = 'content')
 	{
-		switch($this->_oc->getValue($viewName . 'View-type')){
+		$viewType = $this->_oc->getValue($viewName . 'View-type');
+		switch($viewType){
 
 			case 'single':
 				$singleSize = $this->_oc->getValue($viewName . 'View-singleSize');
+				PhotoQHelper::debug('generateContent('.$viewName.') size: '. $singleSize);
 				//if($singleSize != 'main')
 				$data = $this->generateImgTag($singleSize, "photoQ$viewName photoQImg");
 				break;
@@ -132,15 +266,18 @@ class PhotoQPhoto
 					"photoQ$viewName photoQLinkImg"
 				);
 				break;
+			case 'freeform':
+				$data = $this->generateFreeformView(stripslashes(html_entity_decode($this->_oc->getValue($viewName . 'View-freeform'))));
+				break;
 		}
 		
-		if($viewName == 'content'){
+		if($viewName == 'content' && $viewType != 'freeform'){
 			if($this->_oc->getValue('inlineDescr'))
 				//leave this on separate line or wpautop() will mess up, strange but true...
 				$data .= '
 				<div class="'.$this->_descrFieldName.'">' . $this->descr . '</div>';
 			if($this->_oc->getValue('inlineExif'))
-				$data .= $this->niceExif;
+				$data .= $this->getNiceExif();
 		}
 		
 		return $data;
@@ -161,6 +298,10 @@ class PhotoQPhoto
 		return $sizeFieldData;
 	}
 	
+	function hasOriginal(){
+		return file_exists($this->_path);
+	}
+	
 	
 	
 	/**
@@ -169,11 +310,13 @@ class PhotoQPhoto
 	 * @param object PhotoQImageSize $size
 	 * @return boolean
 	 */
-	function rebuild($size, $moveOriginal = true){
+	function rebuildSize($size, $moveOriginal = true){
+		PhotoQHelper::debug('enter rebuildSize()');
 		$status = $size->createPhoto($this->_path, $moveOriginal);
 		if($status->isError()){//an error occurred
 			$status->show();
 			$this->cleanUpAfterError();
+			PhotoQHelper::debug('leave rebuildSize() with Error');
 			return false;
 		}
 		return true;
@@ -202,8 +345,129 @@ class PhotoQPhoto
 	 */
 	function rebuildByName($sizeName){
 		$size = $this->_sizes[$sizeName];
-		return $this->rebuild($this->_sizes[$sizeName]);
+		return $this->rebuildSize($this->_sizes[$sizeName]);
 	}
+	
+	/**
+	 * Getter for the image name field
+	 * @return string
+	 */
+	function getName(){
+		return $this->imgname;
+	}
+	
+	/**
+	 * Getter for the path field
+	 * @return string
+	 */
+	function getPath(){
+		return $this->_path;
+	}
+	
+	/**
+	 * Getter for the id field
+	 * @return int
+	 */
+	function getId(){
+		return $this->id;
+	}
+	
+	/**
+	 * Getter for the title field
+	 * @return string
+	 */
+	function getTitle(){
+		return $this->title;
+	}
+	
+	/**
+	 * Get the customfield with specified name.
+	 * @param $name
+	 * @param $id
+	 * @return unknown_type
+	 */
+	function getField($name, $id = 0){
+		return get_post_meta($this->id, $name, true);
+	}
+	
+	/**
+	 * Getter for the descr field
+	 * @return string
+	 */
+	function getDescription(){
+		return $this->descr;
+	}
+	
+	function getTagString(){
+		return implode(', ', $this->_tags);
+	}
+	
+	/**
+	 * Returns the formatted list of Exif data, only containing Exif tags that
+	 * were selected in the PhotoQ settings.
+	 * @return unknown_type
+	 */
+	function getNiceExif(){
+		$displayOptions = array(
+			'before' => stripslashes(html_entity_decode($this->_oc->getValue('exifBefore'))),
+			'after' => stripslashes(html_entity_decode($this->_oc->getValue('exifAfter'))),
+			'elementBetween' => stripslashes(html_entity_decode($this->_oc->getValue('exifElementBetween'))),
+			'elementFormatting' => stripslashes(html_entity_decode($this->_oc->getValue('exifElementFormatting')))
+		);
+		return PhotoQExif::getFormattedExif(
+			$this->exif,
+			$this->_oc->getValue('exifTags'),
+			array_keys($this->getTagsFromExifKeyValArray()),
+			$this->getExifTagsDisplayNameArray(),
+			$displayOptions	
+		);
+	}
+	
+	/**
+	 * Create array of tagsFromExif key value pairs for this photo
+	 * @return array
+	 */
+	function getTagsFromExifKeyValArray(){
+		$result = array();
+		if(count($this->exif)){
+			foreach($this->exif as $key => $value){
+				if($this->_oc->getValue($key.'-tag'))
+					$result[$key] = $value;
+			}
+		}
+		return $result;
+	}
+	
+	function getExifTagsDisplayNameArray(){
+		$result = array();
+		if(count($this->exif)){
+			foreach($this->exif as $key => $value){
+				$result[$key] = $this->_oc->getValue($key.'-displayName');
+			}
+		}
+		return $result;
+	}
+	
+	
+	function getTagsFromExifString(){
+		return implode(',', array_values($this->getTagsFromExifKeyValArray()));
+	}
+	
+	
+	function getAdminThumbURL($width = 200, $height = 90)
+	{
+		$phpThumbLocation = PhotoQHelper::getRelUrlFromPath(PHOTOQ_PATH.'lib/phpThumb_1.7.9/phpThumb.php?');
+		//$phpThumbParameters = 'src=../../../../../'.PhotoQHelper::getRelUrlFromPath($this->getPath()).'&amp;h='.$height.'&amp;w='.$width;
+		$phpThumbParameters = 'src='.$this->getPath().'&amp;h='.$height.'&amp;w='.$width;
+		
+		$imagemagickPath = 
+			( $this->_oc->getValue('imagemagickPath') ? $this->_oc->getValue('imagemagickPath') : null );
+		if($imagemagickPath)
+			$phpThumbParameters .= '&amp;impath='.$imagemagickPath;
+		$imagesrc = $phpThumbLocation.$phpThumbParameters;
+		return get_option('siteurl').'/'.$imagesrc;
+	}
+	
 	
 	
 }
@@ -211,40 +475,138 @@ class PhotoQPhoto
 class PhotoQQueuedPhoto extends PhotoQPhoto
 {
 	 
-	var $slug; 
-	var $tags; 
 	var $edited; 
-	var $id;
+	var $_authorID;
+	var $_position;
+	var $_slug;
 	
-	/**
-	 * PHP4 type constructor
-	 */
-	function PhotoQQueuedPhoto($id, $imgname, $title, $descr, $slug, 
-						$tags, $exif, $edited)
-	{
-		$this->__construct($id, $imgname, $title, $descr, $slug, 
-						$tags, $exif, $edited);
-	}
-
-
+	
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($id, $imgname, $title, $descr, $slug, 
-						$tags, $exif, $edited)
+	function __construct($id, $title, $descr, $exif, $path, $imgname, $tags, 
+					$slug, $edited, $authorID, $position)
 	{
 		
-		$this->id = $id;
-		$this->slug = $slug;
-		$this->tags = $tags;
 		$this->edited = $edited;
+		$this->_position = $position;
+		$this->_slug = $slug;
+		$this->_authorID = $authorID;
 		
 		$this->_yearMonthDir = mysql2date('Y_m', current_time('mysql')) . "/";
 		
 		
-		parent::__construct($imgname, $title, $descr, $exif);
+		parent::__construct($id, $title, $descr, $exif, $path, $imgname, $tags);
 		
 	}
+	
+	/**
+	 * Getter for the position field
+	 * @return int
+	 */
+	function getPosition(){
+		return $this->_position;
+	}
+	
+	/**
+	 * Getter for the edited field
+	 * @return boolean
+	 */
+	function wasEdited(){
+		return $this->edited;
+	}
+	
+	function getSlug(){
+		return $this->_slug;
+	}
+	
+	function getAuthor(){
+		global $user_ID;
+		
+		$postAuthor = $this->_authorID;
+		
+		if ( empty($postAuthor) )
+			$postAuthor = $user_ID;
+			
+		//we still didn't get an author -> set it to default
+		if ( empty($postAuthor) )
+			$postAuthor = $this->_oc->getValue('qPostAuthor');
+		return $postAuthor;
+	}
+	
+	
+	/**
+	 * Return list of ids of selected categories
+	 * @return array
+	 */
+	function getSelectedCats(){
+		$selectedCats = array();
+		//first check for common info
+		if ( isset($_POST['post_category']) )
+			$selectedCats = $_POST['post_category'][0];
+		else
+			$selectedCats = $this->_db->getCategoriesByImgId($this->id);
+		 
+		return $selectedCats;
+	}
+	
+	/**
+	 * Get the customfield with specified id. Overrides the parent 
+	 * function because here custom fields are still in the photoq DB.
+	 * @param $name the name of the field to fetch
+	 * @param $id the id of the field to fetch
+	 * @return unknown_type
+	 */
+	function getField($name, $id = 0){
+		return $this->_db->getFieldValue($this->id, $id);
+	}
+
+	/**
+	 * Shows the edit/enter info form for one photo.
+	 *
+	 * @param mixed $this	The photo to be edited.
+	 */
+	function showPhotoEditForm()
+	{
+		global $current_user;
+		//if we have post values (common info) we take those instead of db value.
+		$descr = attribute_escape($_POST['img_descr']) ? attribute_escape(stripslashes($_POST['img_descr'])) : $this->getDescription();
+		$tags = attribute_escape($_POST['tags_input']) ? attribute_escape(stripslashes($_POST['tags_input'])) : $this->getTagString();
+		$selectedAuthor = attribute_escape($_POST['img_author']) ? attribute_escape(stripslashes($_POST['img_author'])) : $this->getAuthor();
+		$fullSizeUrl = "../". PhotoQHelper::getRelUrlFromPath($this->getPath());
+		
+		// output photo information form
+		$path = $this->getAdminThumbURL($this->_oc->getValue('photoQAdminThumbs-Width'), 
+						$this->_oc->getValue('photoQAdminThumbs-Height'));
+						
+		
+		$authors = get_editable_user_ids( $current_user->id ); 				
+		
+	?>
+		
+		<div class="main info_group">
+			<div class="info_unit"><a class="img_link" href="<?php echo $fullSizeUrl; ?>" title="Click to see full-size photo" target="_blank"><img src='<?php echo $path; ?>' alt='<?php echo $this->getName(); ?>' /></a></div>
+			<div class="info_unit"><label><?php _e('Title','PhotoQ') ?>:</label><br /><input type="text" name="img_title[]" size="30" value="<?php echo $this->getTitle(); ?>" /></div>
+			<div class="info_unit"><label><?php _e('Description','PhotoQ') ?>:</label><br /><textarea style="font-size:small;" name="img_descr[]" cols="30" rows="3"><?php echo $descr; ?></textarea></div>
+			
+			<?php //this makes it retro-compatible
+				if(function_exists('get_tags_to_edit')): ?>
+			<div class="info_unit"><label><?php _e('Tags (separate multiple tags with commas: cats, pet food, dogs)', 'PhotoQ'); ?>:</label><br /><input type="text" name="tags_input[]" class="tags-input" size="50" value="<?php echo $tags; ?>" /></div>
+			<?php endif; ?>
+			
+			<div class="info_unit"><label><?php _e('Slug','PhotoQ') ?>:</label><br /><input type="text" name="img_slug[]" size="30" value="<?php echo $this->getSlug(); ?>" /></div>
+			<div class="info_unit"><label><?php _e('Post Author','PhotoQ') ?>:</label><?php wp_dropdown_users( array('include' => $authors, 'name' => 'img_author[]', 'multi' => true, 'selected' => $selectedAuthor) ); ?></div>
+			<input type="hidden" name="img_id[]" value="<?php echo $this->getId(); ?>" />
+			<input type="hidden" name="img_position[]" value="<?php echo $this->getPosition(); ?>" />
+		</div>
+		<?php PhotoQHelper::showMetaFieldList($this->getId()); ?>
+		<div class="wimpq_cats info_group"><?php PhotoQHelper::showCategoryCheckboxList($this->getId(), $this->_oc->getValue('qPostDefaultCat'), $this->getSelectedCats()); ?></div>
+		<div class="clr"></div>
+	<?php
+		
+	}
+	
+	
 	
 	
 	
@@ -255,12 +617,17 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 	 */
 	function publish($timestamp = 0)
 	{
+		
+		PhotoQHelper::debug('enter publish()');
+		
 		//create the resized images and move them into position
 		foreach($this->_sizes as $size){
-			if(!$this->rebuild($size)){//an error occurred
+			if(!$this->rebuildSize($size)){//an error occurred
 				return 0;
 			}
 		}
+		
+		PhotoQHelper::debug('thumbs created');
 		
 		//generate the post data and add it to database
 		$postData = $this->_generatePostData($timestamp);
@@ -269,6 +636,8 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 			return 0;
 		}
 		
+		PhotoQHelper::debug('post inserted');
+		
 		//insert description
 		add_post_meta($postID, $this->_descrFieldName, $this->descr, true);
 		
@@ -276,7 +645,7 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 		add_post_meta($postID, $this->_exifFullFieldName, $this->exif, true);
 		
 		//insert formatted exif
-		add_post_meta($postID, $this->_exifFieldName, $this->niceExif, true);
+		add_post_meta($postID, $this->_exifFieldName, $this->getNiceExif(), true);
 		
 		//insert sizesFiled
 		add_post_meta($postID, $this->_sizesFieldName, $this->generateSizesField(), true);
@@ -284,15 +653,38 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 		//add path variable
 		add_post_meta($postID, $this->_pathFieldName, $this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getPath(), true);
 	
+		//insert custom views
+		foreach($this->_oc->getViewNames() as $currentViewName){
+			if(!in_array($currentViewName, $this->_DEFAULT_VIEWS)){
+				add_post_meta($postID, $currentViewName, $this->generateContent($currentViewName), true);
+			}
+		}
+		
 		//handle the other fields
 		$fields = $this->_db->getAllFields();
 		foreach ($fields as $field) {
 			$fieldValue = $this->_db->getFieldValue($this->id, $field->q_field_id);
 			add_post_meta($postID, $field->q_field_name, $fieldValue, true);
 		}
-			
+		
+		//increment the counter of photos posted through photoq
+		$postedSinceLastReminder = get_option('wimpq_posted_since_reminded');
+		if($postedSinceLastReminder != NULL)
+			update_option('wimpq_posted_since_reminded',$postedSinceLastReminder+1);
+		else{
+			add_option('wimpq_posted_since_reminded', 1);
+			add_option('wimpq_reminder_threshold', 50);
+			add_option('wimpq_last_reminder_reset', time());
+		}	
+		PhotoQHelper::debug('leave publish()');
+		
 		return $postID;
 					
+	}
+	
+	
+	function _raisePhotoNotFoundError(){
+		$this->_errStack->push(PHOTOQ_QUEUED_PHOTO_NOT_FOUND,'error', array('title' => $this->title, 'imgname' => $this->imgname, 'path' => $this->_path));
 	}
 	
 	
@@ -303,8 +695,8 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 	
 	function _generatePostData($timestamp){
 		
-		$post_author = $this->_oc->getValue('qPostAuthor');
-		$post_status = 'publish';
+		$post_author = $this->getAuthor();
+		$post_status = $this->_oc->getValue('qPostStatus');
 		$post_title = $this->title;
 	
 		//if a timestamp is given we set the post_date
@@ -315,7 +707,7 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 		$post_name =  $this->slug;
 	
 		//the tags
-		$tags_input =  $this->tags;
+		$tags_input =  rtrim($this->getTagString() . ',' . $this->getTagsFromExifString(),',');
 	
 		//category stuff
 		$post_category = $this->_db->getCategoriesByImgId($this->id);
@@ -324,12 +716,19 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 		if (0 == count($post_category) || !is_array($post_category)) {
 			$post_category = array($this->_oc->getValue('qPostDefaultCat'));
 		}
-	
-		$post_content = $this->generateContent();
-		$post_excerpt = $this->generateContent('excerpt');
+
+		$varNames = array();
+		if($this->_oc->isManaged('content')){
+			$post_content = $this->generateContent();
+			array_push($varNames,'post_content');
+		}
+		if($this->_oc->isManaged('excerpt')){
+			$post_excerpt = $this->generateContent('excerpt');
+			array_push($varNames,'post_excerpt');
+		}
 			
 		
-		$postData = compact('post_content','post_category','post_title','post_excerpt','post_name','post_author', 'post_status', 'tags_input', 'post_date');
+		$postData = compact($varNames, 'post_category','post_title','post_name','post_author', 'post_status', 'tags_input', 'post_date');
 		//to safely insert values into db
 		$postData = add_magic_quotes($postData);
 		
@@ -346,22 +745,13 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 
 class PhotoQPublishedPhoto extends PhotoQPhoto
 {
-	
-	var $_postID;
-	
-	/**
-	 * PHP4 type constructor
-	 */
-	function PhotoQPublishedPhoto($postID, $title, $descr = '', $exif = '', $path = '')
-	{
-		$this->__construct($postID, $title, $descr, $exif, $path);
-	}
 
 
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($postID, $title, $descr = '', $exif = '', $path = '')
+	function __construct($postID, $title, $descr = '', $exif = '', $path = '', $imgname = '', 
+		$tags = '', $slug = '', $edited = false)
 	{
 		if(empty($path)) $path = get_post_meta($postID, $this->_pathFieldName, true);
 		if(empty($descr)) $descr = get_post_meta($postID, $this->_descrFieldName, true);
@@ -370,8 +760,7 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 		//read ymd and imgname from path
 		$imgname = basename($path);
 		$this->_yearMonthDir = array_pop(explode('/', dirname($path))) . "/";
-		$this->_postID = $postID;
-		parent::__construct($imgname, $title, $descr, $exif, $path);
+		parent::__construct($postID, $title, $descr, $exif, $path, $imgname, $tags);
 	}
 	
 	/**
@@ -385,18 +774,91 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 		}
 		parent::delete();
 	}
+
+	/**
+	 * Rebuild the entire post and all the thumbs of a published photo.
+	 * @param $changedSizes
+	 * @param $updateExif
+	 * @param $changedViews
+	 * @param $updateOriginalFolder
+	 * @param $oldFolder
+	 * @param $newFolder
+	 * @return unknown_type
+	 */
+	function rebuild($changedSizes, $updateExif = true, $changedViews = array(),
+		$updateOriginalFolder = false, $oldFolder = '', $newFolder = '', 
+		$addedTags = array(), $deletedTags = array()){
+		
+		if($updateOriginalFolder)
+			$this->_updatePath($oldFolder,$newFolder);
+
+		if($this->hasOriginal()){ //make sure it is not null due to an error when creating the photo
+			
+			foreach ($changedSizes as $changedSize){
+				$this->rebuildByName($changedSize);
+			}
+			
+			if(count($changedSizes) || $updateOriginalFolder)
+				$this->_updateSizesField();
+
+			//update the tags
+			if(!empty($addedTags) || !empty($deletedTags))	
+				$this->_updateTags($addedTags,$deletedTags);
+				
+			//update the formatted exif field
+			if($updateExif){
+				$this->_updateExif();
+			}
+			//also update the post content like we do for view changes
+			if( $changedViews )
+				$this->_updateViews($changedViews);
+		}
+
+		//PhotoQHelper::debug('rebuilt: ' . $this->getTitle());
+		//PhotoQHelper::debug('path: ' . $this->_sizes['main']->getPath());
+		//PhotoQHelper::debug('file exists: ' . file_exists($this->_sizes['main']->getPath()));
+	}
+	
+	function _updateViews($changedViews, $customOnly = false){
+		$updatePost = false;
+		foreach($changedViews as $currentView){
+			if(!in_array($currentView,$this->_DEFAULT_VIEWS)){
+				$this->_updateCustomView($currentView);
+			}else
+				$updatePost = true;
+		}
+		if($updatePost && !$customOnly)//content or excerpt view changed -> update post
+			$this->_updatePost();
+	}
 	
 	/**
-	 * Updates the content of an alreay published photo post.
+	 * Updates the field corresponding to custom view with given name.
+	 *
+	 */
+	function _updateCustomView($name)
+	{
+		update_post_meta($this->id, $name, $this->generateContent($name));
+	}
+
+	/**
+	 * Updates the content of an already published photo post.
 	 *
 	 * @return integer the ID of the post
 	 */
-	function updatePost()
+	function _updatePost()
 	{
-		$ID = $this->_postID;
-		$post_content = $this->generateContent();
-		$post_excerpt = $this->generateContent('excerpt');
-		$postData = compact('ID', 'post_content', 'post_excerpt');
+		PhotoQHelper::debug('enter _updatePost()');
+		$ID = $this->id;
+		$varNames = array();
+		if($this->_oc->isManaged('content')){
+			$post_content = $this->generateContent();
+			array_push($varNames,'post_content');
+		}
+		if($this->_oc->isManaged('excerpt')){
+			$post_excerpt = $this->generateContent('excerpt');
+			array_push($varNames,'post_excerpt');
+		}
+		$postData = compact('ID', $varNames);
 		$postData = add_magic_quotes($postData);
 		$res = wp_update_post($postData);
 		//kill revisions
@@ -410,62 +872,124 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 	 * @param string $old
 	 * @param string $new
 	 */
-	function updatePath($old, $new)
+	function _updatePath($old, $new)
 	{
+		PhotoQHelper::debug('old: ' . $old . ' new: ' . $new);
 		$this->_path = str_replace($old, $new, $this->_path);
-		update_post_meta($this->_postID, $this->_pathFieldName, $this->_path);
+		//convert backslashes (windows) to slashes
+		$this->_path = str_replace('\\', '/', $this->_path);
+		
+		$this->imgname = basename($this->_path);
+		
+		update_post_meta($this->id, $this->_pathFieldName, $this->_path);
+		
+		//finally we need to re-init the image sizes as the path changed
+		$this->initImageSizes();
+	}
+	
+	/**
+	 * Updates the tagsFromExif of the current post.
+	 *
+	 */
+	function _updateTags($addedTagNames = array(), $deletedTagNames = array())
+	{
+		//create value array from name arrays first
+		$addedTags = $this->_getExifValueArray($addedTagNames);
+		$deletedTags = $this->_getExifValueArray($deletedTagNames);
+		PhotoQHelper::debug('added: '. print_r($addedTagNames,true));
+		PhotoQHelper::debug('deleted: '. print_r($deletedTagNames,true));
+		//make sure we don't have double entries
+		$this->_tags = array_unique($this->_tags);
+		
+		//remove tags that were deleted
+		$this->_tags = array_diff($this->_tags, $deletedTags);
+		
+		//add tags that were added
+		$this->_tags = array_unique(array_merge($this->_tags, $addedTags));
+		
+		//update the tags in the database
+		wp_set_post_tags( $this->id, add_magic_quotes($this->_tags) );
+		
+		PhotoQHelper::debug($this->getName().' tags: ' . implode(',',$this->_tags) );
 	}
 	
 	/**
 	 * Updates the formatted exif of an already published photo post.
 	 *
 	 */
-	function updateExif()
+	function _updateExif()
 	{
-		update_post_meta($this->_postID, $this->_exifFieldName, $this->niceExif);
+		update_post_meta($this->id, $this->_exifFieldName, $this->getNiceExif());
+	}
+	
+	/**
+	 * Helper function for the updateExif function. Takes an array of exif tags (keys)
+	 * and returns an array with the corresponding Exif values for the current post.
+	 * @param $keys
+	 * @return array
+	 */
+	function _getExifValueArray($keys){
+		$result = array();
+		foreach($keys as $key){
+			if(array_key_exists($key,$this->exif))
+				$result[] = $this->exif[$key];
+		}
+		return $result;
 	}
 	
 	/**
 	 * Updates the field containing info on image sizes.
 	 *
 	 */
-	function updateSizesField()
+	function _updateSizesField()
 	{
-		update_post_meta($this->_postID, $this->_sizesFieldName, $this->generateSizesField());
+		update_post_meta($this->id, $this->_sizesFieldName, $this->generateSizesField());
 	}
 	
+	function getOriginalDir()
+	{
+		return $this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getYearMonthDirPath();
+	}
 	
+	function replaceImage($pathToNewImage){
+		//new photo was uploaded, now replace the old one
+		$this->delete();
+		$this->_updatePath($this->getPath(), $pathToNewImage);
+		$this->initImageSizes();
+
+		//get new exif data
+		$this->exif = PhotoQExif::readExif($pathToNewImage);
+		//update full exif in database
+		update_post_meta($this->id, $this->_exifFullFieldName, $this->exif);
+		
+		//rebuild the whole thing
+		$this->rebuild($this->_oc->getImageSizeNames(),true,false);
+	}
 	
 	/**
-	 * Called whenever a photo post is edited and saved in the wordpress editor. If the content
-	 * changed, we sync the change to the description custom field as well.
-	 * There is no wordpress filter for updated content that passes the post id along. Thus our
-	 * only option was to use this action that is called on updates. The problem is that we also want
-	 * to call update at the end of this function to make sure the user didn't delete or change 
-	 * e.g. any of the images. Now this would create a loop so we have to break it with the first
-	 * if. this function is thus executed twice whenever a post is updated. Should the wp api change
-	 * we would prefer to use a filter and return $this->generateContent().
-	 *
-	 * @param string $content
-	 */
-	function syncContent($content)
-	{
-		//needed to break loop see function description.
-		if($this->generateContent() != $content){
-			if($this->_oc->getValue('inlineDescr')){
-				//we are now trying to find the description
-				$descr = $this->getInlineDescription($content);
-				//the rest is the description
-				if($descr){
-					$this->descr = $descr;
-					//sync it with the field
-					update_post_meta($this->_postID, $this->_descrFieldName, $this->descr);
-				}
-			}
-			//and update post so everything looks nice.
-			$this->updatePost();
-		}
+	 * 
+	 * Called whenever a photo post is edited and saved in the wordpress editor but before the
+	 * database write. If the content changed, we sync the change to the description custom field 
+	 * and put images and stuff back into the_content and the_excerpt.
+	 * @param $data	array the data to be written to the database
+	 * @return array the updated data
+	 */	
+	function syncPostUpdateData($data){
+		//get the description, add formatting, e.g. replace line breaks with <p>
+		$this->descr = apply_filters('the_content', $data['post_content']);
+		//sync it with the field
+		update_post_meta($this->id, $this->_descrFieldName, $this->descr);
+		//put photos back into excerpt and content
+		if($this->_oc->isManaged('content'))
+			$data['post_content'] = $this->generateContent();
+		if($this->_oc->isManaged('excerpt'))
+			$data['post_excerpt'] = $this->generateContent('excerpt');
+		//update all custom views
+		$this->_updateViews($this->_oc->getViewNames(), true);
+		return $data;
 	}
+	
+	
 
 	
 	/**
@@ -508,26 +1032,6 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 		return $descr;
 	}
 	
-	
-	/**
-	 * Replaces the description field with the inlined description from the_content.
-	 *
-	 * @param string $content
-	 * @return string	The same $content that was input, filter doesn't affect $content.
-	 */
-	function syncField($content)
-	{
-		//we are now trying to find the description
-		$descr = $this->getInlineDescription($content);
-		if($descr){
-			$this->descr = $descr;
-			//sync it with the field
-			update_post_meta($this->_postID, $this->_descrFieldName, $this->descr);
-		}
-		return $content;
-	}
-
-	
 }
 
 /**
@@ -537,19 +1041,12 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 class PhotoQImportedPhoto extends PhotoQPublishedPhoto
 {
 	
-	/**
-	 * PHP4 type constructor
-	 */
-	function PhotoQImportedPhoto($postID, $title, $descr = '', $path = '')
-	{
-		$this->__construct($postID, $title, $descr, $path);
-	}
-
 
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($postID, $title, $descr = '', $path = '')
+	function __construct($postID, $title, $descr = '', $path = '', $imgname, 
+		$tags = '', $slug = '', $edited = false)
 	{
 		if(empty($path)) $path = get_post_meta($postID, 'path', true);
 		
@@ -583,32 +1080,32 @@ class PhotoQImportedPhoto extends PhotoQPublishedPhoto
 	{
 		//create the resized images and move them into position
 		foreach($this->_sizes as $size){
-			if(!$this->rebuild($size, false)){//an error occurred
+			if(!$this->rebuildSize($size, false)){//an error occurred
 				return 0;
 			}
 		}
 		
 		//insert description
-		add_post_meta($this->_postID, $this->_descrFieldName, $this->descr, true);
+		add_post_meta($this->id, $this->_descrFieldName, $this->descr, true);
 		
 		//insert full exif
-		add_post_meta($this->_postID, $this->_exifFullFieldName, $this->exif, true);
+		add_post_meta($this->id, $this->_exifFullFieldName, $this->exif, true);
 		
 		//insert formatted exif
-		add_post_meta($this->_postID, $this->_exifFieldName, $this->niceExif, true);
+		add_post_meta($this->id, $this->_exifFieldName, $this->getNiceExif(), true);
 		
 		//insert sizesFiled
-		add_post_meta($this->_postID, $this->_sizesFieldName, $this->generateSizesField(), true);
+		add_post_meta($this->id, $this->_sizesFieldName, $this->generateSizesField(), true);
 		
 		//add path variable
-		add_post_meta($this->_postID, $this->_pathFieldName, $this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getPath(), true);
+		add_post_meta($this->id, $this->_pathFieldName, $this->_sizes[$this->_oc->ORIGINAL_IDENTIFIER]->getPath(), true);
 		
 		//delete old descr and path fields
-		delete_post_meta($this->_postID, 'descr');
-		delete_post_meta($this->_postID, 'path');
+		delete_post_meta($this->id, 'descr');
+		delete_post_meta($this->id, 'path');
 		
 		//update content and excerpt
-		$this->updatePost();
+		$this->_updatePost();
 	}
 }
 

@@ -152,14 +152,22 @@ span.okbtn{
 .qPosition, .qHPosition{
 	width: 70px;
 	font-weight: bold;
+	text-align: center;
 }
 
 .qThumb{
 	width: 120px;
+	text-align: center;
 }
 
 .qTitle{
 	width: 300px;
+	margin: 0px 10px;
+	text-align: left;
+}
+
+.qAuthor{
+	width: 100px;
 }
 
 .qDescr{
@@ -171,14 +179,14 @@ span.okbtn{
 }
 
 .qCol{
-	text-align: center;
+	//text-align: center;
 	float: left;
 	height: 90px;
 	overflow: hidden;
+	font-size: 11px;
 }
 
 .qHCol{
-	text-align: center;
 	float: left;
 }
 
@@ -235,3 +243,39 @@ ul.exifTags li{
 .error{
 	padding: 8px;
 }
+
+.setting-description{
+	padding: 0px;
+	margin: 0px;
+}
+
+.optionTable td{
+	padding: 0px;
+}
+
+.donate{
+	float: left;
+}
+
+.ppal{
+	margin-top: -4px;
+}
+
+.nothanks{
+	float:right;
+	margin-left: 10px;
+}
+
+th.imageSizeName, th.viewName{
+	font-weight: bold;
+}
+
+#autoconf{
+	margin-bottom: 50px;
+}
+
+#autoconf h4, #autoconf .inside p{
+	margin: 10px;
+}
+
+

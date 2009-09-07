@@ -11,7 +11,7 @@
  * @author  M. Flury
  * @package ReusableOptions
  */
-class ReusableOption
+class ReusableOption extends ReusableOptionObject
 {
 	
 	/**
@@ -29,6 +29,22 @@ class ReusableOption
 	 * @access private
 	 */
 	var $_value;
+	
+	/**
+	 * Old values are stored before updating so we can check whether any of them changed
+	 *
+	 * @access private
+	 * @var array
+	 */
+	var $_oldValues;
+
+	/**
+	 * Indicates whether the option has changed in the last update.
+	 *
+	 * @access private
+	 * @var boolean
+	 */
+	var $_hasChanged;
 	
 	/**
 	 * Default value of the option.
@@ -63,12 +79,10 @@ class ReusableOption
 	var $_textAfter;
 	
 	/**
-	 * PHP4 type constructor
+	 * Strings that can be localized.
+	 * @var unknown_type
 	 */
-	function ReusableOption($name, $defaultValue, $label = '', $textBefore = '', $textAfter = '')
-	{
-		$this->__construct($name, $defaultValue, $label, $textBefore, $textAfter);
-	}
+	var $_L10nStrings;
 	
 	
 	/**
@@ -76,24 +90,39 @@ class ReusableOption
 	 */
 	function __construct($name, $defaultValue, $label = '', $textBefore = '', $textAfter = '')
 	{	
-		$this->_name = $name;
+		$this->_name = $name; 
 		$this->setDefaultValue($defaultValue);
 		$this->setValue($this->_default);
 		$this->setLabel($label);
 		$this->setTextBefore($textBefore);
 		$this->setTextAfter($textAfter);
+		$this->_hasChanged = false;
 	}
 	
 	/**
-	 * Abstract implementation of the accept() method allowing traversal of 
-	 * options by a visitor object. Subclasses should override this and call the
-	 * appropriate visit method on the visitor object.
+	 * Default implementation of the accept() method allowing traversal of 
+	 * options by a visitor object. Calls the appropriate visit method on 
+	 * the visitor object. We have two visit methods one that is called before
+	 * the children are visited (so a non-composite option only defines this one)
+	 * and one that is called after the childs are visited.
 	 *
 	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
 	 */
 	function accept(&$visitor)
 	{
-		return false;
+	
+		//default method that may be defined by visitor to be executed independent of object type
+		if(method_exists($visitor, 'visitDefaultBefore'))
+			call_user_func_array(array(&$visitor, 'visitDefaultBefore'), array(&$this));
+		
+		//here we only call the "before" method as we don't have children that can be visited in between
+		if( $methodBefore = $this->findVisitorMethodToCall('visit', 'Before', $visitor) )
+			call_user_func_array(array(&$visitor, $methodBefore), array(&$this));
+		
+		//default method that may be defined by visitor to be executed independent of object type
+		if(method_exists($visitor, 'visitDefaultAfter'))
+			call_user_func_array(array(&$visitor, 'visitDefaultAfter'), array(&$this));
+			
 	}
 	
 	/**
@@ -126,6 +155,41 @@ class ReusableOption
 		$result[$this->_name] = $this->_value;
 		
 		return $result;
+	}
+	
+	/**
+	 * Store old values before updating such that we can later check whether any of them changed.
+	 *
+	 */
+	function storeOldValues()
+	{		
+		$this->_oldValues = $this->_value;
+	}
+	
+	/**
+	 * Assess whether this option changed in the last update. Called from UpdateVisitor.
+	 *
+	 */
+	function updateChangedStatus()
+	{
+				
+		//needed because stuff from database can be differently attribute escaped than input data
+		$a = (is_string($this->_value)) ? stripslashes($this->_value) : $this->_value;
+		$b = (is_string($this->_oldValues)) ? stripslashes($this->_oldValues) : $this->_oldValues;
+		
+		$this->_hasChanged = ($a != $b);
+		
+		
+	}
+	
+	/**
+	 * Check whether this option changed in the last update.
+	 *
+	 * @return boolean
+	 */
+	function hasChanged()
+	{
+		return $this->_hasChanged;
 	}
 	
 	/**
@@ -209,6 +273,17 @@ class ReusableOption
 	}
 	
 	/**
+	 * Getter for name field.
+	 * @return string		The name of the option.
+	 * @access public
+	 */
+	function getPOSTName()
+	{
+		//when POSTing whitespace becomes _
+		return preg_replace('/\s/', '_', $this->_name); 
+	}
+	
+	/**
 	 * Setter for name field.
 	 * @param string $value		The name of the option.
 	 * @access public
@@ -226,6 +301,14 @@ class ReusableOption
 	function getValue()
 	{
 		return $this->_value;
+	}
+	
+	/**
+	 * Getter for the old values field
+	 * @return mixed	The value of the option before the last update
+	 */
+	function getOldValue(){
+		return $this->_oldValues;
 	}
 	
 	
@@ -308,6 +391,61 @@ class ReusableOption
 	function setLabel($value)
 	{
 		$this->_label = $value;
+	}
+	
+	/**
+	 * Works its way up the class hierarchy unless it find 
+	 * a method on the supplied visitor that matches.
+	 * @return String method to call or false if none found
+	 */
+	function findVisitorMethodToCall($prefix, $postfix, &$visitor)
+	{
+		//check whether we have a method for this class
+		$currentClass = get_class($this);
+		$methodName = $prefix . $currentClass . $postfix;
+		if(method_exists($visitor, $methodName))
+			return $methodName;
+		
+		//we don't so we work up our way through the hierarchy
+		while( $currentClass = get_parent_class($currentClass) ){
+			$methodName = $prefix . $currentClass . $postfix;
+			if(method_exists($visitor, $methodName))
+				return $methodName;
+		}
+		
+		//there is no method to be called
+		return false;
+		
+	}
+	
+	/**
+	 * Translate strings that are given in a key value array
+	 * @param $localizedStrings
+	 * @return unknown_type
+	 */
+	function localizeStrings($localizedStrings)
+	{
+		foreach ($localizedStrings as $key => $value)
+			$this->_L10nStrings[$key] = $value;	
+	}
+	
+	/**
+	 * Getter for localizeable strings
+	 * @param $key
+	 * @return unknown_type
+	 */
+	function getL10nString($key)
+	{
+		return $this->_L10nStrings[$key];
+	}
+	
+	/**
+	 * Registers form submit buttons if any with the OptionController specified.
+	 * @param $oc
+	 * @return unknown_type
+	 */
+	function registerSubmitButtons(&$oc){
+		return true;
 	}
 	
 

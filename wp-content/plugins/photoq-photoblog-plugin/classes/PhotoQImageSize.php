@@ -1,6 +1,6 @@
 <?php
 
-class PhotoQImageSize
+class PhotoQImageSize extends PhotoQObject
 {
 	
 	var $_name;
@@ -22,10 +22,10 @@ class PhotoQImageSize
 	/**
 	 * PHP4 type constructor
 	 */
-	function PhotoQImageSize($name, $imgName, $yearMonthDir, $originalWidth, $originalHeight)
+	/*function PhotoQImageSize($name, $imgName, $yearMonthDir, $originalWidth, $originalHeight)
 	{
 		$this->__construct($name, $imgName, $yearMonthDir, $originalWidth, $originalHeight);
-	}
+	}*/
 
 
 	/**
@@ -54,7 +54,7 @@ class PhotoQImageSize
 	 *
 	 * @param unknown_type $name
 	 */
-	function createInstance($name, $imgName, $yearMonthDir, $width, $height)
+	function &createInstance($name, $imgName, $yearMonthDir, $width, $height)
 	{
 		if($name == $this->_oc->ORIGINAL_IDENTIFIER)
 			$inst =& new PhotoQOriginalImageSize($name, $imgName, $yearMonthDir, $width, $height);
@@ -130,10 +130,10 @@ class PhotoQImageSize
 	
 	
 	function createPhoto($oldOriginalPath, $moveOriginal = true){
-		
+		PhotoQHelper::debug('enter createPhoto()');
 		//create the needed year-month-directory
 		if(!PhotoQHelper::createDir($this->_yearMonthDirPath))
-			return new PhotoQErrorMessage(__("Error when creating directory: $this->_yearMonthDirPath."));
+			return new PhotoQErrorMessage(sprintf(__('Error when creating directory: %s.', 'PhotoQ'),$this->_yearMonthDirPath));
 		if($this->_crop)//constr. width and height decide
 			$status = $this->createThumb($oldOriginalPath, $this->_path, $this->getScaledWidth(), $this->getScaledHeight());
 		else
@@ -142,7 +142,7 @@ class PhotoQImageSize
 			}else{ //it is height
 				$status = $this->createThumb($oldOriginalPath, $this->_path, 0, $this->getScaledHeight());
 			}
-		
+		PhotoQHelper::debug('leave createPhoto()');
 		return $status;
 	}
 	
@@ -154,7 +154,8 @@ class PhotoQImageSize
 	
 	function createThumb($inFile, $outFile, $width = 0, $height = 0)
 	{
-		require_once(PHOTOQ_PATH.'lib/phpThumb_1.7.8/phpthumb.class.php');
+		PhotoQHelper::debug('enter createThumb() ' . $this->getName());
+		require_once(PHOTOQ_PATH.'lib/phpThumb_1.7.9/phpthumb.class.php');
 		// create phpThumb object
 		$phpThumb = new phpThumb();
 		//set imagemagick path here
@@ -191,19 +192,23 @@ class PhotoQImageSize
 			$this->_oc->getValue('watermarkXMargin').'|'.
 			$this->_oc->getValue('watermarkYMargin'));
 		}
+		PhotoQHelper::debug('generating thumb...');
 		// generate & output thumbnail
 		//$output_filename = './thumbnails/'.basename($name.'_'.$largestSide.'.'.$phpThumb->config_output_format;
 		if ($phpThumb->GenerateThumbnail()) { // this line is VERY important, do not remove it!
+			PhotoQHelper::debug('generation ok');
 			if ($phpThumb->RenderToFile($outFile)) {
+				PhotoQHelper::debug('rendering ok');
 				// do something on success
-				return new PhotoQStatusMessage(__('Thumb created successfully'));
+				return new PhotoQStatusMessage(__('Thumb created successfully', 'PhotoQ'));
 			} else {
+				PhotoQHelper::debug('rendering failed');
 				// do something with debug/error messages
-				return new PhotoQErrorMessage(__( 'Failed:<pre>'.implode("\n\n", $phpThumb->debugmessages).'</pre>' ));
+				return new PhotoQErrorMessage(__('Failed:','PhotoQ') . '<pre>' .implode("\n\n", $phpThumb->debugmessages).'</pre>');
 			}
 		} else {
 			// do something with debug/error messages
-			return new PhotoQErrorMessage(__( 'Failed:<pre>'.$phpThumb->fatalerror."\n\n".implode("\n\n", $phpThumb->debugmessages).'</pre>' ));
+			return new PhotoQErrorMessage(__('Failed:','PhotoQ') . '<pre>' .$phpThumb->fatalerror."\n\n".implode("\n\n", $phpThumb->debugmessages).'</pre>' );
 		}
 		
 	}
@@ -222,10 +227,10 @@ class PhotoQRectImageSize extends PhotoQImageSize
 	/**
 	 * PHP4 type constructor
 	 */
-	function PhotoQRectConstraint($name, $imgName, $yearMonthDir, $width, $height)
+	/*function PhotoQRectConstraint($name, $imgName, $yearMonthDir, $width, $height)
 	{
 		$this->__construct($name, $imgName, $yearMonthDir, $width, $height);
-	}
+	}*/
 
 
 	/**
@@ -280,10 +285,10 @@ class PhotoQSideImageSize extends PhotoQImageSize
 	/**
 	 * PHP4 type constructor
 	 */
-	function PhotoQSideConstraint($name, $imgName, $yearMonthDir, $width, $height)
+	/*function PhotoQSideConstraint($name, $imgName, $yearMonthDir, $width, $height)
 	{
 		$this->__construct($name, $imgName, $yearMonthDir, $width, $height);
-	}
+	}*/
 
 
 	/**
@@ -328,10 +333,10 @@ class PhotoQFixedImageSize extends PhotoQImageSize
 	/**
 	 * PHP4 type constructor
 	 */
-	function PhotoQFixedImageSize($name, $imgName, $yearMonthDir, $width, $height)
+	/*function PhotoQFixedImageSize($name, $imgName, $yearMonthDir, $width, $height)
 	{
 		$this->__construct($name, $imgName, $yearMonthDir, $width, $height);
-	}
+	}*/
 
 
 	/**
@@ -382,19 +387,19 @@ class PhotoQOriginalImageSize extends PhotoQImageSize
 	
 		//create directory
 		if(!PhotoQHelper::createDir($this->_yearMonthDirPath))
-			return new PhotoQErrorMessage(__("Error when creating directory: $this->_yearMonthDirPath."));
+			return new PhotoQErrorMessage(sprintf(_c('Error when creating directory: %s| dirname', 'PhotoQ'), $this->_yearMonthDirPath));
 		//move the image file
 		if (!file_exists($this->_path)) {
 			if($moveOriginal){
 				if(!PhotoQHelper::moveFile($oldOriginalPath, $this->_path))
-					return new PhotoQErrorMessage(__("Unable to move $this->_imgName, posting aborted."));
+					return new PhotoQErrorMessage(sprintf(_c('Unable to move %s, posting aborted.| imgname', 'PhotoQ'), $this->_imgName));
 			}else{ //we don't move we only copy
 				if (!copy($oldOriginalPath, $this->_path)){
-					return new PhotoQErrorMessage(__("Unable to copy $this->_imgName, posting aborted."));
+					return new PhotoQErrorMessage(sprintf(_c('Unable to copy %s, posting aborted.| imgname', 'PhotoQ'), $this->_imgName));
 				}
 			}
 		}else{
-			return new PhotoQErrorMessage(__("Image already exists, posting aborted."));
+			return new PhotoQErrorMessage(sprintf(_c('Image %s already exists, posting aborted.| imgname', 'PhotoQ'), $this->_imgName));
 		}
 	
 		return new PhotoQStatusMessage(__('Original photo moved successfully'));
@@ -418,7 +423,7 @@ class PhotoQOriginalImageSize extends PhotoQImageSize
 	 */
 	function createThumb($inFile, $outFile, $width = 0, $height = 0)
 	{
-		return new PhotoQErrorMessage(__( "Failed:<pre> Don't call createThumb() on original image.</pre>" ));	
+		return new PhotoQErrorMessage(__('Failed:','PhotoQ') . '<pre> ' . __("Don't call createThumb() on original image.", 'PhotoQ') .'</pre>' );	
 	}
 			
 }

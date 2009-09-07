@@ -24,10 +24,10 @@ class FileWritableInputTest extends InputTest
 	/**
 	 * PHP4 type constructor
 	 */
-	function FileWritableInputTest($file = '', $errMsgPrefix = '', $customErrMsg = '')
+	/*function FileWritableInputTest($file = '', $errMsgPrefix = '', $customErrMsg = '')
 	{
 		$this->__construct($file, $errMsgPrefix, $customErrMsg);
-	}
+	}*/
 	
 	
 	/**

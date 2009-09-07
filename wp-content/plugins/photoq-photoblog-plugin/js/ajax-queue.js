@@ -1,23 +1,17 @@
 jQuery(document).ready(
 	function () {
-		jQuery('#photoq').sortable(
-			{
-				axis: 			'y',
-				containment:	'parent',
-				stop :			listReordered
-				
-				/*accept : 		'photoqEntry',
-				helperclass : 	'sorthelper',
-				activeclass : 	'sortableactive',
-				hoverclass : 	'sortablehover',
-				onchange :		listReordered,
-				opacity: 		0.8,
-				fx:				200,
-				axis:			'vertically',
-				opacity:		0.4,
-				revert:			true*/
-			}
-		);
+		if(ajaxQueueL10n.allowReorder){
+			jQuery('#photoq').sortable(
+				{
+					axis: 			'y',
+					containment:	'parent',
+					stop :			listReordered,
+					opacity: 0.5,
+					tolerance: 'pointer',
+					cursor: 'move'
+				}
+			);
+		}
 	}
 );
 

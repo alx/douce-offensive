@@ -1,5 +1,5 @@
 <?php
-class PhotoQHelper
+class PhotoQHelper extends PhotoQObject
 {
 
 	function createDir($path)
@@ -20,6 +20,22 @@ class PhotoQHelper
 		return $removed;
 	}
 	
+	function getArrayOfTagNames($postID){
+		return PhotoQHelper::getArrayOfTermNames($postID, 'get_the_tags');
+	}
+	function getArrayOfCategoryNames($postID){
+		return PhotoQHelper::getArrayOfTermNames($postID, 'get_the_category');
+	}
+	function getArrayOfTermNames($postID, $funcName = 'get_the_tags'){
+		$terms = $funcName($postID);
+		$result = array();
+		if ( !empty( $terms ) ) {
+			foreach ( $terms as $term )
+			$result[] = $term->name;
+		}
+		return $result;
+	}
+	
 	/**
 	 * Returns matching content from a directory.
 	 *
@@ -38,7 +54,28 @@ class PhotoQHelper
 			}
 			closedir($handle);
 		}
+		//sort alphabetically
+		sort($result);
 		return $result;
+	}
+	
+	/**
+	 * Generates automatic name for display from filename. Removes suffix,
+	 * replaces underscores, dashes and dots by spaces and capitalizes only first
+	 * letter of any word.
+	 *
+	 * @param string $filename
+	 * @return string
+	 */
+	function niceDisplayNameFromFileName($filename){
+		//remove suffix
+		$displayName = preg_replace('/\.[^\.]*$/', '', $filename);
+		//replace underscores and hyphens with spaces
+		$replaceWithWhiteSpace = array('-', '_', '.');
+		$displayName = str_replace($replaceWithWhiteSpace, ' ', $displayName);
+		//proper capitalization
+		$displayName = ucwords(strtolower($displayName));
+		return $displayName;
 	}
 	
 	/**
@@ -153,6 +190,22 @@ class PhotoQHelper
 	}
 	
 	/**
+	 * PHP built-in str_ireplace only works for PHP5.
+	 * This function should do more or less the same and
+	 * also work with PHP4. Other option would have been
+	 * to include the corresponding lib from PEAR::PHP_Compat
+	 * @param $needle
+	 * @param $str
+	 * @param $haystack
+	 * @return unknown_type
+	 */
+	function strIReplace($needle, $str, $haystack) {
+		$needle = preg_quote($needle, '/');
+		return preg_replace("/$needle/i", $str, $haystack);
+	}
+
+	
+	/**
 	 * PHP built-in pathinfo() does not have filename field
 	 * under PHP4. This is a fix for this.
 	 *
@@ -179,7 +232,6 @@ class PhotoQHelper
 		//convert backslashes (windows) to slashes
 		$abs = str_replace('\\', '/', ABSPATH);
 		$path = str_replace('\\', '/', $path);
-		
 		//remove ABSPATH
 		$relUrl = str_replace($abs, '', trim($path));
 		//remove slashes from beginning
@@ -215,7 +267,8 @@ class PhotoQHelper
 	 * @param string $string
 	 * @return array
 	 */
-	function getHTMLTags($tag, $string){
+	function getHTMLTags($tag, $string)
+	{
 		$result = array();
 		$bufferedOpen = array();
 		$offset = 0;
@@ -234,6 +287,46 @@ class PhotoQHelper
 		}
 		return $result;
 	}
+	
+	
+	/**
+	 * Fills in shorttags into the format string specified
+	 * @param $format
+	 * @param $keyValArray
+	 * @return unknown_type
+	 */
+	function formatShorttags($format, $tagValArray)
+	{
+		foreach ($tagValArray as $tag => $val)
+			$format = str_replace("[$tag]",$val,$format);
+		return $format;
+	}
+	
+	/**
+	 * Determines whether the given shorttag is part of the formatting string given.
+	 * @param $format
+	 * @param $tag
+	 * @return unknown_type
+	 */
+	function containsShorttag($format, $tag){
+		return strpos($format, $tag) !== false;
+	}
+	
+	/**
+	 * Given array of shorttags, checks whether the format string contains least one of them.
+	 * @param $format
+	 * @param $tags
+	 * @return unknown_type
+	 */
+	function containsAnyOfTheseShorttags($format, $tags){
+		foreach ($tags as $tag){
+			if(PhotoQHelper::containsShorttag($format,$tag)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	
 	/**
 	 * Get the maximum allowable file size in KB from php.ini
@@ -271,6 +364,92 @@ class PhotoQHelper
 			$logger->log($msg);
 		}	
 	}
+	
+	/**
+	 * Escapes an entire array to prevent SQL injection.
+	 * @param $array the array to be escaped.
+	 * @return Array the escaped array
+	 */   
+	function arrayAttributeEscape($array){
+		if(is_array($array))
+  			return array_map("attribute_escape",$array);
+    	else
+    		return attribute_escape($array);
+	}
+	
+	/**
+	 * Encodes all string elements of a (possibly nested) array using htmlentities.
+	 * @param $array the array whose elements are to be encoded.
+	 * @return Array the encoded array
+	 */   
+	function arrayHtmlEntities($array){
+		if(is_array($array))
+  			return array_map(array('PhotoQHelper', 'arrayHtmlEntities'),$array);
+    	else{
+    		if(is_string($array))
+    			return htmlentities($array);
+    		else
+    			return $array;
+    	}
+	}
+    
+    
+    /**
+     * Outputs the category list where the user can select categories.
+     * @param $q_id int id of the queued photo for which to choose cats
+     * @param $default int id of the default photoq category
+     * @param $selectedCats array category ids of categories that should appear selected
+     */
+    function showCategoryCheckboxList( $q_id = 0, $default = 0, $selectedCats = array() ) {
+		
+		if(!$selectedCats)
+		{
+		 	// No selected categories, set to default
+		 	$selectedCats[] = $default;
+		}
+		
+		//$q_id = preg_replace('/\./','_',$q_id); //. in post vars become _
+		
+		// check the fold option
+		$oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
+		$closed = $oc->getValue('foldCats') ? 'closed' : ''; 
+		
+		echo '<div class="postbox '.$closed.'">';
+		echo '<h3 class="postbox-handle"><span>'.__('Categories','PhotoQ').'</span></h3>';
+		echo '<div class="inside">';
+		echo '<ul>';
+		//$this->category_checklist(0,0,$selectedCats,$q_id);
+		wp_category_checklist( 0, 0, $selectedCats, false, new Walker_PhotoQ_Category_Checklist($q_id));
+	
+		echo '</ul></div></div>';
+	}
+	
+	/**
+	 * Shows the list of meta fields
+	 * @param $id int if given shows the meta field of queued photo with this id.
+	 */
+	function showMetaFieldList($id = 0){
+		$db =& PhotoQSingleton::getInstance('PhotoQDB');
+		if($results = $db->getAllFields()){
+			echo '<div class="info_group">';
+			
+			foreach ($results as $field_entry) {
+				if($id){
+					//get posted values if any from common info
+					$field_value = attribute_escape(stripslashes($_POST[$field_entry->q_field_name][0]));
+					if(empty($field_value)){
+						//get the stored values
+						$field_value = $this->_db->getFieldValue($id, $field_entry->q_field_id);
+					}
+				}
+				echo '<div class="info_unit">'.$field_entry->q_field_name.':<br /><textarea style="font-size:small;" name="'.$field_entry->q_field_name.'[]" cols="30" rows="3"  class="uploadform">'.$field_value.'</textarea></div>';
+			}
+			
+			echo '</div>';
+		}
+	}
+	
+	
 	
 	
 	
@@ -597,7 +776,7 @@ class PhotoQHelper
 		global $post;
 		
 		if($this->isPhotoPost($post)){
-			$photo = new PhotoQPublishedPhoto($post->ID, $post->title);
+			$photo =& PhotoQPhoto::createInstance('PhotoQPublishedPhoto', $post->ID, $post->title);
 			$data = $photo->generateContent($viewName);
 		}
 		return $data;
@@ -606,118 +785,137 @@ class PhotoQHelper
 	
 }
 
-
 /**
- * No exceptions in PHP4, so let's try to have at least 
- * some level of error handling through this class
- *
+ * My own category walker visitor object that will output categories in array syntax such that we can 
+ * have multiple category dropdown lists on the same page.
  */
-class PhotoQStatusMessage
-{
-
-	/**
-	 * The string message.
-	 *
-	 * @var string
-	 * @access private
-	 */
-	var $_msg;
-	
+class Walker_PhotoQ_Category_Checklist extends Walker {
+	var $tree_type = 'category';
+	var $db_fields = array ('parent' => 'parent', 'id' => 'term_id'); //TODO: decouple this
+	var $q_id;
 	/**
 	 * PHP4 type constructor
 	 */
-	function PhotoQStatusMessage($msg = '')
+	function Walker_PhotoQ_Category_Checklist($q_id)
 	{
-		$this->__construct($msg);
+		$this->__construct($q_id);
 	}
-
 
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($msg = '')
+	function __construct($q_id)
 	{
-		$this->_msg = $msg;	
+		$this->q_id = $q_id;
+	}
+
+	function start_lvl(&$output, $depth, $args) {
+		$indent = str_repeat("\t", $depth);
+		$output .= "$indent<ul class='wimpq_subcats'>\n";
+	}
+
+	function end_lvl(&$output, $depth, $args) {
+		$indent = str_repeat("\t", $depth);
+		$output .= "$indent</ul>\n";
+	}
+
+	function start_el(&$output, $category, $depth, $args) {
+		extract($args);
+
+		$class = in_array( $category->term_id, $popular_cats ) ? ' class="popular-category"' : '';
+		$output .= "\n<li id='category-$category->term_id-".$this->q_id."'$class>" . '<label for="in-category-' . $category->term_id . '-'.$this->q_id.'" class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="post_category['.$this->q_id.'][]" id="in-category-' . $category->term_id . '-'.$this->q_id.'"' . (in_array( $category->term_id, $selected_cats ) ? ' checked="checked"' : "" ) . '/> ' . wp_specialchars( apply_filters('the_category', $category->name )) . '</label>';
+	}
+
+	function end_el(&$output, $category, $depth, $args) {
+		$output .= "</li>\n";
 	}
 	
-	/**
-	 * Whether the message denotes an error or not.
-	 *
-	 * @access public
-	 * @return boolean
-	 */
-	function isError()
-	{
-		return false;		
-	}
-	
-	/**
-	 * Print the message to screen.
-	 *
-	 * @access public
-	 */
-	function show()
-	{
- 		echo '<div class="updated fade">';
-		echo "<p>$this->_msg</p>";
-		echo '</div>';
-	}
-	
-	/**
-	 * Getter for the message string.
-	 *
-	 * @access public
-	 * @return string
-	 */
-	function getMsg()
-	{
-		return $this->_msg;
-	}
 	
 }
 
-/**
- * This message can be returned if there was an error.
- *
- */
-class PhotoQErrorMessage extends PhotoQStatusMessage
-{
-	function isError()
-	{
-		return true;		
-	}
-
-	function show()
-	{
-		echo '<div class="error">';
-		echo $this->getMsg();
-		echo '</div>';
-	}
-}
-
-
 
 /**
- * Helper class to implement Singleton pattern. Instantiate objects like
- * $object =& PhotoQSingleton::getInstance('ClassName');
+ * Shamelessly copied from Drupal. This gives us a set of timers that we for now use
+ * in the batch processing stuff to prevent script timeouts. 
+ * Usage:
+ * 
+ * $timer =& PhotoQSingleton::getInstance('PhotoQTimers');
+ * $timer->start('batchProcessing');
+ * if($timer->read('batchProcessing') < 1000) ...
+ * 
+ * @author manu
  *
  */
-class PhotoQSingleton
+class PhotoQTimers extends PhotoQSingleton
 {
 	/**
-	 * implements the 'singleton' design pattern.
+	 * @var Array of registered timers
 	 */
-	function getInstance ($class)
-	{
-		static $instances = array();  // array of instance names
+	var $_timers;
+	function __construct(){
+		$_timers = array();
+	}
 
-		if (!array_key_exists($class, $instances)) {
-			// instance does not exist, so create it
-			$instances[$class] =& new $class;
+	/**
+	 * Start the timer with the specified name. If you start and stop
+	 * the same timer multiple times, the measured intervals will be
+	 * accumulated.
+	 *
+	 * @param name
+	 *   The name of the timer.
+	 */
+	function start($name) {
+		
+		list($usec, $sec) = explode(' ', microtime());
+		$this->_timers[$name]['start'] = (float)$usec + (float)$sec;
+		$this->_timers[$name]['count'] = isset($this->_timers[$name]['count']) ? ++$this->_timers[$name]['count'] : 1;
+	}
+
+	/**
+	 * Read the current timer value without stopping the timer.
+	 *
+	 * @param name
+	 *   The name of the timer.
+	 * @return
+	 *   The current timer value in ms.
+	 */
+	function read($name) {
+		
+		if (isset($this->_timers[$name]['start'])) {
+			list($usec, $sec) = explode(' ', microtime());
+			$stop = (float)$usec + (float)$sec;
+			$diff = round(($stop - $this->_timers[$name]['start']) * 1000, 2);
+
+			if (isset($this->_timers[$name]['time'])) {
+				$diff += $this->_timers[$name]['time'];
+			}
+			return $diff;
 		}
-		$instance =& $instances[$class];
-		return $instance;
 	}
-} // singleton
+
+	/**
+	 * Stop the timer with the specified name.
+	 *
+	 * @param name
+	 *   The name of the timer.
+	 * @return
+	 *   A timer array. The array contains the number of times the
+	 *   timer has been started and stopped (count) and the accumulated
+	 *   timer value in ms (time).
+	 */
+	function stop($name) {
+		$this->_timers[$name]['time'] = $this->read($name);
+		unset($this->_timers[$name]['start']);
+
+		return $this->_timers[$name];
+	}
+
+
+}
+
+
+
+
+
 
 ?>

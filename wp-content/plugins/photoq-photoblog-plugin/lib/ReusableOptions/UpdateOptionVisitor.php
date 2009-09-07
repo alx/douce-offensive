@@ -21,17 +21,17 @@ class UpdateOptionVisitor extends OptionVisitor
 	 *
 	 * @param object TextFieldOption &$textField	Reference to visited option.
 	 */
-	 function visitTextField(&$textField)
+	 function visitTextFieldOptionBefore(&$textField)
 	 {
-	 	if(isset($_POST[$textField->getName()]))
-	 		$textField->setValue(attribute_escape($_POST[$textField->getName()]));
+	 	if(isset($_POST[$textField->getPOSTName()]))
+	 		$textField->setValue(esc_attr($_POST[$textField->getPOSTName()]));
 	 }
 	 
 	 
-	 function visitStrictValidationTextField(&$textField)
+	 function visitStrictValidationTextFieldOptionBefore(&$textField)
 	 {
 	 	$oldValue = $textField->getValue();
-	 	$this->visitTextField($textField);
+	 	$this->visitTextFieldOptionBefore($textField);
 	 	//check whether we pass validation if not put back the old value
 	 	$errMsgs = $textField->validate();
 	 	if(!empty($errMsgs))
@@ -45,9 +45,9 @@ class UpdateOptionVisitor extends OptionVisitor
 	 *
 	 * @param object TextFieldOption &$textField	Reference to visited option.
 	 */
-	 function visitPasswordTextField(&$textField)
+	 function visitPasswordTextFieldOptionBefore(&$textField)
 	 {
-	 	$this->visitTextField($textField);
+	 	$this->visitTextFieldOptionBefore($textField);
 	 }
 	 
 	 /**
@@ -57,10 +57,11 @@ class UpdateOptionVisitor extends OptionVisitor
 	 *
 	 * @param object TextAreaOption &$textArea	Reference to visited option.
 	 */
-	 function visitTextArea(&$textArea)
+	 function visitTextAreaOptionBefore(&$textArea)
 	 {
-	 	if(isset($_POST[$textArea->getName()]))
-	 		$textArea->setValue(attribute_escape($_POST[$textArea->getName()]));
+	 	
+	 	if(isset($_POST[$textArea->getPOSTName()]))
+	 		$textArea->setValue(str_replace(array("\r\n", "\r", "\n"),PHP_EOL,esc_attr($_POST[$textArea->getPOSTName()])));
 	 }
 	 
 	 /**
@@ -70,9 +71,10 @@ class UpdateOptionVisitor extends OptionVisitor
 	 *
 	 * @param object HiddenInputField &$hiddenInputField	Reference to visited option.
 	 */
-	 function visitHiddenInputField(&$hiddenInputField)
+	 function visitHiddenInputFieldOptionBefore(&$hiddenInputField)
 	 {
-	 	$hiddenInputField->setValue(attribute_escape($_POST[$hiddenInputField->getName()]));
+	 	if(isset($_POST[$hiddenInputField->getPOSTName()]))
+	 		$hiddenInputField->setValue(esc_attr($_POST[$hiddenInputField->getPOSTName()]));
 	 }
 	
 	/**
@@ -82,9 +84,10 @@ class UpdateOptionVisitor extends OptionVisitor
 	 *
 	 * @param object CheckBoxOption &$checkBox	Reference to visited option.
 	 */
-	 function visitCheckBox(&$checkBox)
+	 function visitCheckBoxOptionBefore(&$checkBox)
 	 {
-	 	$checkBox->setValue(isset($_POST[$checkBox->getName()]) ? '1' : '0');
+	 	if (!isset($_GET['action']))
+	 		$checkBox->setValue(isset($_POST[$checkBox->getPOSTName()]) ? '1' : '0');
 	 }
 
 	/**
@@ -96,13 +99,16 @@ class UpdateOptionVisitor extends OptionVisitor
 	 */
 	 function visitRadioButtonListBefore(&$radioButtonList)
 	 {	
-	 	$radioButtonList->setValue($_POST[$radioButtonList->getName()]);
+	 	if(isset($_POST[$radioButtonList->getPOSTName()]))
+	 		$radioButtonList->setValue($_POST[$radioButtonList->getPOSTName()]);
 	 }
 	 
-	 function visitCheckBoxList(&$checkBoxList)
+	 function visitRO_CheckBoxListBefore(&$checkBoxList)
 	 {	
-	 	$checkBoxList->setValue(isset($_POST[$checkBoxList->getName()]) ? $_POST[$checkBoxList->getName()] : NULL);
+	 	if (!isset($_GET['action']))
+	 		$checkBoxList->setValue(isset($_POST[$checkBoxList->getPOSTName()]) ? $_POST[$checkBoxList->getPOSTName()] : NULL);
 	 }
+	 
 	 
 	 /**
 	 * Abstract implementation of the visitDropDownListBefore() method called whenever a
@@ -113,31 +119,76 @@ class UpdateOptionVisitor extends OptionVisitor
 	 */
 	 function visitDropDownListBefore(&$dropDownList)
 	 {	
-	 	$dropDownList->setValue($_POST[$dropDownList->getName()]);
+	 	if(isset($_POST[$dropDownList->getPOSTName()]))
+	 		$dropDownList->setValue($_POST[$dropDownList->getPOSTName()]);
 	 }
 	 
-	/**
-	 * Method called whenever a RO_ChangeTrackingContainer is visited. 
-	 *
-	 * @param object RO_ChangeTrackingContainer &$ctContainer	Reference to visited option.
-	 */
-	 function visitCTContainerBefore(&$ctContainer)
-	 {
-	 	$ctContainer->storeOldValues();
+
+	 function visitRO_ReorderableListBefore(&$reorderableList){
+	 	if(isset($_POST[$reorderableList->getFieldName()]))
+	 		$reorderableList->setValue($_POST[$reorderableList->getFieldName()]);
 	 }
+
+	 //check whether a new option is being added
+	 function visitRO_ExpandableCompositeOptionBefore(&$option){
+	 	if (isset($_POST['addExpComp-'.$option->getName()])) {
+	 		//name has to be save to create directories and not empty.
+	 		$name = preg_replace('/[^a-zA-Z0-9_\-]/','_',$_POST['newExpComp-'.$option->getName()]);
+	 		if(!empty($name)){
+	 			$addOk = true;
+	 			//callback to be executed if we add a child
+				if(method_exists($option->_onAddCallback[0], $option->_onAddCallback[1]))
+					$addOk = call_user_func_array(array($option->_onAddCallback[0], $option->_onAddCallback[1]), array($name));
+				
+				//only add if the onAddCallback returned true
+				if($addOk){
+	 				$className = $option->_childClassName;
+	 				$option->addChild(new $className($name),1);
+				}else
+					echo "could not add, callback returned false";
+	 		}else
+	 			echo "ERROR: invalid name";
+	 	}
+	 	if (isset($_GET['action']) && $_GET['action'] == 'delExpComp-'.$option->getName()) {
+	 		$name = esc_attr($_GET['entry']);
+	 		//check for correct nonce first
+	 		check_admin_referer('delExpComp'.$name. '-nonce');
+	 		$delOk = true;
+	 		//callback to be executed if we remove a child
+	 		if(method_exists($option->_onDelCallback[0], $option->_onDelCallback[1]))
+	 			$delOk = call_user_func_array(array($option->_onDelCallback[0], $option->_onDelCallback[1]), array($name));
+
+			//only delete if the onDelCallback returned true
+	 		if($delOk){
+	 			$option->removeChild($name);
+	 		}else
+	 			echo "could not add, callback returned false";
+			
+	 	}
+	 }
+
+	 
 	 
 	 /**
-	 * Method called whenever a
-	 * RO_ChangeTrackingContainer is visited.
-	 *
-	 * @param object RO_ChangeTrackingContainer &$ctContainer	Reference to visited option.
-	 */
-	 function visitCTContainerAfter(&$ctContainer)
+	  * Method called whenever any option is visited.
+	  *
+	  * @param object ReusableOption &$option	Reference to visited option.
+	  */
+	 function visitDefaultBefore(&$option)
 	 {
-	 	$ctContainer->checkIfChanged();
+	 	$option->storeOldValues();
 	 }
-	 
-	 
+
+	 /**
+	  * Method called whenever any option is visited.
+	  *
+	  * @param object ReusableOption &$option	Reference to visited option.
+	  */
+	 function visitDefaultAfter(&$option)
+	 {
+	 	$option->updateChangedStatus();
+	 }
+
 
 }
 

@@ -34,19 +34,6 @@ class RO_CheckBoxList extends SelectionList
 	}
 	
 	
-	
-	/**
-	 * Concrete implementation of the accept() method. Calls visitCheckBoxList() on 
-	 * the supplied visitor object.
-	 *
-	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
-	 */
-	function accept(&$visitor)
-	{
-		$visitor->visitCheckBoxList($this);
-		parent::accept($visitor);
-	}
-	
 
 }
 
@@ -62,16 +49,6 @@ class RO_CheckBoxListOption extends SelectableOption
 	
 	
 	/**
-	 * PHP4 type constructor
-	 */
-	function RO_CheckBoxListOption($defaultValue, $label = '', 
-					$textBefore = '', $textAfter = '')
-	{
-		$this->__construct($defaultValue, $label, $textBefore, $textAfter);
-	}
-	
-	
-	/**
 	 * PHP5 type constructor
 	 */
 	function __construct($defaultValue, $label = '', 
@@ -81,17 +58,7 @@ class RO_CheckBoxListOption extends SelectableOption
 	}
 	
 	
-	/**
-	 * Concrete implementation of the accept() method. Calls visitCheckBoxListOption() on 
-	 * the supplied visitor object.
-	 *
-	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
-	 */
-	function accept(&$visitor)
-	{
-		$visitor->visitCheckBoxListOption($this);
-		parent::accept($visitor);
-	}
+	
 	
 	
 }

@@ -1,128 +1,133 @@
 <div class="wrap">
 
-
 <form method="post" action="edit.php?page=whoismanu-photoq.php">
-<h2>Manage PhotoQ</h2>
+<h2><?php _e('Manage PhotoQ', 'PhotoQ') ?></h2>
 <div id="poststuff">
 
-<?php 
+<?php
+	global $current_user;
 
-wp_nonce_field( 'queueReorder', 'queueReorderNonce', false ); 
-
-
+	if ( function_exists('wp_nonce_field')){
+		wp_nonce_field('photoq-manageQueue', 'manageQueueNonce');
+		wp_nonce_field( 'queueReorder', 'queueReorderNonce', false );
+	}
+	
+	//get the length of the queue
+	$qLength = $this->_queue->getLength();
+	
 ?> 
 
-
-
 <div class="qlen">		
-	<?php 
-	if($queue)
-		echo 'Queue length: '.$qLength;
+<?php 
+	if($qLength)
+		printf(__('Number of photos in the queue: %s', 'PhotoQ'), "<b>$qLength</b>");
 	else
-		echo "Queue empty, why not upload some photos?";
-	?>
+		_e('Queue empty, why not upload some photos?', 'PhotoQ');
+?>
 </div>
 
-
-<div class="tablenav">
-	
+<div class="tablenav">	
 	<div class="alignleft actions">
 		<input type="submit" class="button-primary action" name="add_entry"
 			value="<?php _e('Add Photos to Queue', 'PhotoQ') ?>" />
 	
 		<input type="submit" class="button-secondary action" name="clear_queue"
 			value="<?php _e('Clear Queue...', 'PhotoQ') ?>"
-			onClick="return confirm(
-		'Are you sure you want to clear the entire queue?');" />
+			onclick="return confirm(
+		'<?php _e('Are you sure you want to clear the entire queue?', 'PhotoQ') ?>');" />
 	</div>
 	
 	<div class="alignright actions">
 		<?php 
+		if ( current_user_can('use_secondary_photoq_post_button') ):
+		
 			$num2Post = $this->_oc->getValue('postMulti');
 			if(is_numeric($num2Post) && $num2Post > 1):
-				$btnString = "Post Next $num2Post Photos...";
+				$btnString = sprintf(__('Post Next %d Photos...','PhotoQ'), $num2Post);
 				if($num2Post >= $qLength)
-					$btnString = 'Post Whole Queue...';
+					$btnString = __('Post Whole Queue...', 'PhotoQ');
 		?>
-		<input type="submit" class="button-secondary action" name="post_multi"
+		
+			<input type="submit" class="button-secondary action" name="post_multi"
 			value="<?php echo $btnString; ?>"
-			onClick="return confirm(
-		'Are you really sure you want to publish the next entries in the queue?');" />
-		<?php endif;?>
+			onclick="return confirm(
+			'<?php _e('Are you really sure you want to publish the next entries in the queue?', 'PhotoQ') ?>');" />
+		<?php 
+			endif;
+		endif;
+		?>
+		<?php if ( current_user_can('use_primary_photoq_post_button') ): ?>
 		<input type="submit" class="button-secondary action" name="post_first"
 			value="<?php _e('Post Top of Queue...', 'PhotoQ') ?>"
-			onClick="return confirm('Are you sure you want to publish the first entry of the queue?');" />
+			onclick="return confirm('<?php _e('Are you sure you want to publish the first entry of the queue?', 'PhotoQ') ?>');" />
+		<?php endif; ?>
 	</div>
-	
 </div>
 <div class="clr"></div>
-<?php if($queue){ ?>
 
-<div id="qHeader" class="thead">
-	<div class="qHCol qHPosition">Position</div>
-		<div class="qHCol qThumb">Thumbnail</div>
-		<div class="qHCol qTitle">Title</div>
-		<div class="qHCol qDescr">Description</div>
+<?php if($qLength): ?>
+
+	<div id="qHeader" class="thead">
+		<div class="qHCol qHPosition"><?php _e('Position', 'PhotoQ') ?></div>
+		<div class="qHCol qThumb"><?php _e('Thumbnail', 'PhotoQ') ?></div>
+		<div class="qHCol qTitle"><?php _e('Title', 'PhotoQ') ?></div>
+		<div class="qHCol qAuthor"><?php _e('Author', 'PhotoQ') ?></div>
+		<div class="qHCol qDescr"><?php _e('Description', 'PhotoQ') ?></div>
 		<div class="qHCol qEdit"></div>
 		<div class="qHCol qDelete"></div>
 		<div class="clr">&nbsp;</div>
-</div>
-
-
+	</div>
+	
+	
 	<ul id="photoq">
+	
+		<?php
+		for ($i = 0; $i < $qLength; $i++){
+			//get the i-th photo from the queue
+			$currentPhoto =& $this->_queue->getQueuedPhoto($i);
+			
+			//construct the url to the fullsize image
+			$imgUrl = "../". PhotoQHelper::getRelUrlFromPath($currentPhoto->getPath());
+	
+			$path = $currentPhoto->getAdminThumbURL();		
+			
+			$deleteLink = 'edit.php?page=whoismanu-photoq.php&action=delete&entry='.$currentPhoto->getId();
+			$deleteLink = ( function_exists('wp_nonce_url') ) ? wp_nonce_url($deleteLink, 'photoq-deleteQueueEntry' . $currentPhoto->getId()) : $deleteLink;
+				
+		?>
+	
+			<li id="photoq-<?php echo $currentPhoto->getId(); ?>" class='photoqEntry'>
+				<div class="qCol qPosition"><?php echo ($i + 1); ?></div>
+				<div class="qCol qThumb">
+					<a class="img_link" href="<?php echo $imgUrl; ?>" title="<?php _e('Click to see full-size photo', 'PhotoQ') ?>" target="_blank">
+						<img src='<?php echo $path; ?>' alt='<?php echo $queue[$i]->q_title; ?>' />
+					</a>
+				</div>
+				<div class="qCol qTitle"><?php echo $currentPhoto->getTitle(); ?></div>
+				<div class="qCol qAuthor"><?php $userData = get_userdata($currentPhoto->getAuthor()); echo $userData->display_name; ?></div>
+				<div class="qCol qDescr"><?php if($currentPhoto->getDescription()) echo $currentPhoto->getDescription(); else echo "&nbsp;"; ?></div>
+				<?php if ( $current_user->id == $currentPhoto->getAuthor() ||  current_user_can('edit_others_posts') ): ?>
+				<div class="qCol qEdit">
+					<a href="#" onclick="return editQEntry('<?php echo $currentPhoto->getId(); ?>');"><?php _e('Edit', 'PhotoQ') ?></a>
+				</div>
+				<?php endif; ?>
+				<?php if ( $current_user->id == $currentPhoto->getAuthor() ||  current_user_can('delete_others_posts') ): ?>
+				<div class="qCol qDelete">
+					<a href="<?php echo $deleteLink; ?>" onclick="return confirm('<?php _e('Delete entry? Corresponding image will also be deleted from server?', 'PhotoQ') ?>');"><?php _e('Delete', 'PhotoQ') ?></a>
+				</div>
+				<?php endif; ?>
+				<div class="clr">&nbsp;</div>
+			</li>
+		<?php 	} //for loop over queue entries ?>
+	
+	</ul>
 
-<?php
+<?php endif; //if(qLength) ?>
 
-	for ($i = 0; $i < $qLength; $i++){
-		//get the name of the thumbnail
-		$img_path = $this->_oc->getQDir() . $queue[$i]->q_imgname;
-		$img_url = "../". PhotoQHelper::getRelUrlFromPath($img_path);
 
-		$path = $this->getAdminThumbURL($this->_oc->getQDir() . $queue[$i]->q_imgname);
-		
-?>
-
-		<li id="photoq-<?php echo $queue[$i]->q_img_id; ?>" class='photoqEntry'>
-			<div class="qCol qPosition"><?php echo $queue[$i]->q_position; ?></div>
-			<div class="qCol qThumb">
-				<a class="img_link" href="<?php echo $img_url; ?>" title="Click to see full-size photo" target="_blank">
-					<img src='<?php echo $path; ?>' alt='<?php echo $queue[$i]->q_title; ?>' />
-				</a>
-			</div>
-			<div class="qCol qTitle"><?php echo $queue[$i]->q_title; ?></div>
-			<div class="qCol qDescr"><?php if($queue[$i]->q_descr) echo $queue[$i]->q_descr; else echo "&nbsp;"; ?></div>
-
-<?php
-		$delete_link = 'edit.php?page=whoismanu-photoq.php&action=delete&entry='.$queue[$i]->q_img_id;
-		$delete_link = ( function_exists('wp_nonce_url') ) ? wp_nonce_url($delete_link, 'photoq-deleteQueueEntry' . $queue[$i]->q_img_id) : $delete_link;
-		
-?>
-		<div class="qCol qEdit">
-			<a href="" onClick="return editQEntry('<?php echo $queue[$i]->q_img_id; ?>');">Edit</a>
-		</div>
-		<div class="qCol qDelete">
-			<a href="<?php echo $delete_link; ?>" onClick="return confirm('Delete entry? Correpsonding image will also be deleted from server?');">Delete</a>
-		</div>
-		<div class="clr">&nbsp;</div>
-
-		</li>
-<?php 	
-	}
-
-	echo "</ul>";
-
-}//if(queue)
-
-if ( function_exists('wp_nonce_field') ){
-	wp_nonce_field('photoq-manageQueue');
-}
-?>
 
 </div>
 
 </form>
-
-
-
 
 </div>

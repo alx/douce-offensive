@@ -14,18 +14,6 @@
 class RadioButtonList extends SelectionList
 {
 
-	/**
-	 * Concrete implementation of the accept() method. Calls visitRadioButtonList() on
-	 * the supplied visitor object.
-	 *
-	 * @param object OptionVisitor &$visitor	Reference to visiting visitor.
-	 */
-	function accept(&$visitor)
-	{
-		$visitor->visitRadioButtonListBefore($this);
-		parent::accept($visitor);
-		$visitor->visitRadioButtonListAfter($this);
-	}
 	
 	/**
 	 * Add an option to the composite.	
@@ -53,13 +41,13 @@ class RadioButtonList extends SelectionList
 	 * @access public
 	 * @param array $nameValueArray value-label pairs with which to populate the list.
 	 */
-	function populate($valueLabelArray)
+	function populate($valueLabelArray, $textBefore = '', $textAfter = '')
 	{
 		//populate the list with all ImageSizes
 		foreach ($valueLabelArray as $value => $label){
 			$this->addChild(
 			new RadioButtonOption(
-			$value, $label
+			$value, $label, $textBefore, $textAfter
 			)
 			);
 		}
