@@ -11,5 +11,4 @@
 		<?php edit_post_link('Modifier cette page.', '<p>', '</p>'); ?>
 	 <?php endwhile; endif; ?>
 
-<?php get_sidebar(); ?>
 <?php get_footer(); ?>
