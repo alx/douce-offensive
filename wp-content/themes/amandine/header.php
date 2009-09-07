@@ -16,7 +16,7 @@
 	
 	<?php wp_head(); ?>
 	<script type="text/javascript" src="<?php bloginfo('siteurl'); ?>/wp-includes/js/jquery/jquery.js"></script>
-	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/douce-offensive.js" type="text/javascript"></script>
+	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/douce-offensive.js"></script>
 </head>
 
 <body>

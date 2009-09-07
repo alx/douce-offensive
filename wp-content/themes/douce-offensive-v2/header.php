@@ -9,20 +9,17 @@
 	<meta name="generator" content="WordPress <?php bloginfo('version'); ?>" /> <!-- leave this for stats -->
 
 	<link rel="stylesheet" href="<?php bloginfo('stylesheet_url'); ?>" type="text/css" media="all" />
-	<link rel="stylesheet" href="<?php bloginfo('stylesheet_directory'); ?>/print.css" type="text/css" media="print" />
 
 	<link rel="alternate" type="application/rss+xml" title="<?php printf(__('%s RSS Feed', 'skimmed'), bloginfo('name')); ?>" href="<?php bloginfo('rss2_url'); ?>" />
 	<link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
 	
 	<?php wp_head(); ?>
-	<script type="text/javascript" src="<?php bloginfo('siteurl'); ?>/wp-includes/js/jquery/jquery.js"></script>
-	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/douce-offensive.js" type="text/javascript"></script>
 </head>
 
 <body>
-<div id="page"><?php // Note html, body & page are all closed by footer.php ?>
+<div id="page">
 
-	<div id="header">
+	<div id="side-left">
 		<ul>
 		<?php
 		$categories = get_categories();
@@ -39,7 +36,6 @@
 			$i += 1;
 		endforeach;
 		
-		$output .= '<li>contact: <a href="mailto:globaleffect@gmail.com">globaleffect@gmail.com</a></li><ul>';
 		echo $output;
 		?>
 		</ul>

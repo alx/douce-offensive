@@ -18,7 +18,7 @@ function douce_main($post) {
 	$sizes = get_post_meta($post->ID, 'photoQImageSizes', true);
 	
 	$main = '<img class="photoQcontent" height="'.$sizes['main']['imgHeight'].'" ';
-        $main = 'src="'.$sizes['main']['imgUrl'].'" alt="'.$post->title.'"/>';
+    $main .= 'src="'.$sizes['main']['imgUrl'].'" alt="'.$post->title.'"/>';
 	
 	return $main;
 }
