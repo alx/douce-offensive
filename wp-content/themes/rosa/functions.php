@@ -51,14 +51,15 @@ if ( function_exists('register_sidebar') )
 	));
 
 function display_recent_categories(){
-	global $wpdb;
+	global $wpdb, $wp_rewrite;
 	
 	$query = "select t.term_id as term_ids, t.name, t.slug, max(p.ID) as id, tx.count from $wpdb->terms t, $wpdb->term_taxonomy tx, $wpdb->term_relationships tr, $wpdb->posts p where t.term_id = tx.term_id and tx.parent != 0 and tx.taxonomy = 'category' and tr.term_taxonomy_id = t.term_id and tr.object_id = id and p.post_status = 'publish' group by term_ids order by id desc limit 5";
 	
 	$results = $wpdb->get_results($query);
 	
 	foreach ($results as $result) {
-		echo "<li><a href='".get_category_link($result->id, true)."'>".print_r($result)."</a></li>";
+		$catlink = $wp_rewrite->get_category_permastruct() . $result->slug;
+		echo "<li><a href='".$catlink."'>".$result->name."</a></li>";
 	}
 }
 
