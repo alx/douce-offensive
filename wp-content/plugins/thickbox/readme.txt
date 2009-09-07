@@ -1,10 +1,10 @@
 === ThickBox ===
 Contributors: chschenk
 Donate link: http://www.christianschenk.org/donation/
-Tags: thickbox, gallery, pictures, images
+Tags: thickbox, smoothbox, gallery, pictures, images
 Requires at least: 2.0
-Tested up to: 2.6.1
-Stable tag: 1.2.1
+Tested up to: 2.8
+Stable tag: 1.4
 
 Embed ThickBox into your posts and pages.
 
@@ -12,6 +12,8 @@ Embed ThickBox into your posts and pages.
 
 If you'd like to embed ThickBox into your blog just install this plugin,
 insert ThickBox compliant markup whereever you want and you're all set.
+
+Also contains SmoothBox.
 
 == Installation ==
 
@@ -22,6 +24,27 @@ insert ThickBox compliant markup whereever you want and you're all set.
 
 1. Some pictures in a gallery.
 2. If you click on a picture you'll see the larger image.
+
+== Changelog ==
+
+1.4
+
+* New admin interface with various options
+* Added german translation for ThickBox and SmoothBox
+* You may now add variants of ThickBox and SmoothBox as you see fit
+* Plugin supports i18n now
+
+1.3.1
+
+* Small bugfix regarding jQuery.
+
+1.3
+
+* Updated ThickBox (3.1) and SmoothBox (v20080623) to latest version.
+
+1.0 - 1.2.x
+
+* First drafts
 
 == Expert Mode ==
 
