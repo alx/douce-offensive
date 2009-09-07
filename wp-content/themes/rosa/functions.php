@@ -38,7 +38,7 @@ if (!class_exists("PhotoQ")) {
 	require_once(PHOTOQ_PATH.'classes/PhotoQImageSize.php');
 }
 
-$photoq = new PhotoQ();
+//$photoq = new PhotoQ();
 
 automatic_feed_links();
 
