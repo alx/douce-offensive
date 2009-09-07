@@ -58,7 +58,7 @@ function display_recent_categories(){
 	$results = $wpdb->get_results($query);
 	
 	foreach ($results as $result) {
-		echo "<li><a href='".get_category_link($result->id)."'>".$result->name."</a></li>";
+		echo "<li><a href='".get_category_link($result->id)."'>".$result->name.print_r($result)"</a></li>";
 	}
 }
 
