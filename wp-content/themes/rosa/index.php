@@ -17,7 +17,7 @@
 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
 <?php
-	echo $photoq->_db->getPublishedPhoto($post->ID)->generateImgTag('main', '');
+	echo PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->generateImgTag('main', '');
 ?>
 
 <?php endwhile; endif; ?>
