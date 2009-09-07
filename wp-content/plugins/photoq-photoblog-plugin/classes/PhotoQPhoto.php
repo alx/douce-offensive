@@ -163,7 +163,7 @@ class PhotoQPhoto extends PhotoQObject
 	
 	function generateImgTag($sizeName, $class)
 	{				
-		return '<img width="'.$this->_sizes[$sizeName]->getScaledWidth().'" height="'.$this->_sizes[$sizeName]->getScaledHeight().'" alt="'.$this->title.'" src="'.$this->_sizes[$sizeName]->getUrl().'" class="'.$class.'" />';
+		return '<img  alt="'.$this->title.'" src="'.$this->_sizes[$sizeName]->getUrl().'" class="'.$class.'" />';
 	}
 	
 	function generateImgLink($sourceSizeName, $targetSizeName, $attributes, $class)
