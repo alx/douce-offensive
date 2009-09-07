@@ -1,8 +1,8 @@
-<?php 
-/** 
- * @package WordPress 
- * @subpackage Default_Theme 
- */ 
+<?php
+/**
+ * @package WordPress
+ * @subpackage Default_Theme
+ */
 /*
 Template Name: Archives
 */
@@ -11,17 +11,19 @@ Template Name: Archives
 <?php get_header(); ?>
 
 <div id="content" class="widecolumn">
-	<?php get_search_form(); ?>
-	
-	<h2>Archives par mois&nbsp;:</h2>
+
+<?php get_search_form(); ?>
+
+<h2>Archives by Month:</h2>
 	<ul>
 		<?php wp_get_archives('type=monthly'); ?>
 	</ul>
-	
-	<h2>Archives par catégorie&nbsp;:</h2>
+
+<h2>Archives by Subject:</h2>
 	<ul>
-		<?php wp_list_categories(); ?>
+		 <?php wp_list_categories(); ?>
 	</ul>
+
 </div>
 
 <?php get_footer(); ?>

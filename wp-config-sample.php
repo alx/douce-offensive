@@ -1,49 +1,44 @@
 <?php
 /** 
- * La configuration de base de votre WordPress.
+ * The base configurations of the WordPress.
  *
- * Ce fichier contient les réglages de configuration suivants : réglages MySQL,
- * préfixe de table, clefs secrètes, langue utilisée, et ABSPATH.
- * Vous pouvez en savoir plus à leur sujet en allant sur 
- * {@link http://codex.wordpress.org/Editing_wp-config.php Modifier
- * wp-config.php} (en anglais). Vous devez obtenir les codes MySQL de votre 
- * hébergeur.
+ * This file has the following configurations: MySQL settings, Table Prefix,
+ * Secret Keys, WordPress Language, and ABSPATH. You can find more information by
+ * visiting {@link http://codex.wordpress.org/Editing_wp-config.php Editing
+ * wp-config.php} Codex page. You can get the MySQL settings from your web host.
  *
- * Ce fichier est utilisé par le script de création de wp-config.php pendant
- * le processus d'installation. Vous n'avez pas à utiliser le site web, vous
- * pouvez simplement renommer ce fichier en "wp-config.php" et remplir les
- * valeurs.
+ * This file is used by the wp-config.php creation script during the
+ * installation. You don't have to use the web site, you can just copy this file
+ * to "wp-config.php" and fill in the values.
  *
  * @package WordPress
  */
 
-// ** Réglages MySQL - Votre hébergeur doit vous fournir ces informations. ** //
-/** Le nom de la base de données de WordPress. */
-define('DB_NAME', 'votre-nom-de-bdd');
+// ** MySQL settings - You can get this info from your web host ** //
+/** The name of the database for WordPress */
+define('DB_NAME', 'putyourdbnamehere');
 
-/** Utilisateur de la base de données MySQL. */
-define('DB_USER', 'votre-utilisateur-de-bdd');
+/** MySQL database username */
+define('DB_USER', 'usernamehere');
 
-/** Mot de passe de la base de données MySQL. */
-define('DB_PASSWORD', 'votre-mdp-de-bdd');
+/** MySQL database password */
+define('DB_PASSWORD', 'yourpasswordhere');
 
-/** Adresse de l'hébergement MySQL. */
+/** MySQL hostname */
 define('DB_HOST', 'localhost');
 
-/** Jeu de caractères à utiliser par la base de données lors de la création des tables. */
+/** Database Charset to use in creating database tables. */
 define('DB_CHARSET', 'utf8');
 
-/** Le type de collabtion de la base de données. 
-  * N'y touchez qui si vous savez ce que vous faites. 
-  */
+/** The Database Collate type. Don't change this if in doubt. */
 define('DB_COLLATE', '');
 
 /**#@+
- * Clefs uniques d'authentification.
+ * Authentication Unique Keys.
  *
- * Remplacez les valeurs par défaut par des phrases uniques !
- * Vous pouvez générer des phrases aléatoires en utilisant 
- * {@link http://api.wordpress.org/secret-key/1.1/ Le service de clefs secrètes de WordPress.org}.
+ * Change these to different unique phrases!
+ * You can generate these using the {@link https://api.wordpress.org/secret-key/1.1/ WordPress.org secret-key service}
+ * You can change these at any point in time to invalidate all existing cookies. This will force all users to have to log in again.
  *
  * @since 2.6.0
  */
@@ -54,30 +49,28 @@ define('NONCE_KEY', 'put your unique phrase here');
 /**#@-*/
 
 /**
- * Préfixe de base de données pour les tables de WordPress.
+ * WordPress Database Table prefix.
  *
- * Vous pouvez installer plusieurs WordPress sur une seule base de données
- * si vous leur donnez chacune un préfixe unique. 
- * N'utilisez que des chiffres, des lettres non-accentuées, et des caractères soulignés!
+ * You can have multiple installations in one database if you give each a unique
+ * prefix. Only numbers, letters, and underscores please!
  */
 $table_prefix  = 'wp_';
 
 /**
- * Langue de localisation de WordPress, par défaut en Anglais.
+ * WordPress Localized Language, defaults to English.
  *
- * Modifiez cette valeur pour localiser WordPress. Un fichier MO correspondant
- * au langage choisi doit être installé dans le dossier wp-content/languages.
- * Par exemple, pour mettre en place une traduction française, mettez le fichier
- * fr_FR.mo dans wp-content/languages, et réglez l'option ci-dessous à "fr_FR".
+ * Change this to localize WordPress.  A corresponding MO file for the chosen
+ * language must be installed to wp-content/languages. For example, install
+ * de.mo to wp-content/languages and set WPLANG to 'de' to enable German
+ * language support.
  */
-define ('WPLANG', 'fr_FR');
+define ('WPLANG', '');
 
-/* C'est tout, ne touchez pas à ce qui suit ! Bon blogging ! */
+/* That's all, stop editing! Happy blogging. */
 
-/** Chemin absolu de WordPress vers le dossier WordPress. */
+/** WordPress absolute path to the Wordpress directory. */
 if ( !defined('ABSPATH') )
 	define('ABSPATH', dirname(__FILE__) . '/');
 
-/** Réglage des variables de WordPress et de ses fichiers inclus. */
+/** Sets up WordPress vars and included files. */
 require_once(ABSPATH . 'wp-settings.php');
-?>

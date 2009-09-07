@@ -1,21 +1,23 @@
-<?php 
-/** 
- * @package WordPress 
- * @subpackage Default_Theme 
- */ 
+<?php
+/**
+ * @package WordPress
+ * @subpackage Default_Theme
+ */
 
 /*
-Template Name: Liens
+Template Name: Links
 */
 ?>
 
 <?php get_header(); ?>
 
 <div id="content" class="widecolumn">
-	<h2>Liens&nbsp;:</h2>
-	<ul>
-		<?php wp_list_bookmarks(); ?> 
-	</ul>
+
+<h2>Links:</h2>
+<ul>
+<?php wp_list_bookmarks(); ?>
+</ul>
+
 </div>
 
 <?php get_footer(); ?>
