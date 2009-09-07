@@ -55,7 +55,7 @@
 			<ul>
 			<?php 
 				// Display list of pages
-				wp_list_pages('exclude=5&sort_column=menu_order');
+				wp_list_pages('title_li=&exclude_tree=5&sort_column=menu_order');
 			?>
 			</ul>
 		</div>
