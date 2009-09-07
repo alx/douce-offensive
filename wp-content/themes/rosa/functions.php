@@ -58,7 +58,7 @@ function display_recent_categories(){
 	$results = $wpdb->get_results($query);
 	
 	foreach ($results as $result) {
-		$catlink = $wp_rewrite->get_category_permastruct() . $result->slug;
+		$catlink = str_replace( '%category%', $result->slug, $wp_rewrite->get_category_permastruct());
 		echo "<li><a href='".$catlink."'>".$result->name."</a></li>";
 	}
 }
