@@ -6,7 +6,7 @@
 
 if(!defined(PHOTOQ_PATH)){
 	//convert backslashes (windows) to slashes
-	$cleanPath = str_replace('//', '/', dirname(__FILE__ . '/') . "../../plugins/photoq-photoblog-plugin/");
+	$cleanPath = str_replace('//', '/', dirname(__FILE__ . '/') . "/../../plugins/photoq-photoblog-plugin/");
 	define('PHOTOQ_PATH', $cleanPath.'/');
 }
 
