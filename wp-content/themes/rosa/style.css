@@ -154,9 +154,12 @@ Content
 	height:380px;
 	margin-left:25px;
 	margin-top:140px;
+	width: 10000px;
+	white-space: nowrap;
 }
 
 #content img {
+	display: inline;
 	vertical-align: middle;
 }
 
