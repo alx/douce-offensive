@@ -1,6 +1,7 @@
 <?php get_header(); ?>
 
 <div id="photo_list">
+	<div class="items">
 <?php
 	
 	$last_categories = get_categories(array(
@@ -22,6 +23,7 @@
 ?>
 
 <?php endwhile; endif; ?>
+	</div>
 </div>
 
 <div class="textset">
