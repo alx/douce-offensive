@@ -4,6 +4,11 @@
  * @subpackage Classic_Theme
  */
 
+function insert_jquery(){
+   wp_enqueue_script('jquery');
+}
+add_filter('wp_head','insert_jquery');
+
 if(!defined(PHOTOQ_PATH)){
 	//convert backslashes (windows) to slashes
 	$cleanPath = str_replace('\\', '/', dirname(__FILE__ . '/') . "/../../plugins/photoq-photoblog-plugin/");
