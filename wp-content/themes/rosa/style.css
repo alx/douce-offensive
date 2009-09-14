@@ -149,7 +149,7 @@ Header
 /*
 Content
 */
-
+/*
 #content {
 	height:380px;
 	margin-left:25px;
@@ -161,7 +161,47 @@ Content
 #content img {
 	display: inline;
 	vertical-align: middle;
+}*/
+
+.scrollable {
+
+	/* required settings */
+	position:relative;
+	overflow:hidden;
+	width: 680px;
+	height:120px;
+
 }
+
+.scrollable .items {
+	/* this cannot be too large */
+	width:20000em;
+	position:absolute;
+	clear:both;
+}
+
+/* single scrollable item */
+.scrollable img {
+	float:left;
+	margin:20px 5px 20px 21px;
+	background-color:#fff;
+	padding:2px;
+	border:1px solid #ccc;
+	cursor:pointer;
+	width:100px;
+	height:75px;
+	
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+}
+
+/* active item */
+.scrollable .active {
+	border:2px solid #000;
+	z-index:9999;
+	position:relative;
+}
+
 
 .textset {
 	float:left;

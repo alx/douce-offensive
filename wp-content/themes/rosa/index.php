@@ -1,6 +1,6 @@
 <?php get_header(); ?>
 
-<div id="photo_list">
+<div id="photo_list" class="scrollable">
 	<div class="items">
 <?php
 	
