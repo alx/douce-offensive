@@ -149,27 +149,18 @@ Header
 /*
 Content
 */
-/*
+
 #content {
 	height:380px;
 	margin-left:25px;
 	margin-top:140px;
-	width: 10000px;
 	white-space: nowrap;
 }
 
-#content img {
-	display: inline;
-	vertical-align: middle;
-}*/
-
 .scrollable {
-
 	/* required settings */
 	position:relative;
 	overflow:hidden;
-	width: 680px;
-	height:120px;
 
 }
 
@@ -186,10 +177,7 @@ Content
 	margin:20px 5px 20px 21px;
 	background-color:#fff;
 	padding:2px;
-	border:1px solid #ccc;
 	cursor:pointer;
-	width:100px;
-	height:75px;
 	
 	-moz-border-radius:4px;
 	-webkit-border-radius:4px;
