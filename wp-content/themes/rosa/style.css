@@ -166,6 +166,8 @@ Content
 	overflow:hidden;
 	width: 1024px;
 	height:380px;
+	border-right: 1px solid #999;
+	border-left: 1px solid #999;
 }
 
 /*
@@ -231,48 +233,4 @@ Content
 	line-height:13px;
 	margin-bottom:0;
 	margin-top:2px;
-}
-
-a.browse {
-	-moz-background-clip:border;
-	-moz-background-inline-policy:continuous;
-	-moz-background-origin:padding;
-	background:transparent url(./hori_large.png) no-repeat scroll 0 0;
-	cursor:pointer;
-	display:block;
-	float:left;
-	font-size:1px;
-	height:30px;
-	margin:40px 10px;
-	width:30px;
-}
-
-a.right {
-	background-position:0 -30px;
-	clear:right;
-	margin-right:0;
-}
-
-a.right:hover {
-	background-position:-30px -30px;
-}
-
-a.right:active {
-	background-position:-60px -30px;
-}
-
-a.left {
-	margin-left:0;
-}
-
-a.left:hover {
-	background-position:-30px 0;
-}
-
-a.left:active {
-	background-position:-60px 0;
-}
-
-a.disabled {
-	visibility:hidden !important;
 }
