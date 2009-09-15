@@ -155,6 +155,7 @@ Content
 	margin-left:25px;
 	margin-top:140px;
 	white-space: nowrap;
+	width:1000px;
 }
 
 .scrollable {
@@ -167,9 +168,7 @@ Content
 .scrollable .items {
 	/* this cannot be too large */
 	width:20000em;
-	position:absolute;
 	clear:both;
-	width:1000px;
 }
 
 /* single scrollable item */
