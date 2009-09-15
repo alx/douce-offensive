@@ -1,5 +1,7 @@
 <?php get_header(); ?>
 
+<a class="prevPage browse left disabled"/>
+
 <div id="wheeled" class="scrollable">
 	<div class="items">
 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
@@ -11,6 +13,9 @@
 <?php endwhile; endif; ?>
 	</div>
 </div>
+
+<a class="nextPage browse right"/>
+<br clear="all"/>
 
 <script>
 $(document).ready(function() {
