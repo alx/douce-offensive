@@ -15,11 +15,13 @@
 	<style type="text/css" media="screen">
 		@import url( <?php bloginfo('stylesheet_url'); ?> );
 	</style>
-
+	
+	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/jquery.tools.min.js"></script>
+	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/master.js"></script>
+	
 	<link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
 	<?php wp_get_archives('type=monthly&format=link'); ?>
 	<?php wp_head(); ?>
-	<script type="text/javascript" src="<?php bloginfo('stylesheet_directory'); ?>/jquery.tools.min.js"></script>
 </head>
 
 <body <?php body_class(); ?>>
