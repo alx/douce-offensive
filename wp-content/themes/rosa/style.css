@@ -79,7 +79,6 @@ img {
 /*
 Header
 */
-
 #header {
 	background-color:#F5F5F5;
 	height:100px;
@@ -96,6 +95,13 @@ Header
 	height:140px;
 	width:190px;
 }
+
+#logo a {
+	text-decoration:none;
+	color:black;
+	font-size:40px;
+}
+
 
 .nav {
 	float:left;
