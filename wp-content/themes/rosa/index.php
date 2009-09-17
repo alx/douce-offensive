@@ -1,7 +1,5 @@
 <?php get_header(); ?>
 
-<div id="wheeled" class="scrollable">
-	<div class="items">
 <?php
 	
 	$last_categories = get_categories(array(
@@ -23,17 +21,6 @@
 ?>
 
 <?php endwhile; endif; ?>
-	</div>
-</div>
-
-<script>
-$(document).ready(function() {
-
-	// initialize scrollable together with the mousewheel plugin
-	$("#wheeled").scrollable().mousewheel();	
-});
-</script>
-
 
 <div class="textset">
 	<h1><?php echo $last_category->name; ?></h1>

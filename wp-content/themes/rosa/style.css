@@ -157,50 +157,16 @@ Content
 */
 
 #content {
+	height:380px;
 	margin-left:25px;
 	margin-top:140px;
+	width: 10000px;
+	white-space: nowrap;
 }
 
-/*
-	root element for the scrollable.
-	when scrolling occurs this element stays still.
-*/
-.scrollable {
-
-	/* required settings */
-	position:relative;
-	overflow:hidden;
-	width: 1024px;
-	height:380px;
-	border-right: 1px solid #999;
-	border-left: 1px solid #999;
-}
-
-/*
-	root element for scrollable items. Must be absolutely positioned
-	and it should have a extremely large width to accomodate scrollable items.
-	it's enough that you set the width and height for the root element and
-	not for this element.
-*/
-.scrollable .items {
-	/* this cannot be too large */
-	width:20000em;
-	position:absolute;
-	clear:both;
-}
-
-/* single scrollable item */
-.scrollable img {
-	float:left;
-	margin:20px 5px 20px 21px;
-	padding:2px;
-	cursor:pointer;
-}
-
-/* active item */
-.scrollable .active {
-	z-index:9999;
-	position:relative;
+#content img {
+	display: inline;
+	vertical-align: middle;
 }
 
 .textset {

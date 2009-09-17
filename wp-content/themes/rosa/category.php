@@ -1,7 +1,5 @@
 <?php get_header(); ?>
 
-<div id="wheeled" class="scrollable">
-	<div class="items">
 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
 <?php
@@ -9,16 +7,6 @@
 ?>
 
 <?php endwhile; endif; ?>
-	</div>
-</div>
-
-<script>
-$(document).ready(function() {
-
-	// initialize scrollable together with the mousewheel plugin
-	$("#wheeled").scrollable().mousewheel();	
-});
-</script>
 
 <div class="textset">
 	<h1><?php single_cat_title(); ?></h1>
