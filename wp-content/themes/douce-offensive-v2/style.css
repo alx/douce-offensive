@@ -35,3 +35,12 @@ body {
 #menu-right {
 	right:60px;
 }
+
+li {
+	list-style: none;
+}
+
+li a {
+	color: #FFF;
+	text-decoration:none;
+}
