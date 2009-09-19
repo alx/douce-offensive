@@ -1,30 +1,56 @@
 <?php get_header(); ?>
 
-	<div id="content">
-		<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+	<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+		
+		<div id="post_<?php the_id(); ?>" class="post">
+			<div class="container">
 
-		<?php the_date('','<h2>','</h2>'); ?>
+				<div id="showroom_203124" class="showroom">
+  					<div class="full_image_wrapper"><?php display_photo(); ?></div>
+  					<div style="display: none;" class="rtw_button" id="look_label_203124">
+						<div class="rtw_button_inner">
+    						<div class="content">achetez cette sélection 
 
-		<div <?php post_class() ?> id="post-<?php the_ID(); ?>">
-			 <h3 class="storytitle"><a href="<?php the_permalink() ?>" rel="bookmark"><?php the_title(); ?></a></h3>
-			<div class="meta"><?php _e("Filed under:"); ?> <?php the_category(',') ?> &#8212; <?php the_tags(__('Tags: '), ', ', ' &#8212; '); ?> <?php the_author() ?> @ <?php the_time() ?> <?php edit_post_link(__('Edit This')); ?></div>
+							</div>
+    						<div class="end"/>
+						</div>
+  					</div>
+				</div><!-- div.showroom -->
+				
+			</div> <!-- div.container -->
+			<div class="shadow-bottom"><div class="start"/></div>
+			<div class="shadow-right"/>
 
-			<div class="storycontent">
-				<?php the_content(__('(more...)')); ?>
-			</div>
-
-			<div class="feedback">
-				<?php wp_link_pages(); ?>
-				<?php comments_popup_link(__('Comments (0)'), __('Comments (1)'), __('Comments (%)')); ?>
-			</div>
+			<div class="clear"/>
 
 		</div>
 
-		<?php comments_template(); // Get wp-comments.php template ?>
-
-		<?php endwhile; else: ?>
-		<p><?php _e('Sorry, no posts matched your criteria.'); ?></p>
-		<?php endif; ?>
-	</div><!-- content -->
+	<?php endwhile; else: ?>
+	<p><?php _e('Sorry, no posts matched your criteria.'); ?></p>
+	<?php endif; ?>
 
 <?php get_footer(); ?>
+
+
+<!-- <div id="rtw_" class="rtw">
+	<div class="container">
+
+		<div id="showroom_203124" class="showroom">
+			<div class="full_image_wrapper"><img style="" 	src="http://images.gucci.com/images/categories/fw09rtw/full/fw09_wrtw_17m_001_full.jpg" class="full" id="showroom_image_203124"/></div>
+			<div style="display: none;" class="rtw_button" id="look_label_203124">
+				<div class="rtw_button_inner">
+					<div class="content">achetez cette sélection 
+
+					</div>
+					<div class="end"/>
+				</div>
+			</div>
+		</div><
+		
+	</div>
+	<div class="shadow-bottom"><div class="start"/></div>
+	<div class="shadow-right"/>
+
+	<div class="clear"/>
+
+</div> -->
