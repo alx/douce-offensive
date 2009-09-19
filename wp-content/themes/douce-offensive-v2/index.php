@@ -3,7 +3,8 @@
 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
 <?php
-	echo PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->generateImgTag('main', '');
+	if($photo = PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID))
+		echo $photo->generateImgTag('main', '');
 ?>
 
 <?php endwhile; endif; ?>
