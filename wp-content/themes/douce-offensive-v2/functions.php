@@ -38,7 +38,8 @@ if (!class_exists("PhotoQ")) {
 function display_image() {
 	global $post;
 	
-	echo "<img src='" . PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->_sizes["main"]->getUrl() . "' class='full' id='showroom_image_" . $post->ID . "'/>";
+	$src = PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->_sizes["main"]->getUrl();
+	echo "<img src='$src' class='full' id='showroom_image_$post->ID'/>";
 }
 
 function display_categories() {
