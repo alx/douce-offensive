@@ -38,7 +38,9 @@ if (!class_exists("PhotoQ")) {
 function display_image() {
 	global $post;
 	
-	$src = PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->_sizes["main"]->getUrl();
+	$photo_db = PhotoQSingleton::getInstance('PhotoQDB');
+	$photo = $photo_db->getPublishedPhoto($post->ID);
+	$src = $photo->_sizes["main"]->getUrl();
 	echo "<img src='$src' class='full' id='showroom_image_$post->ID'/>";
 }
 
