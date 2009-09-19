@@ -1,29 +1,13 @@
-	<div style="position: absolute; height: 504px; width: 236px; top: 60px; right: 65px;">
-		<div class="menu" id="menu-left" style="top: 0pt;">
-			<div class="background" id="menu-left-background" style="left: -472px;"/>
-			<div class="scroll" id="menu-left-scroll" style="left: -472px; top: 0px;">
-				<div class="pagemenu" id="menu-left-pagemenu">
-					<div class="title"><?php wp_title(); ?></div>
 
-					<ul class="subselection">		
-						<li><a class="active" href="#">Categorie</a></li>
-						<?php display_categories(); ?>
-					</ul>
+	<div id="footer">
+		<span id="generator-link"><a href="http://wordpress.org/" title="<?php _e( 'WordPress', 'sandbox' ) ?>" rel="generator"><?php _e( 'WordPress', 'sandbox' ) ?></a></span>
+		<span class="meta-sep">|</span>
+		<span id="theme-link"><a href="http://www.plaintxt.org/themes/sandbox/" title="<?php _e( 'Sandbox theme for WordPress', 'sandbox' ) ?>" rel="designer"><?php _e( 'Sandbox', 'sandbox' ) ?></a></span>
+	</div><!-- #footer -->
 
-					<p class="level-up"><a href="#">Autres catégories</a></p>
-				</div>
-			</div>
-		</div>
-		<div class="shadow-bottom">
-			<div class="start"/>
-		</div>
-	</div>
-	<div class="shadow-bottom"/>
-	<div class="shadow-right"/>
-</div>
+</div><!-- #wrapper .hfeed -->
 
-
-<?php do_action('wp_footer'); ?>
+<?php wp_footer() ?>
 
 </body>
 </html>

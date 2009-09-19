@@ -1,670 +1,215 @@
 /*
-	Theme Name: Douce Offensive v2
-	Theme URI: http://douceoffensive.org
-	Description: Douce Offensive theme for WordPress
-	Author: Alexandre Girard
-	Author URI: http://alexgirard.com
-	Version: 2.0
+THEME NAME: Sandbox
+THEME URI: http://www.plaintxt.org/themes/sandbox/
+DESCRIPTION: Rich with powerful and dynamic semantic class selectors, Sandbox is a canvas for CSS artists
+VERSION: 1.6.1
+AUTHOR: <a href="http://andy.wordpress.com/">Andy Skelton</a> &amp; <a href="http://www.plaintxt.org/">Scott Allan Wallick</a>
+AUTHOR URI:
+TAGS: sandbox, microformats, hcard, hatom, xoxo, widgets, blank slate, starter theme, minimalist, developer
 */
 
-/* Reset */
+@import url('blueprint/screen.css');
 
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, font, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	outline: 0;
-	font-size: 100%;
-	vertical-align: baseline;
-	background: transparent;
-}
-body {
-	line-height: 1;
-}
-ol, ul {
-	list-style: none;
-}
-blockquote, q {
-	quotes: none;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
+/* Just some example content */
+div.skip-link {
+position:absolute;
+right:1em;
+top:1em;
 }
 
-/* remember to define focus styles! */
-:focus {
-	outline: 0;
+div#menu {
+background:#EEE;
+height:1.5em;
+margin:1em 0;
+width:100%;
 }
 
-/* remember to highlight inserts somehow! */
-ins {
-	text-decoration: none;
-}
-del {
-	text-decoration: line-through;
-}
-
-/* tables still need 'cellspacing="0"' in the markup */
-table {
-	border-collapse: collapse;
-	border-spacing: 0;
+div#menu ul,div#menu ul ul {
+line-height:1;
+list-style:none;
+margin:0;
+padding:0;
 }
 
-/* Layout */
-* {
-  outline: none;
-}
-html, body {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  font: .75em/1.3 Verdana, Arial, sans-serif;
-  color: #000;
-  background-color: #FFF;
-  height: 100%;
-	width: 100%;
+div#menu ul a {
+display:block;
+margin-right:1em;
+padding:0.2em 0.5em;
+text-decoration:none;
 }
 
-/* Basics */
-ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
+div#menu ul ul ul a {
+font-style:italic;
 }
 
-li {
-  color: #2B200D;
-  margin: 0;
-  padding: 0;
+div#menu ul li ul {
+left:-999em;
+position:absolute;
 }
 
-li a {
-  color: #2B200D;
-  text-decoration: none;
+div#menu ul li:hover ul {
+left:auto;
 }
 
-li a:hover {
-  color: #89693b;
+.entry-title,.entry-meta {
+clear:both;
 }
 
-a {
-  color: #000;
+div#container,div#primary {
+margin-top:2em;
 }
 
-
-/* Centering layout */
-#container {
-  position: absolute;
-  top: 50%;
-  margin-top: -315px;
+form#commentform .form-label {
+margin:1em 0 0;
 }
 
-  /* For ordinary page we'll use .layout-default */
-  .layout-default #container {
-    left: 0;    
-    margin-left:  65px;
-    margin-right: 65px;
-    width: 1235px; /* This should be set in JS and modified on window resize */
-  }
-  
-  .layout-center #container {
-    left: 50%;
-  	margin-left: -501px;
-  }
-
-  #container.absolute {
-    top: 0;
-    margin-top: 0;
-  }
-
-/* Header */
-#header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+form#commentform span.required {
+background:#fff;
+color:#c30;
 }
 
-*:first-child+html #header { z-index: -1; } /* IE7 has an odd bug with z-index. Removing z-index for it */
-
-  #header-content {
-    position: fixed;
-    height: 610px;
-  }
-  .layout-default #header-content {
-    margin-left: -65px;
-    width: 100%;
-    max-width: 1300px; /* This should be set in JS and modified on window resize. Schould equal #container width */
-    
-  }
-  .layout-center #header-content {
-    width: 1001px;
-  }
-
-  #container.absolute #header-content {
-    position: absolute;
-    margin-left: 0;
-    width: 100%;
-  }
-
-  /* Logo */
-  #header-content .logo-wrapper {
-    position: relative;
-    top: 582px;
-    overflow: hidden;
-    z-index: 110;
-  }
-  #logo {
-    float: left;
-		margin: 0 0 0 34px;
-		text-align: center;
-		text-indent: -1000px;
-		width: 159px;
-    height: 30px;
-    background: transparent url(/images/gucci-logo.png) no-repeat 0 0;
-    overflow: hidden;
-  }
-  
-  .layout-default #logo {
-		margin: 0 0 0 101px;
-  }
-  
-  #container.absolute #header-content #logo { margin-left: 36px; }
-  
-    #logo a {
-      display: block;
-      width: 159px;
-      height: 30px;
-    }
-
-  #links {
-    float: right;
-    margin: 0 40px 0 0;
-    padding: 0;
-    z-index: 10;
-  }
-    #links li {
-      display: inline;
-      margin: 0;
-      padding: 0;
-      font-size: 11px;
-      list-style-type: none;
-      cursor: pointer;
-    }
-      #links li a {
-        float: left;
-        margin-left: 25px;
-        color: #B99C70;
-        text-transform: lowercase;
-      }
-      #links li a:hover {
-          color: #DEC39B;
-      }
-      #links li a.active {
-        color: #DEC39B!important;
-      }
-	  #links.homepage li {
-		font-size: 14px;
-	  }	
-
-/* Content area */
-#content {
-  position: relative;
-  padding: 60px 0; /* For logo and minibag */
-
+form#commentform,form#commentform p {
+padding:0;
 }
 
-.layout-default #content {
-  width: auto;
-}
-.layout-center #content {
-  margin: 0;
-  width: 1005px;
+input#author,input#email,input#url,textarea#comment {
+padding:0.2em;
 }
 
-  /* Basic sinppets definitions */
-  .layout-center #snippets_container {
-    height: 510px;
-    overflow: hidden;
-    z-index: 101;    
-  }
-  
-  .layout-default #snippets_container {
-    position: relative;
-    height: 510px; /* Snippet height & shadow bottom */
-    overflow: visible;
-    z-index: 101;
-  }
-
-  #snippets {
-  }
-    #snippets div.snippet {
-      position: relative;
-      float: left;
-      height: 510px; /* Don't forget about the shadow height */
-    }
-      #snippets div.spacer {
-        width: 65px;
-        background: transparent url(/images/spacer-column.gif) repeat scroll 0%;
-        cursor:pointer;
-      }
-      #snippets div.mini-spacer {
-        width: 8px;
-        background: transparent;
-      }
-
-  /* Shadows */
-  .shadow-bottom {
-    position: absolute;
-    top: 504px;
-    left: 0;
-    height: 6px;
-    width: 100%;
-    overflow: hidden;
-  }
-    .shadow-bottom .end {
-      position: absolute;
-      left: 6px;
-      top: 0;
-      background: url(/images/shadow-bottom.png) repeat-x 0 0;
-      width: 100%;
-      height: 6px;
-    }
-    .shadow-bottom .start {
-      position: absolute;
-      left: 0;
-      top: 0;
-      background: url(/images/shadow-bottom-start.png) no-repeat 0 0;
-      width: 6px;
-      height: 6px;
-    }
-
-  .shadow-right {
-    position: absolute;
-    right: -4px;
-    top: 0;
-    background: url(/images/shadow-right.png) no-repeat 0 0;
-    height: 510px;
-    width: 4px;
-  }
-
-
-/* Helpers */
-.clearfix:after {
-  content: ".";
-  display: block;
-  height: 0;
-  clear: both;
-  visibility: hidden;
+div.comments ol li {
+margin:0 0 3.5em;
 }
 
-.clearfix {
-  display: inline-block;
+textarea#comment {
+height:13em;
+margin:0 0 0.5em;
+overflow:auto;
+width:66%;
 }
 
-/* Hides from IE-mac \*/
-* html .clearfix {
-  height: 1%;
-}
-.clearfix {
-  display: block;
-}
-/* End hide from IE-mac */
-
-/* Menu */
-.menu {
-  position: relative;
-  float: left;
-	text-transform: lowercase;
-  background: url(/images/bg-panel.png) repeat-x;
-  width: 236px;
-	height: 504px;
-	overflow: hidden;
-	z-index: 101;  
-}
-#menu-right {
-  text-align: right;
+.alignright,img.alignright{
+float:right;
+margin:1em 0 0 1em;
 }
 
-  .menu p {
-    margin: 0;
-    padding: 0;
-    line-height: 20px;
-  }
-
-  .menu p.active {
-    font-weight: bold;
-    font-size: 10px;
-    color: #2B200D !important;
-  }
-
-  .menu p.complete {
-    font-size: 10px;
-    font-weight: normal;
-    color: #2B200D !important;
-  }
-
-  .menu p.checkout-menu-item {
-    cursor: default;
-  }
-
-  .menu p.inactive {
-    color: #726854;
-    cursor: default !important;
-  }
-
-  .menu p.optional {
-    display: none;
-  }
-
-  .menu a.small {
-    font-size: 11px;
-    margin: 0;
-    padding: 0;
-    color: #2B200D;
-  }
-  .menu a.small.overrider {
-  	font-size: 10px;
-  }
-  #menu-left a.small {
-   padding-right: 12px;  
-  }
-
-  #menu-right a.small {
-   padding-left: 12px;  
-  }
-
-/* Main menu */
-.menu .main {
-  position: absolute;
-  font: 12px/20px "Verdana";
-  padding: 28px 29px 0 36px;
-  width: 171px;
-  height: 476px;
-}
-#menu-right .main {
-  right: 0px;
+.alignleft,img.alignleft{
+float:left;
+margin:1em 1em 0 0;
 }
 
-  .menu a {
-    position: relative;
-    color: #2B200D;
-    text-decoration: none;
-    z-index: 100001;
-  }
-
-  .menu a.menuheader {
-    font-size: 12px;
-    color: #89693b;
-    cursor: text;
-  } 
-
-  #menu-left a.menuheader {
-    background: right 5px url(/images/menu-submenu-left-highlight.gif) no-repeat;
-  }
-
-  #menu-right .menuheader {
-    background: 0 2px url(/images/menu-submenu-right-highlight.gif) no-repeat;
-  }
-
-  #menu-left .menuindent {
-    padding-left: 15px;
-  }
-
-  #menu-right .menuindent {
-    padding-right: 15px;
-  }
-
-  .menu .menulessheight {
-    line-height: 18px;
-  }
-
-  .menu .menularge {
-    font-size: 12px;
-  }
-
-  .menu p.menubottomspace {
-    padding-bottom: 25px;
-  }
-
-  .menu p.menubottomhalfspace {
-    padding-bottom: 10px;
-  }
-
-  .menu p.menubottomquarterspace {
-    padding-bottom: 4px;
-  }
-
-  div.menu a.mixedcase {
-  	text-transform: none;
-  }
-
-  #menu-left a {
-    padding-right: 12px;
-
-  }
-
-  #menu-right a {
-    padding-left: 12px;
-  }
-
-  .menu a:hover {
-    color: #89693B;
-  }
-
-  #menu-left a.submenu:hover {
-    background: right 5px url(/images/menu-submenu-left-highlight.gif) no-repeat;
-  }
-
-  #menu-right a.submenu:hover {
-    background: 0 5px url(/images/menu-submenu-right-highlight.gif) no-repeat;
-  }
-
-/* Scrolling part */
-.menu .scroll {
-  position: absolute;
-  left: 0;
-  background: transparent url(/images/menu-background.gif) repeat-x 0 0;
-  width: 708px;
-  height: 504px;
-  overflow: hidden;
+.aligncenter,img.aligncenter{
+display:block;
+margin:1em auto;
+text-align:center;
 }
 
-#menu-right .scroll {
-  left: auto;
-  right: 0px;
+div.gallery {
+clear:both;
+height:180px;
+margin:1em 0;
+width:100%;
 }
 
-.menu div.submenu, 
-.menu div.pagemenu {
-  position: absolute;
-  left: 236px;
-  padding-left: 36px;
-  padding-top: 28px;
-  font: 11px/20px "Verdana";
-  width: 200px;
-  height: 476px;
+p.wp-caption-text{
+font-style:italic;
 }
 
-.menu div.pagemenu {
-  left: 472px;
+div.gallery dl{
+margin:1em auto;
+overflow:hidden;
+text-align:center;
 }
 
-#menu-right div.submenu, 
-#menu-right div.pagemenu {
-  padding-right: 36px;
-  padding-left: 0px;
+div.gallery dl.gallery-columns-1 {
+width:100%;
 }
 
-#menu-right div.pagemenu {
-  left: 0;
+div.gallery dl.gallery-columns-2 {
+width:49%;
 }
 
-.menu div.submenu p.level-up a, 
-.menu div.pagemenu p.level-up a {
-  position: absolute;
-  top: 460px;
-  left: 36px;
-  background: url(/images/menu-level-up-left.gif) no-repeat 0 7px;
-  padding-left: 12px;
+div.gallery dl.gallery-columns-3 {
+width:33%;
 }
 
-#menu-right .menu div.submenu p.level-up a, 
-#menu-right.menu div.pagemenu p.level-up a {
-  left: 39px;
+div.gallery dl.gallery-columns-4 {
+width:24%;
 }
 
-.menu div.submenu p.level-up a:hover, 
-.menu div.pagemenu p.level-up a:hover {
-  background: url(/images/menu-level-up-left-highlight.gif) no-repeat 0 7px;
+div.gallery dl.gallery-columns-5 {
+width:19%;
 }
 
-#menu-right div.submenu p.level-up a, 
-#menu-right div.pagemenu p.level-up a {
-  background: url(/images/menu-level-up-right.gif) no-repeat right 6px;
+div#nav-above {
+margin-bottom:1em;
 }
 
-#menu-right div.submenu p.level-up a:hover, 
-#menu-right div.pagemenu p.level-up a:hover {
-  background: url(/images/menu-level-up-right-highlight.gif) no-repeat right 6px;
+div#nav-below {
+margin-top:1em;
 }
 
-#menu-right div.submenu p.level-up a, 
-#menu-right div.pagemenu p.level-up a {
-  padding-right: 13px;
-  width: 135px;
+div#nav-images {
+height:150px;
+margin:1em 0;
 }
 
-div.pagemenu div.title {
-  font-size: 12px;
-  color: #89693b;
-  cursor: text;
+div.navigation {
+height:1.25em;
 }
 
-div.pagemenu ul {
-  margin: 0;
-  padding: 0;
-  list-style-type: none;
-  color: #2B200D;
-  width: 161px;
+div.navigation div.nav-next {
+float:right;
+text-align:right;
 }
 
-div.pagemenu ul li {
-  text-indent: -15px;
-  margin-left: 15px;
+div.sidebar h3 {
+font-size:1.2em;
 }
 
-.menu a.active {
-  cursor:default;
-  color: #2B200D;
-  font-weight: bold;
-  font-size: 10px;
+div.sidebar input#s {
+width:7em;
 }
 
-.menu .main a.active {
-  font-size: 11px;
+div.sidebar li {
+list-style:none;
+margin:0 0 2em;
 }
 
-div.pagemenu ul.subselection {
-  position: absolute;
-  left: 51px;
-  top: 59px;
+div.sidebar li form {
+margin:0.2em 0 0;
+padding:0;
 }
 
-div.pagemenu ul.filters {
-  position: absolute;
-  left: 36px;
-  bottom: 140px;
+div.sidebar ul ul {
+margin:0 0 0 1em;
 }
 
-div.pagemenu ul.filters-full {
-  position: absolute;
-  left: 51px;
-  top: 165px;
+div.sidebar ul ul li {
+list-style:disc;
+margin:0;
 }
 
-div.pagemenu ul.actions {
-  position: absolute;
-  left: 36px;
-  bottom: 60px;
+div.sidebar ul ul ul {
+margin:0 0 0 0.5em;
 }
 
-#menu-right div.pagemenu ul.subselection,
-#menu-right div.pagemenu ul.filters-full {
-  left: 24px;
+div.sidebar ul ul ul li {
+list-style:circle;
 }
 
-#menu-right div.pagemenu ul.filters,
-#menu-right div.pagemenu ul.actions {
-  left: 39px;
+div#menu ul li,div.gallery dl,div.navigation div.nav-previous {
+float:left;
 }
 
-div#overlay_screen {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	width: 100%;
-	height: 100%;
-	background: #000;
-	color: #eee;
-	z-index: 200000;
-	-moz-opacity: 0;
-	opacity: 0;
-	filter: alpha(opacity=0);
+div#header,div#footer {
+text-align:center;
 }
 
-div#overlay_panel {
-	position: absolute;
-	margin: 0;
-	padding: 10px;
-	background: #C2A378;
-	color: #2C200A;
-  	width: 400px;
-	text-align: center;
-	z-index: 200010;
-	-moz-opacity: 0;
-	opacity: 0;
-	filter: alpha(opacity=0);
+input#author,input#email,input#url,div.navigation div {
+width:50%;
 }
 
-div#coverlay_display a.country {
-	color: #2C200A;
-	line-height: 25px;
-	font-size: 12px;
-	text-decoration: none;
-	/*display: none;*/
-}
-
-div#coverlay_display a.country:hover {
-	color: #89693b;
-}
-
-/* outside */
-#outside {
-  position: relative;
-  top: -30px;
-  right: 0;
-  margin-right: 37px;
-  height: 60px;
-  overflow: hidden;
-  z-index: 110;
-}
-
-#outside ul {
-  float: right;
-  margin-left: 5px;
-  overflow: hidden;
+div.gallery *,div.sidebar div,div.sidebar h3,div.sidebar ul {
+margin:0;
+padding:0;
 }
