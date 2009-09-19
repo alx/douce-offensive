@@ -24,6 +24,7 @@ if (!class_exists("PhotoQ")) {
 	// import ReusableOptions Library, same here add safety check
 	if (!class_exists("OptionController"))
 		require_once(PHOTOQ_PATH.'lib/ReusableOptions/OptionController.php');
+		
 	//import remaining PhotoQ classes
 	require_once(PHOTOQ_PATH.'classes/PhotoQOptionController.php');
 	require_once(PHOTOQ_PATH.'classes/PhotoQDB.php');
@@ -37,8 +38,7 @@ if (!class_exists("PhotoQ")) {
 function display_image() {
 	global $post;
 	
-	$photo = PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID);
-	echo "<img src='" . $photo->_sizes["main"]->getUrl() . "' class='full' id='showroom_image_" . $post->ID . "'/>";
+	echo "<img src='" . PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->_sizes["main"]->getUrl() . "' class='full' id='showroom_image_" . $post->ID . "'/>";
 }
 
 function display_categories() {
