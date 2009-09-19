@@ -1,11 +1,11 @@
 <?php get_header() ?>
 
-<?php while ( have_posts() ) : the_post() ?>
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
-	<?php
-		echo PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->generateImgTag('main', '');
-	?>
-			
-<?php endwhile; ?>
+<?php
+	echo PhotoQSingleton::getInstance('PhotoQDB')->getPublishedPhoto($post->ID)->generateImgTag('main', '');
+?>
+
+<?php endwhile; endif; ?>
 
 <?php get_footer() ?>
