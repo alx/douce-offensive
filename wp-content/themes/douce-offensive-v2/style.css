@@ -20,7 +20,7 @@ body {
 }
 
 #container {
-	width:2600px;
+	width:auto;
 }
 
 .menu {
@@ -30,6 +30,7 @@ body {
 
 #menu-left {
 	left:60px;
+	text-align:right;
 }
 
 #menu-right {
