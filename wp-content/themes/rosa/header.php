@@ -39,17 +39,6 @@
 			</ul>
 		</div>
 		
-		<!--
-		<div class="nav">
-			<h2>Selected &mdash;</h2>
-			<ul>
-			<?php 
-				display_selected_categories();
-			?>
-			</ul>
-		</div>
-		-->
-		
 		<div class="nav">
 			<h2>Info &mdash;</h2>
 			<ul>
