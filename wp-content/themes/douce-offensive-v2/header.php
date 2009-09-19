@@ -16,14 +16,3 @@
 <body class="<?php sandbox_body_class() ?> container">
 
 <div id="wrapper" class="hfeed">
-
-	<div id="container">
-		<div id="content">
-			<div id="left-menu">
-				<ul>
-					<li>Cat1</li>
-					<li>Cat1</li>
-					<li>Cat1</li>
-					<li>Cat1</li>
-				</ul>
-			</div>

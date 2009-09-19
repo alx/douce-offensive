@@ -18,3 +18,20 @@ body {
 #wrapper {
 	height:60px;
 }
+
+#container {
+	width:2600px;
+}
+
+.menu {
+	height:500px;
+	width:200px;
+}
+
+#menu-left {
+	left:60px;
+}
+
+#menu-right {
+	right:60px;
+}
