@@ -26,20 +26,28 @@
 		<ul>
 		<?php
 		$categories = get_categories();
+		$current_cat = get_query_var('cat');
 
 		$output = '<ul>';
 		$i = 1;
-		foreach($categories as $cat):
+		foreach($categories as $cat):		
 			$output .= '<li class="cat-item cat-item-'.$cat->term_id.'">';
 			$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
-			$output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+			
+			if ($cat->ID == $current_cat->ID) {
+				$output .= ' href="' . get_category_link( $cat->term_id ) . '"><strong>' . attribute_escape($cat->name) . '</strong></a>';
+			} else {
+				$output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+			}
+			
+			
 			$output .= ' (' . intval($cat->count) . ')</li>';
 			
 			if($i%3 == 0) $output .= '</ul><ul>';
 			$i += 1;
 		endforeach;
 		
-		$output .= '<li><a href="/contact">contact</a></li><ul>';
+		$output .= '<li><a href="mailto:amandin.le.conte@free.fr">contact</a></li><ul>';
 		echo $output;
 		?>
 		</ul>
