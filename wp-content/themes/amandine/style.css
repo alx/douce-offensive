@@ -617,3 +617,8 @@ div.selected_photo {
 .first_column {
 	margin-left:0px;
 }
+
+.cat-item strong {
+	font-size:12px;
+	line-height:12px;
+}

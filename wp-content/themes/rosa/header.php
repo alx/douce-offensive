@@ -40,12 +40,20 @@
 		</div>
 		
 		<div class="nav">
-			<h2>Info &mdash;</h2>
+			<h2>Talleres de labor creativa &mdash;</h2>
 			<ul>
-			<?php 
-				// Display list of pages
-				wp_list_pages('title_li=&exclude_tree=5&sort_column=menu_order');
-			?>
+				<li><a href="#">visitas a exposiciones</a></li>
+				<li><a href="#">fotos de los alumnos</a></li>
+				<li><a href="#">antisafari fotográfico</a></li>
+			</ul>
+		</div>
+		
+		<div class="nav">
+			<h2>Direcciones &mdash;</h2>
+			<ul>
+				<li><a href="#">links</a></li>
+				<li><a href="#">blog</a></li>
+				<li><a href="#">contacto</a></li>
 			</ul>
 		</div>
 	</div>
