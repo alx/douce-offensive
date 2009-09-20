@@ -34,7 +34,7 @@
 			$output .= '<li class="cat-item cat-item-'.$cat->term_id.'">';
 			$output .= '<a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
 			
-			if ($cat->ID == $current_cat->ID) {
+			if ($cat->cat_ID == $current_cat->cat_ID) {
 				$output .= ' href="' . get_category_link( $cat->term_id ) . '"><strong>' . attribute_escape($cat->name) . '</strong></a>';
 			} else {
 				$output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
