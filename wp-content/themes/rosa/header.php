@@ -31,7 +31,7 @@
 		</div>
 		
 		<div class="nav">
-			<h2>Recent &mdash;</h2>
+			<h2>Archivo &mdash;</h2>
 			<ul>
 			<?php 
 				display_recent_categories();
