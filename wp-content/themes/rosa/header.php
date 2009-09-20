@@ -51,9 +51,9 @@
 		<div class="nav">
 			<h2>Direcciones &mdash;</h2>
 			<ul>
-				<li><a href="#">links</a></li>
-				<li><a href="#">blog</a></li>
-				<li><a href="#">contacto</a></li>
+				<!-- <li><a href="#">links</a></li>
+								<li><a href="#">blog</a></li> -->
+				<li><a href="mailto:rosaveloso.foto@gmail.com">contacto</a></li>
 			</ul>
 		</div>
 	</div>
