@@ -42,9 +42,9 @@
 		<div class="nav talleres-nav">
 			<h2>Talleres de labor creativa &mdash;</h2>
 			<ul>
-				<li><a href="#">visitas a exposiciones</a></li>
-				<li><a href="#">fotos de los alumnos</a></li>
-				<li><a href="#">antisafari fotográfico</a></li>
+				<li><a href="/visitas-a-exposiciones/">visitas a exposiciones</a></li>
+				<li><a href="/fotos-de-los-alumnos/">fotos de los alumnos</a></li>
+				<li><a href="/antisafari-fotografico/">antisafari fotogr&aacute;fico</a></li>
 			</ul>
 		</div>
 		
