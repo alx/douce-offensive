@@ -39,7 +39,7 @@
 			</ul>
 		</div>
 		
-		<div class="nav">
+		<div class="nav talleres-nav">
 			<h2>Talleres de labor creativa &mdash;</h2>
 			<ul>
 				<li><a href="#">visitas a exposiciones</a></li>
