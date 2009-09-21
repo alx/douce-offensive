@@ -2,7 +2,7 @@
 	get_header();
 	
 	$current_cat = get_query_var('cat');
-	$category_posts = new WP_Query("cat=" . $current_cat . "&showposts=1");
+	$category_posts = new WP_Query("cat=" . $current_cat . "&showposts=-1");
 ?>
 
 	<div id="content" class="autosize">
