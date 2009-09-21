@@ -62,6 +62,10 @@ div.autosize > div { display: table-cell; }
 
 #footer {
 	position: fixed;
-	bottom:3px;
-	left:300px;
+	bottom:0px;
+	left:100px;
+}
+
+#footer h1 {
+	color: #888;
 }
