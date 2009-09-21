@@ -1,48 +1,47 @@
 <?php get_header() ?>
 
-	<div id="container">
-		<div id="content">
+	<div id="content" class="autosize">
+		<div id="menu-left" class="menu">
+			<ul>
+				<?php
+				$categories = get_categories();
 
-			<h2 class="page-title"><?php _e( 'Category Archives:', 'sandbox' ) ?> <span><?php single_cat_title() ?></span></h2>
-			<?php $categorydesc = category_description(); if ( !empty($categorydesc) ) echo apply_filters( 'archive_meta', '<div class="archive-meta">' . $categorydesc . '</div>' ); ?>
+				$category_output = '';
+				$i = 1;
+				foreach($categories as $cat):
+					$category_output .= '<li><a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
+					$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+					$category_output .= ' (' . intval($cat->count) . ')</li>';
+				endforeach;
 
+				$category_output .= '<li>contact: <a href="mailto:globaleffect@gmail.com">globaleffect@gmail.com</a></li><ul>';
+				echo $category_output;
+				?>
+			</ul>
+		</div>
+		
+		<div id="photobook">
 
-			<div id="nav-above" class="navigation">
-				<div class="nav-previous"><?php next_posts_link( __( '<span class="meta-nav">&laquo;</span> Older posts', 'sandbox' ) ) ?></div>
-				<div class="nav-next"><?php previous_posts_link( __( 'Newer posts <span class="meta-nav">&raquo;</span>', 'sandbox' ) ) ?></div>
-			</div>
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
-<?php while ( have_posts() ) : the_post() ?>
+<?php
+	$photo_db = PhotoQSingleton::getInstance('PhotoQDB');
+	$photo = $photo_db->getPublishedPhoto($post->ID);
+	
+	if(isset($photo)){
+		echo $photo->generateImgTag('main', '');
+	}
+?>
 
-			<div id="post-<?php the_ID() ?>" class="<?php sandbox_post_class() ?>">
-				<h3 class="entry-title"><a href="<?php the_permalink() ?>" title="<?php printf( __( 'Permalink to %s', 'sandbox' ), the_title_attribute('echo=0') ) ?>" rel="bookmark"><?php the_title() ?></a></h3>
-				<div class="entry-date"><abbr class="published" title="<?php the_time('Y-m-d\TH:i:sO') ?>"><?php unset($previousday); printf( __( '%1$s &#8211; %2$s', 'sandbox' ), the_date( '', '', '', false ), get_the_time() ) ?></abbr></div>
-				<div class="entry-content">
-<?php the_excerpt(__( 'Read More <span class="meta-nav">&raquo;</span>', 'sandbox' )) ?>
+<?php endwhile; endif; ?>
 
-				</div>
-				<div class="entry-meta">
-					<span class="author vcard"><?php printf( __( 'By %s', 'sandbox' ), '<a class="url fn n" href="' . get_author_link( false, $authordata->ID, $authordata->user_nicename ) . '" title="' . sprintf( __( 'View all posts by %s', 'sandbox' ), $authordata->display_name ) . '">' . get_the_author() . '</a>' ) ?></span>
-					<span class="meta-sep">|</span>
-<?php if ( $cats_meow = sandbox_cats_meow(', ') ) : // Returns categories other than the one queried ?>
-					<span class="cat-links"><?php printf( __( 'Also posted in %s', 'sandbox' ), $cats_meow ) ?></span>
-					<span class="meta-sep">|</span>
-<?php endif ?>
-					<?php the_tags( __( '<span class="tag-links">Tagged ', 'sandbox' ), ", ", "</span>\n\t\t\t\t\t<span class=\"meta-sep\">|</span>\n" ) ?>
-<?php edit_post_link( __( 'Edit', 'sandbox' ), "\t\t\t\t\t<span class=\"edit-link\">", "</span>\n\t\t\t\t\t<span class=\"meta-sep\">|</span>\n" ) ?>
-					<span class="comments-link"><?php comments_popup_link( __( 'Comments (0)', 'sandbox' ), __( 'Comments (1)', 'sandbox' ), __( 'Comments (%)', 'sandbox' ) ) ?></span>
-				</div>
-			</div><!-- .post -->
+		</div>
 
-<?php endwhile; ?>
+		<div id="menu-right" class="menu">
+			<ul>
+				<?php echo $category_output; ?>
+			</ul>
+		</div>
+	</div> <!-- #content -->
 
-			<div id="nav-below" class="navigation">
-				<div class="nav-previous"><?php next_posts_link( __( '<span class="meta-nav">&laquo;</span> Older posts', 'sandbox' ) ) ?></div>
-				<div class="nav-next"><?php previous_posts_link( __( 'Newer posts <span class="meta-nav">&raquo;</span>', 'sandbox' ) ) ?></div>
-			</div>
-
-		</div><!-- #content -->
-	</div><!-- #container -->
-
-<?php get_sidebar() ?>
 <?php get_footer() ?>
