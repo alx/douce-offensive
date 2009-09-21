@@ -5,12 +5,17 @@
 			<ul>
 				<?php
 				$categories = get_categories();
-
+				$current_cat = get_query_var('cat');
+				
 				$category_output = '';
 				$i = 1;
 				foreach($categories as $cat):
 					$category_output .= '<li><a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
-					$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+					if ($cat->cat_ID == $current_cat) {
+						$category_output .= ' href="' . get_category_link( $cat->term_id ) . '"><strong>' . attribute_escape($cat->name) . '</strong></a>';
+					} else {
+						$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+					}
 					$category_output .= ' (' . intval($cat->count) . ')</li>';
 				endforeach;
 
