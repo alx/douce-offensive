@@ -24,17 +24,18 @@ body {
 }
 
 .menu {
-	position:absolute;
-	top:75px;
 }
 
 #menu-left {
+	position:absolute;
+	top:75px;
 	left:60px;
 	text-align:right;
 }
 
 #menu-right {
-	right:60px;
+	position:absolute;
+	top:75px;
 }
 
 li {
@@ -47,7 +48,7 @@ li a {
 }
 
 #photobook {
-	margin-left:300px;
+	padding-left:100px;
 }
 
 #photobook img {
