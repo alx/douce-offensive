@@ -24,8 +24,8 @@ body {
 }
 
 .menu {
-	height:500px;
-	width:200px;
+	position:absolute;
+	top:75px;
 }
 
 #menu-left {
@@ -44,6 +44,10 @@ li {
 li a {
 	color: #FFF;
 	text-decoration:none;
+}
+
+#photobook {
+	margin-left:300px;
 }
 
 #photobook img {
