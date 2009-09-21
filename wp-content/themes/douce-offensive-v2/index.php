@@ -1,7 +1,7 @@
 <?php get_header() ?>
 
 	<div id="content" class="autosize">
-		<div id="left-menu" class="menu">
+		<div id="menu-left" class="menu">
 			<ul>
 				<?php
 				$categories = get_categories();
@@ -37,7 +37,7 @@
 
 		</div>
 
-		<div id="right-menu" class="menu">
+		<div id="menu-right" class="menu">
 			<ul>
 				<?php echo $category_output; ?>
 			</ul>
