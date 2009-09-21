@@ -14,7 +14,7 @@
 					$category_output .= ' (' . intval($cat->count) . ')</li>';
 				endforeach;
 
-				$category_output .= '<li>contact: <a href="mailto:globaleffect@gmail.com" class="email">globaleffect@gmail.com</a></li><ul>';
+				$category_output .= '<li>-- contact --</li><li><a href="mailto:globaleffect@gmail.com" class="email">globaleffect@gmail.com</a></li><ul>';
 				echo $category_output;
 				?>
 			</ul>
