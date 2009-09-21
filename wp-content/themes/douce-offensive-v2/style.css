@@ -53,6 +53,12 @@ li a:hover {
 	font-weight: bold;
 }
 
+li a:hover .email {
+	color: #FFF;
+	text-decoration:none;
+	font-weight: normal;
+}
+
 #photobook {
 	padding-left:100px;
 }
