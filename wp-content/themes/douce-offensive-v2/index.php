@@ -1,7 +1,7 @@
 <?php get_header() ?>
 
 <div id="container">
-	<div id="content">
+	<div id="content" class="autosize">
 		<div id="left-menu" class="menu">
 			<ul>
 				<?php
@@ -20,6 +20,8 @@
 				?>
 			</ul>
 		</div>
+		
+		<div id="photobook">
 
 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 
@@ -33,6 +35,8 @@
 ?>
 
 <?php endwhile; endif; ?>
+
+		</div>
 
 		<div id="right-menu" class="menu">
 			<ul>

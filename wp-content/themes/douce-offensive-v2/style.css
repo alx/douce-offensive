@@ -45,3 +45,10 @@ li a {
 	color: #FFF;
 	text-decoration:none;
 }
+
+#photobook img {
+    display:inline;
+}
+
+div.autosize { display: table; width: 1px; }
+div.autosize > div { display: table-cell; }
