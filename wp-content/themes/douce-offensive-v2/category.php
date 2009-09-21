@@ -1,11 +1,15 @@
-<?php get_header() ?>
+<?php 
+	get_header();
+	
+	$current_cat = get_query_var('cat');
+	$category_posts = new WP_Query("cat=" . $current_cat . "&showposts=1");
+?>
 
 	<div id="content" class="autosize">
 		<div id="menu-left" class="menu">
 			<ul>
 				<?php
 				$categories = get_categories();
-				$current_cat = get_query_var('cat');
 				
 				$category_output = '';
 				$i = 1;
@@ -27,7 +31,7 @@
 		
 		<div id="photobook">
 
-<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<?php if ($category_posts->have_posts()) : while ($category_posts->have_posts()) : $category_posts->the_post(); ?>
 
 <?php
 	$photo_db = PhotoQSingleton::getInstance('PhotoQDB');
