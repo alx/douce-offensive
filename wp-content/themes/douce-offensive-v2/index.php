@@ -1,6 +1,5 @@
 <?php get_header() ?>
 
-<div id="container">
 	<div id="content" class="autosize">
 		<div id="left-menu" class="menu">
 			<ul>
@@ -44,6 +43,5 @@
 			</ul>
 		</div>
 	</div> <!-- #content -->
-</div> <!-- #container -->
 
 <?php get_footer() ?>
