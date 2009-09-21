@@ -20,6 +20,10 @@
 	<?php wp_get_archives('type=monthly&format=link'); ?>
 	<?php //comments_popup_script(); // off by default ?>
 	<?php wp_head(); ?>
+	
+	
+	<script type="text/javascript" src="<?php bloginfo('siteurl'); ?>/wp-includes/js/jquery/jquery.js"></script>
+	<script type="text/javascript" src="<?php bloginfo('template_directory'); ?>/rosa.js"></script>
 </head>
 
 <body <?php body_class(); ?>>

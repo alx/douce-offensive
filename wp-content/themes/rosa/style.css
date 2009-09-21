@@ -162,7 +162,6 @@ Content
 	height:380px;
 	margin-left:25px;
 	margin-top:140px;
-	width: 10000px;
 	white-space: nowrap;
 }
 
@@ -212,3 +211,6 @@ Content
 .talleres-nav {
 	width:200px;
 }
+
+div.autosize { display: table; width: 1px; }
+div.autosize > div { display: table-cell; }
