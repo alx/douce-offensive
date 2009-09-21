@@ -47,6 +47,12 @@ li a {
 	text-decoration:none;
 }
 
+li a:hover {
+	color: #FFF;
+	text-decoration:none;
+	font-weight: bold;
+}
+
 #photobook {
 	padding-left:100px;
 }
