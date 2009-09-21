@@ -6,5 +6,5 @@ jQuery(document).ready(function() {
 		all_img_width += this.width;
 	})
 	
-	jQuery("#photobook").width = all_img_width;
+	jQuery("#photobook").width(all_img_width);
 });
