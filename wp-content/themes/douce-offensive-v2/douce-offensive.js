@@ -1,6 +1,6 @@
 jQuery(document).ready(function() {
 	
-	all_img_width = 100;
+	var all_img_width = 100;
 	
 	jQuery("#photobook img").each(function() {
 		all_img_width += (this.width + 10);

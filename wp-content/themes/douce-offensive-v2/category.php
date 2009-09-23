@@ -20,7 +20,9 @@
 					} else {
 						$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
 					}
-					$category_output .= ' (' . intval($cat->count) . ')</li>';
+					if($cat->slug 1= "videos") {
+						$category_output .= ' (' . intval($cat->count) . ')</li>';
+					}
 				endforeach;
 
 				$category_output .= '<li>contact: <a href="mailto:globaleffect@gmail.com">globaleffect@gmail.com</a></li><ul>';
