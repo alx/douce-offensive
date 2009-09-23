@@ -33,7 +33,7 @@
 		<div id="photobook">
 
 		<?php
-		$vimeo_user_name = 'douceoffensive'
+		$vimeo_user_name = 'douceoffensive';
 		
 		// endpoints
 		$api_endpoint = 'http://www.vimeo.com/api/v2/'.$vimeo_user_name;
