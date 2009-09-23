@@ -31,33 +31,54 @@
 		</div>
 		
 		<div id="photobook">
-
-		<?php
-		$vimeo_user_name = 'douceoffensive';
-		
-		// endpoints
-		$api_endpoint = 'http://www.vimeo.com/api/v2/'.$vimeo_user_name;
-		$oembed_endpoint = 'http://vimeo.com/api/oembed.xml?url=http%3A//vimeo.com/';
-
-		// Curl helper function
-		function curl_get($url) {
-			$curl = curl_init($url);
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($curl, CURLOPT_TIMEOUT, 30);
-			$return = curl_exec($curl);
-			curl_close($curl);
-			return $return;
-		}
-		
-		// Load the user clips
-		$videos = simplexml_load_string(curl_get($api_endpoint.'/videos.xml'));
-		
-		foreach ($videos->video as $video):
-			$embed = simplexml_load_string(curl_get($api_endpoint.$video->id));?>
-			<div class="video"><?=$embed->html?></div>
-		<?php endforeach;?>
-
 		</div>
+		
+		<script type="text/javascript">
+
+			// Change this to your username to load in your clips
+			var vimeoUserName = 'douceoffensive';
+
+			// Tell Vimeo what function to call
+			var callback = 'showThumbs';
+
+			// Set up the URLs
+			var url = 'http://www.vimeo.com/api/v2/' + vimeoUserName + '/videos.json?callback=' + callback;
+
+			// This function loads the data from Vimeo
+			function init() {
+				var js = document.createElement('script');
+				js.setAttribute('type', 'text/javascript');
+				js.setAttribute('src', url);
+				document.getElementsByTagName('head').item(0).appendChild(js);
+			}
+
+			// This function goes through the clips and puts them on the page
+			function showThumbs(videos) {
+				var thumbs = document.getElementById('photobook');
+				thumbs.innerHTML = '';
+
+				for (var i = 0; i < videos.length; i++) {
+					var thumb = document.createElement('img');
+					thumb.setAttribute('src', videos[i].thumbnail_medium);
+					thumb.setAttribute('alt', videos[i].title);
+					thumb.setAttribute('title', videos[i].title);
+
+					var a = document.createElement('a');
+					a.setAttribute('href', videos[i].url);
+					a.appendChild(document.createTextNode(videos[i].title));
+
+					var p = document.createElement('p');
+					p.appendChild(thumb);
+					p.appendChild(document.createElement('br'));
+					p.appendChild(a);
+					thumbs.appendChild(p);
+				}
+			}
+
+			// Call our init function when the page loads
+			window.onload = init;
+
+		</script>
 
 		<div id="menu-right" class="menu">
 			<ul>
