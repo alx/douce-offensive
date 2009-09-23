@@ -20,7 +20,7 @@
 					} else {
 						$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
 					}
-					if($cat->slug 1= "videos") {
+					if($cat->slug = "videos") {
 						$category_output .= ' (' . intval($cat->count) . ')</li>';
 					}
 				endforeach;
