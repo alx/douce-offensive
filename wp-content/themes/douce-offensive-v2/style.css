@@ -25,6 +25,8 @@ body {
 }
 
 .menu {
+	vertical-align:top;
+	padding-top:70px;
 }
 
 #menu-left {
