@@ -33,6 +33,11 @@
 	}
 ?>
 
+		<div class='nav'>
+			<img src="<?php bloginfo('template_directory'); ?>/images/arrow_next.png" class="next" width="10px" height="15px"/>
+			<img src="<?php bloginfo('template_directory'); ?>/images/arrow_prev.png" class="prev" width="10px" height="15px"/>
+		</div>
+
 <?php endwhile; endif; ?>
 
 		</div>

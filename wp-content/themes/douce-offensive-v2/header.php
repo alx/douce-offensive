@@ -13,6 +13,7 @@
 	<!--[if IE]><link rel="stylesheet" href="<?php bloginfo("template_directory"); ?>/blueprint/ie.css" type="text/css" media="screen, projection" /><![endif]-->
 	
 	<script type="text/javascript" src="<?php bloginfo('siteurl'); ?>/wp-includes/js/jquery/jquery.js"></script>
+	<script type="text/javascript" src="<?php bloginfo('template_directory'); ?>/tools.scrollable.js"></script>
 	<script type="text/javascript" src="<?php bloginfo('template_directory'); ?>/douce-offensive.js"></script>
 </head>
 
