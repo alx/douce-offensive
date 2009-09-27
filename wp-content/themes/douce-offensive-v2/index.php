@@ -34,8 +34,8 @@
 ?>
 
 		<div class='nav'>
-			<img src="<?php bloginfo('template_directory'); ?>/images/arrow_next.png" class="next" width="10px" height="15px"/>
-			<img src="<?php bloginfo('template_directory'); ?>/images/arrow_prev.png" class="prev" width="10px" height="15px"/>
+			<a class="next"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_next.png" width="10px" height="15px"/></a>
+			<a class="prev"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_prev.png" width="10px" height="15px"/></a>
 		</div>
 
 <?php endwhile; endif; ?>
