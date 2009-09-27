@@ -13,7 +13,7 @@ TAGS: sandbox, microformats, hcard, hatom, xoxo, widgets, blank slate, starter t
 body {
 	background-color: #000;
 	color: #FFF;
-	font-size:12px;
+	font-size:11px;
 }
 
 #wrapper {
@@ -25,18 +25,16 @@ body {
 }
 
 .menu {
-	width:150px;
+	width:200px;
 }
 
 #menu-left {
-	position:absolute;
 	top:75px;
 	left:60px;
 	text-align:right;
 }
 
 #menu-right {
-	position:absolute;
 	top:75px;
 }
 
