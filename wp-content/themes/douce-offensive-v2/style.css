@@ -25,17 +25,13 @@ body {
 }
 
 .menu {
-	width:150px;
 }
 
 #menu-left {
-	top:75px;
-	left:60px;
 	text-align:right;
 }
 
 #menu-right {
-	top:75px;
 }
 
 li {
@@ -60,7 +56,7 @@ li a:hover .email {
 }
 
 #photobook {
-	padding-left:100px;
+	padding-left:30px;
 }
 
 #photobook img {
