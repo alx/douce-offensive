@@ -11,16 +11,16 @@ jQuery(document).ready(function() {
 	jQuery(".nav:last").remove();
 	
 	jQuery(".next").click(function(){
-		var divOffset = $('#photobook').offset().left;
-		var navOffset = $(this).parents('.nav')[0].nextElementSibling.offset().left;;
+		var divOffset = jQuery('#photobook').offset().left;
+		var navOffset = jQuery(this).parents('.nav')[0].nextElementSibling.offsetLeft;;
 		var imgScroll = navOffset - divOffset;
-		$('#photobook').animate({scrollLeft: '+=' + imgScroll + 'px'}, 500);
+		jQuery('#photobook').animate({scrollLeft: '+=' + imgScroll + 'px'}, 500);
 	})
 	
 	jQuery(".prev").click(function(){
-		var divOffset = $('#photobook').offset().left;
-		var navOffset = $(this).parents('.nav')[0].previousElementSibling.offset().left;
+		var divOffset = jQuery('#photobook').offset().left;
+		var navOffset = jQuery(this).parents('.nav')[0].previousElementSibling.offsetLeft;
 		var imgScroll = navOffset - divOffset;
-		$('#photobook').animate({scrollLeft: '+=' + imgScroll + 'px'}, 500);
+		jQuery('#photobook').animate({scrollLeft: '+=' + imgScroll + 'px'}, 500);
 	})
 });
