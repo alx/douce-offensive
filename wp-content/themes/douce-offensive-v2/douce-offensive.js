@@ -12,4 +12,18 @@ jQuery(document).ready(function() {
 	jQuery("#content").scrollable({
 		items: '#photobook'
 	});
+	
+	jQuery(".next").click(function(){
+		var divOffset = $('#photobook').offset().left;
+		var navOffset = $(this).parents('.nav')[0].nextElementSibling.offset().left;;
+		var imgScroll = navOffset - divOffset;
+		$('#photobook').animate({scrollLeft: '+=' + imgScroll + 'px'}, 500);
+	})
+	
+	jQuery(".prev").click(function(){
+		var divOffset = $('#photobook').offset().left;
+		var navOffset = $(this).parents('.nav')[0].previousElementSibling.offset().left;
+		var imgScroll = navOffset - divOffset;
+		$('#photobook').animate({scrollLeft: '+=' + imgScroll + 'px'}, 500);
+	})
 });
