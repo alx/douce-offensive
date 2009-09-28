@@ -11,13 +11,13 @@ jQuery(document).ready(function() {
 	jQuery(".nav:last").remove();
 	
 	jQuery(".next").click(function(){
-		var imgOffset = jQuery(this).parents('.nav')[0].nextElementSibling.offsetLeft;
-		jQuery('html,body').animate({scrollRight: imgOffset}, 500);
+		var nextImg = jQuery(this).parents('.nav')[0].nextElementSibling;
+		jQuery('html, body').animate({scrollLeft: nextImg.offsetLeft}, 500);
 	})
 	
 	jQuery(".prev").click(function(){
-		var imgOffset = jQuery(this).parents('.nav')[0].previousElementSibling.offsetLeft;
-		jQuery('html,body').animate({scrollLeft: imgOffset}, 500);
+		var previousImg = jQuery(this).parents('.nav')[0].previousElementSibling;
+		jQuery('html, body').animate({scrollLeft: previousImg.offsetLeft}, 500);
 	})
     
 });
