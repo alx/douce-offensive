@@ -9,9 +9,6 @@ jQuery(document).ready(function() {
 	jQuery("#content").width(all_img_width);
 	
 	jQuery(".nav:last").remove();
-	jQuery("#content").scrollable({
-		items: '#photobook'
-	});
 	
 	jQuery(".next").click(function(){
 		var divOffset = $('#photobook').offset().left;
