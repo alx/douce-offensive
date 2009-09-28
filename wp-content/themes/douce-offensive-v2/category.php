@@ -4,7 +4,8 @@
 		<div id="menu-left" class="menu">
 			<ul>
 				<?php
-				$category_menu = category_menu(get_query_var('cat'));
+				$current_cat = get_query_var('cat');
+				$category_menu = category_menu($current_cat);
 				echo $category_menu;
 				?>
 			</ul>
