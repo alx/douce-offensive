@@ -36,6 +36,7 @@ body {
 }
 
 #menu-right {
+	float:left;
 }
 
 li {
