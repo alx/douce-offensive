@@ -67,9 +67,19 @@ li a:hover .email {
 	padding-left:5px;
 }
 
-#photobook nav {
+#photobook .nav {
     display:inline;
 	width:30px;
+}
+
+.nav .next {
+	position:relative;
+	top:0px;
+}
+
+.nav .prev {
+	position:relative;
+	bottom:0px;
 }
 
 #photobook .video {
