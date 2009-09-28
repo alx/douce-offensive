@@ -19,7 +19,7 @@
 	$photo = $photo_db->getPublishedPhoto($post->ID);
 	
 	if(isset($photo)){
-		echo $photo->generateImgTag('main', '');
+		echo $photo->generateImgTag('main', 'photo');
 	}
 ?>
 
