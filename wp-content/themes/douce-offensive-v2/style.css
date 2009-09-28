@@ -26,6 +26,7 @@ body {
 
 .menu {
 	vertical-align:top;
+	width:200px;
 }
 
 #menu-left {
@@ -64,6 +65,11 @@ li a:hover .email {
     display:inline;
 	margin-top:50px;
 	padding-left:5px;
+}
+
+#photobook nav {
+    display:inline;
+	width:30px;
 }
 
 #photobook .video {
