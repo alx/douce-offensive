@@ -8,7 +8,7 @@ jQuery(document).ready(function() {
 	
 	jQuery("#content").width(all_img_width);
 	
-	jQuery(".nav:last").hide();
+	jQuery(".nav:last").remove();
 	jQuery("#content").scrollable({
 		items: '#photobook'
 	});

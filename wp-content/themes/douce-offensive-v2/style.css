@@ -25,6 +25,7 @@ body {
 }
 
 .menu {
+	display:inline;
 	padding-top:80px;
 	vertical-align:top;
 	width:200px;
