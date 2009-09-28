@@ -93,7 +93,7 @@ li a:hover .email {
 }
 
 div.autosize { display: table; width: 1px; }
-div.autosize > div { display: table-cell; }
+div.autosize > div { display: table-cell; vertical-align:top;}
 
 #footer {
 	position: fixed;
