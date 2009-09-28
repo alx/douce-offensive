@@ -4,18 +4,8 @@
 		<div id="menu-left" class="menu">
 			<ul>
 				<?php
-				$categories = get_categories();
-
-				$category_output = '';
-				$i = 1;
-				foreach($categories as $cat):
-					$category_output .= '<li><a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
-					$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
-					$category_output .= ' (' . intval($cat->count) . ')</li>';
-				endforeach;
-
-				$category_output .= '<li>-- contact --</li><li><a href="mailto:globaleffect@gmail.com" class="email">globaleffect@gmail.com</a></li><ul>';
-				echo $category_output;
+				$category_menu = category_menu(get_query_var('cat'));
+				echo $category_menu;
 				?>
 			</ul>
 		</div>
@@ -44,7 +34,7 @@
 
 		<div id="menu-right" class="menu">
 			<ul>
-				<?php echo $category_output; ?>
+				<?php echo $category_menu; ?>
 			</ul>
 		</div>
 	</div> <!-- #content -->

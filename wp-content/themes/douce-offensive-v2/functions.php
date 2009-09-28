@@ -541,4 +541,26 @@ add_filter( 'archive_meta', 'convert_chars' );
 add_filter( 'archive_meta', 'wpautop' );
 
 // Remember: the Sandbox is for play.
+
+function category_menu($current_cat = 0) {
+	$categories = get_categories();
+	
+	$category_output = '';
+	$i = 1;
+	foreach($categories as $cat):
+		$category_output .= '<li><a title="' . sprintf(__( 'View all posts filed under %s' ), attribute_escape($cat->name)) . '"';
+		if ($cat->cat_ID == $current_cat) {
+			$category_output .= ' href="' . get_category_link( $cat->term_id ) . '"><strong>' . attribute_escape($cat->name) . '</strong></a>';
+		} else {
+			$category_output .= ' href="' . get_category_link( $cat->term_id ) . '">' . attribute_escape($cat->name) . '</a>';
+		}
+		if($cat->slug = "videos") {
+			$category_output .= ' (' . intval($cat->count) . ')</li>';
+		}
+	endforeach;
+
+	$category_output .= '<li>contact: <a href="mailto:globaleffect@gmail.com">globaleffect@gmail.com</a></li><ul>';
+	return $category_output;
+}
+
 ?>
