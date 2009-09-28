@@ -25,6 +25,7 @@ body {
 }
 
 .menu {
+	padding-top:80px;
 	vertical-align:top;
 	width:200px;
 }
@@ -73,13 +74,9 @@ li a:hover .email {
 }
 
 .nav .next {
-	position:relative;
-	top:0px;
 }
 
 .nav .prev {
-	position:relative;
-	bottom:0px;
 }
 
 #photobook .video {
