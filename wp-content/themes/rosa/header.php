@@ -31,7 +31,9 @@
 	<div id="header">
 		
 		<div id="logo">
-			<a href="<?php bloginfo('url'); ?>/"><?php bloginfo('name'); ?></a>
+			<a href="<?php bloginfo('url'); ?>/">
+				<img src="<?php bloginfo('template_directory'); ?>/logo.png" width="162px" height="19px"/>
+			</a>
 		</div>
 		
 		<div class="nav">

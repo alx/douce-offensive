@@ -9,6 +9,7 @@ jQuery(document).ready(function() {
 	jQuery("#content").width(all_img_width);
 	
 	jQuery(".nav:last").remove();
+	jQuery(".next:last").remove();
 	
 	jQuery(".next").click(function(){
 		var nextImg = jQuery(this).parents('.nav')[0].nextElementSibling.nextElementSibling;
