@@ -92,8 +92,8 @@ Header
 
 #logo {
 	float:left;
-	height:140px;
-	width:210px;
+	margin-top:65px;
+	padding-right:60px;
 }
 
 #logo a {
@@ -144,7 +144,6 @@ Header
 }
 
 .nav ul a:hover {
-	background-color:#000;
 	color:#7f7f7f;
 	font-family:"Times New Roman",Georgia,Serif;
 	font-size:13px;
