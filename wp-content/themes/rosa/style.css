@@ -136,6 +136,7 @@ Header
 	color:#000000;
 	font-family:"Times New Roman",Georgia,Serif;
 	font-size:13px;
+	font-style:italic;
 	font-weight:normal;
 	line-height:14px;
 	margin:0;
@@ -145,13 +146,7 @@ Header
 
 .nav ul a:hover {
 	color:#7f7f7f;
-	font-family:"Times New Roman",Georgia,Serif;
-	font-size:13px;
-	font-weight:normal;
-	line-height:14px;
-	margin:0;
 	text-decoration:line-through;
-	padding-left:5px;
 }
 
 /*
