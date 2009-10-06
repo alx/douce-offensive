@@ -33,6 +33,7 @@ body {
 
 #menu-left {
 	text-align:right;
+	float:left;
 }
 
 #menu-right {
