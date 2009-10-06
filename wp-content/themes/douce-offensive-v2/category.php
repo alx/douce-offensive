@@ -12,6 +12,10 @@
 		</div>
 		
 		<div id="photobook">
+			
+			<div class='nav'>
+				<a class="next"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_next.png"/></a>
+			</div>
 
 <?php 
 
@@ -27,10 +31,10 @@
 		}
 ?>
 
-	<div class='nav'>
-		<a class="prev"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_prev.png"/></a>
-		<a class="next"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_next.png"/></a>
-	</div>
+			<div class='nav'>
+				<a class="prev"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_prev.png"/></a>
+				<a class="next"><img src="<?php bloginfo('template_directory'); ?>/images/arrow_next.png"/></a>
+			</div>
 
 <?php endwhile; endif; ?>
 
