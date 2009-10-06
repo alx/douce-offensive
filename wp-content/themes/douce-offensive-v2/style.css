@@ -76,8 +76,9 @@ li a:hover .email {
 }
 
 .nav img {
-	height:15px;
-	width:10px;
+	height:9px;
+	width:5px;
+	padding:3px;
 }
 
 .nav .next {

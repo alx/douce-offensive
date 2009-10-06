@@ -32,11 +32,6 @@
 
 		</div>
 
-		<div id="menu-right" class="menu">
-			<ul>
-				<?php echo $category_menu; ?>
-			</ul>
-		</div>
 	</div> <!-- #content -->
 
 <?php get_footer() ?>
