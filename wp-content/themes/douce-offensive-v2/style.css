@@ -78,8 +78,10 @@ li a:hover .email {
 }
 
 #photobook .nav {
-    display:inline;
+	display:inline;
 	width:30px;
+	position:relative;
+	top:-200px;
 }
 
 .nav img {
