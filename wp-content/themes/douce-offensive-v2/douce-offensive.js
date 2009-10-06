@@ -16,6 +16,10 @@ jQuery(document).ready(function() {
 		jQuery('html, body').animate({scrollLeft: nextImg.offsetLeft}, 500);
 	})
 	
+	jQuery(".prev:first").click(function(){
+		jQuery('html, body').animate({scrollLeft: 0}, 500);
+	})
+	
 	jQuery(".prev").click(function(){
 		var previousImg = jQuery(this).parents('.nav')[0].previousElementSibling.previousElementSibling;
 		jQuery('html, body').animate({scrollLeft: previousImg.offsetLeft}, 500);
