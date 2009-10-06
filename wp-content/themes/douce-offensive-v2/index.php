@@ -1,14 +1,15 @@
 <?php get_header() ?>
 
+	<div id="menu-left" class="menu">
+		<ul>
+			<?php
+			$category_menu = category_menu(get_query_var('cat'));
+			echo $category_menu;
+			?>
+		</ul>
+	</div>
+	
 	<div id="content" class="autosize">
-		<div id="menu-left" class="menu">
-			<ul>
-				<?php
-				$category_menu = category_menu(get_query_var('cat'));
-				echo $category_menu;
-				?>
-			</ul>
-		</div>
 		
 		<div id="photobook">
 			

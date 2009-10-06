@@ -48,6 +48,12 @@ li a {
 	text-decoration:none;
 }
 
+li .email {
+	color: #FFF;
+	text-decoration:none;
+	font-weight: normal;
+}
+
 li a:hover {
 	color: #FFF;
 	text-decoration:none;
