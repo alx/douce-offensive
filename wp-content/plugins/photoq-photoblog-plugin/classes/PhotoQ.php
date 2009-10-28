@@ -21,7 +21,7 @@ class PhotoQ extends PhotoQObject
 	 * @var string
 	 * @access private
 	 */
-	var $_version = '1.8';
+	var $_version = '1.8.2';
 	
 	/**
 	 * Reference to OptionControllor singleton
@@ -95,7 +95,6 @@ class PhotoQ extends PhotoQObject
 
 		global $wpdb;
 		
-		
 		//get the PhotoQ error stack for easy access
 		$this->_errStack = &PEAR_ErrorStack::singleton('PhotoQ');
 		
@@ -117,10 +116,6 @@ class PhotoQ extends PhotoQObject
 		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
 		
 		$this->_autoUpgrade();
-		
-		//creating queue
-		$this->_queue =& PhotoQSingleton::getInstance('PhotoQQueue');
-		
 		
 		// actions and filters are next
 
@@ -164,6 +159,7 @@ class PhotoQ extends PhotoQObject
 			PhotoQHelper::debug("GET $key: ".print_r($value,true)." <br />");
 			}
 		*/
+		
 		
 		PhotoQHelper::debug('leave __construct()');
 		
@@ -218,6 +214,8 @@ class PhotoQ extends PhotoQObject
 	 * @return unknown_type
 	 */
 	function showPhotoQDashboard() {
+		$this->initQueue(); //lazy initialization of queue
+		
 		$qLen = $this->_queue->getLength();
 		printf(__('Number of photos in the queue: %s', 'PhotoQ'), "<b>$qLen</b>");
 		if($qLen){
@@ -322,6 +320,7 @@ class PhotoQ extends PhotoQObject
 			
 			// OK, we're authenticated we can now start to change post data
 			if($this->isPhotoPost($postID)){
+				PhotoQHelper::debug('is photo post');
 				$post = get_post($postID);
 				$photo =& new PhotoQPublishedPhoto($post->ID, $post->post_title);
 			
@@ -377,6 +376,9 @@ class PhotoQ extends PhotoQObject
 
 		}else{ //all of these show the options panel
 
+			$oldImgDir = $this->_oc->getImgDir();
+			
+			
 			//was there a full rebuild requested by the user?
 			$rebuildAll = isset($_POST['rebuildAll']);
 			
@@ -391,8 +393,7 @@ class PhotoQ extends PhotoQObject
 					$this->_errStack->push(PHOTOQ_XML_IMPORT_FAILED, 'error', array('filename' => $xmlFilename));
 			}
 			
-			$oldImgDir = $this->_oc->getImgDir();
-
+			
 			//creating batch processor
 			$bp =& new PhotoQBatchProcessor($this);
 
@@ -416,14 +417,6 @@ class PhotoQ extends PhotoQObject
 				$this->uploadWatermark();
 			}
 				
-			//check whether imgdir changed. if so we have to move all the existing stuff and rebuild the content
-			/* //rolled back, coming only in next release
-			if($this->_oc->hasChanged('imgDirOption')){
-			//$oldImgDir = $this->_oc->getOldValues('imgDirOption');
-			//$oldImgDir = $oldImgDir['imgdir']['imgdir'];
-				
-			$this->moveOldImgDir($oldImgDir);
-			}*/
 			
 			//check whether image sizes changed. If so rebuild the thumbs and update the posts accordingly.
 			$changedSizes = $this->_oc->getChangedImageSizeNames();
@@ -438,8 +431,7 @@ class PhotoQ extends PhotoQObject
 				$changedSizes = $this->_oc->getImageSizeNames();
 				
 
-			
-			if(!empty($changedSizes) || $this->_oc->hasChanged(array('views','exifTags','exifDisplay','originalFolder'))){
+			if(!empty($changedSizes) || $this->_oc->hasChanged(array('imgdir','views','exifTags','exifDisplay','originalFolder'))){
 				
 				//we need to rebuild photos/posts. this is time consuming -> prepare for batch processing
 			
@@ -447,23 +439,22 @@ class PhotoQ extends PhotoQObject
 				$updateExif = $rebuildAll ? true : $this->_oc->hasChanged('exifTags') || $this->_oc->hasChanged('exifDisplay');
 				$addDelTagFromExifArray = $this->_oc->getAddedDeletedTagsFromExif();
 				
-				$updateOriginalFolder = $rebuildAll ? true : $this->_oc->hasChanged('originalFolder');
+				$updateOriginalFolder = $rebuildAll ? true : ($this->_oc->hasChanged('originalFolder')  || $this->_oc->hasChanged('imgdir'));
 				
-				
+
+					
 				$changedViews = $this->_oc->getChangedViewNames($changedSizes, $updateExif, $updateOriginalFolder);
 				//if full rebuild was selected we rebuild everything
-				if($rebuildAll)
+				if($rebuildAll || $this->_oc->hasChanged('imgdir'))
 					$changedViews = $this->_oc->getViewNames();
 			
-				//$updateContent = $rebuildAll ? true : !empty($changedSizes) || $this->_oc->hasChanged(array('contentView','excerptView')) ||
-				//				( $this->_oc->hasChanged('exifTags') && $this->_oc->getValue('inlineExif') );		
 				
 				PhotoQHelper::debug('update exif: ' .$updateExif.' update original folder: '. $updateOriginalFolder);
 				PhotoQHelper::debug('changed exif: ' .$this->_oc->hasChanged('exifTags').' changed content:' . $this->_oc->hasChanged('contentView') .' changed excerpt: '. $this->_oc->hasChanged('excerptView'));
 				
 				//these two operations should not take too long so do them outside the batch
 				if($publishedPhotoIDs = $this->_db->getAllPublishedPhotoIDs()){
-					$oldNewFolderName = $this->_rebuildFileSystem($updateOriginalFolder, $changedSizes);
+					$oldNewFolderName = $this->_rebuildFileSystem($updateOriginalFolder, $changedSizes, $this->_oc->hasChanged('imgdir'), $oldImgDir);
 
 					//create the array of operations this batch consists of and register it  with the batch processor
 					$batchOperations = array(
@@ -534,7 +525,7 @@ class PhotoQ extends PhotoQObject
 			if(isset($status)) $status->show();
 
 			//do input validation on options
-			$this->_oc->validateOptions();
+			$this->_oc->validate();
 
 			//make sure we have freshest data possible.
 			$this->_oc->initRuntime();
@@ -568,8 +559,12 @@ class PhotoQ extends PhotoQObject
 	 */
 	function manage_page()
 	{
+		
+		
 		PhotoQHelper::debug('enter manage_page()');
 		
+		$this->initQueue(); //lazy initialization of queue
+				
 		//do some inital setup
 		$this->createDirIfNotExists($this->_oc->getCacheDir(), true);
 			
@@ -697,6 +692,11 @@ class PhotoQ extends PhotoQObject
 		}
 		PhotoQHelper::debug('leave manage_page()');
 	
+		/*$timer =& PhotoQSingleton::getInstance('PhotoQTimers');
+		$timer->start('photoQFullExec');
+		print_r($timer->stop('photoQFullExec'));
+		*/
+		
 	}
 
 
@@ -782,8 +782,11 @@ class PhotoQ extends PhotoQObject
 		
 		PhotoQHelper::debug('uploadPhoto: created auto title');
 		
+		$this->initQueue(); //lazy initialization of queue
+		
+		
 		//add photo to queue
-		if(!$result = $wpdb->query("INSERT INTO $this->QUEUE_TABLE (q_title, q_imgname, q_position, q_slug, q_descr, q_tags, q_exif, q_fk_author_id) VALUES ('$title', '$filename', '".($this->_queue->getLength()+1)."', '$slug', '$descr', '$tags', '$exif', '$post_author')"))
+		if(!$result = $wpdb->query("INSERT INTO $this->QUEUE_TABLE (q_title, q_imgname, q_position, q_slug, q_descr, q_tags, q_exif, q_fk_author_id) VALUES ('$title', '$filename', '".($this->_queue->getLength())."', '$slug', '$descr', '$tags', '$exif', '$post_author')"))
 			return false;
 		
 					
@@ -835,12 +838,12 @@ class PhotoQ extends PhotoQObject
 	function update_queue($id, $title, $descr, $tags, $slug, $authorID, $position, $old_position, $parent, $qLength, $pnum = 0)
 	{
 		global $wpdb;
-		PhotoQHelper::debug('enter update_queue()');
+		PhotoQHelper::debug('enter update_queue(), position: ' . $position . ', old position: ' .$old_position . ', qlen: ' .$qLength);
 	
-		if($position < 1)
-		$position = 1;
-		if($position > $qLength)
-		$position = $qLength;
+		if($position < 0)
+			$position = 0;
+		if($position >= $qLength)
+			$position = $qLength-1;
 	
 		if($position < $old_position){
 			$wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = q_position+1 WHERE q_position >= '$position' AND q_position < '$old_position'");
@@ -848,6 +851,8 @@ class PhotoQ extends PhotoQObject
 		if($position > $old_position){
 			$wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = q_position-1 WHERE q_position <= '$position' AND q_position > '$old_position'");
 		}
+		
+		PhotoQHelper::debug("UPDATE  $this->QUEUE_TABLE SET q_position = '$position', q_title = '$title', q_descr = '$descr', q_tags = '$tags', q_slug = '$slug', q_fk_author_id = '$authorID', q_edited = 1 WHERE q_img_id = $id");
 	
 		$wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = '$position', q_title = '$title', q_descr = '$descr', q_tags = '$tags', q_slug = '$slug', q_fk_author_id = '$authorID', q_edited = 1 WHERE q_img_id = $id");
 	
@@ -904,6 +909,8 @@ class PhotoQ extends PhotoQObject
 	{
 		global $wpdb;
 	
+		$this->initQueue(); //lazy initialization of queue
+		
 		PhotoQHelper::debug('enter cronjob()');
 	
 		//add ftp dir to queue if corresponding option is set
@@ -913,6 +920,7 @@ class PhotoQ extends PhotoQObject
 				$ftpDirContent = PhotoQHelper::getMatchingDirContent($ftpDir,'#.*\.(jpg|jpeg|png|gif)$#i');
 				foreach ($ftpDirContent as $ftpFile)
 					$this->uploadPhoto(basename($ftpFile), '', '', '', $ftpFile);
+					
 				//reload the queue to get newly uploaded photos
 				$this->_queue->load();
 			}
@@ -1273,6 +1281,11 @@ class PhotoQ extends PhotoQObject
 	 */
 	function _handleUpload($destDir, $oldPath = ''){
 		$destDir = rtrim($destDir,'/\\');
+		//if on windows backslashes need to be there otherwise wp upload function is choking.
+		//we really need to find a better solution for this.
+		$cleanAbs = str_replace('\\', '/', ABSPATH);
+		$destDir = str_replace($cleanAbs,ABSPATH,$destDir);
+		
 		PhotoQHelper::debug('destDir: '. $destDir);
 		if($oldPath === ''){
 			/*try to use the functions provided by wordpress, however there is no way to
@@ -1304,7 +1317,7 @@ class PhotoQ extends PhotoQObject
 			//upload the thing
 			$file = wp_handle_upload($_FILES['Filedata'], $overrides);
 			
-			//PhotoQHelper::debug(print_r($file, true));
+			PhotoQHelper::debug(print_r($file, true));
 	
 			//reset upload options to saved ones
 			update_option('upload_path', $oldUploadPath);
@@ -1314,7 +1327,7 @@ class PhotoQ extends PhotoQObject
 			//move file if we have permissions, otherwise copy file
 			//suppress warnings if original could not be deleted due to missing permissions
 			$ok = @PhotoQHelper::moveFileIfNotExists($oldPath, $newPath);
-			if(!$ok) $file['error'] = "Unable to move $oldPath to $newPath";
+			if(!$ok) $file['error'] = sprintf(__('Unable to move %1$s to %2$s', 'PhotoQ'),$oldPath,$newPath);
 			$file['file'] = $newPath;	
 		}
 		
@@ -1384,7 +1397,7 @@ class PhotoQ extends PhotoQObject
 	 * Change "original" folder name to a random string if desired.
 	 *
 	 */
-	function updateOriginalFolderName(){
+	function _updateOriginalFolderName($oldImgDir){
 		$newName = 'original';
 		if($this->_oc->getValue('hideOriginals')){
 			//generate a random name
@@ -1401,7 +1414,7 @@ class PhotoQ extends PhotoQObject
 			add_option("wimpq_originalFolder", $newName);
 		}
 		
-		return array($this->_oc->getImgDir().$oldName, $this->_oc->getImgDir().$newName);
+		return array($oldImgDir.$oldName, $this->_oc->getImgDir().$newName);
 	}
 	
 	/**
@@ -1440,7 +1453,7 @@ class PhotoQ extends PhotoQObject
 		//rebuild it
 		$photo = &$this->_db->getPublishedPhoto($currentId);
 		
-		//PhotoQHelper::debug('photo: ' . $photo->getTitle());
+		PhotoQHelper::debug('photo: ' . $photo->getTitle());
 		//re-enable all errors
 		//if($updateOriginalFolder)
 		//	$this->_errStack->popCallback();
@@ -1469,11 +1482,16 @@ class PhotoQ extends PhotoQObject
 		}
 	}
 	
-	function _rebuildFileSystem($updateOriginalFolder,$changedSizes){
+	function _rebuildFileSystem($updateOriginalFolder,$changedSizes, $imgDirChanged, $oldImgDir){
 		
+		//check whether imgdir changed. if so we have to move all the existing stuff and rebuild the content
+		if($imgDirChanged){
+			$this->_moveImgDir($oldImgDir, false);
+		}
+
 		$oldNewFolderName = array('','');
 		if($updateOriginalFolder){
-			$oldNewFolderName = $this->updateOriginalFolderName();
+			$oldNewFolderName = $this->_updateOriginalFolderName($oldImgDir);
 			PhotoQHelper::moveFile($oldNewFolderName[0], $oldNewFolderName[1]);
 		}
 			
@@ -1495,7 +1513,17 @@ class PhotoQ extends PhotoQObject
 	function _autoUpgrade(){
 		
 		if($this->_version != get_option( "wimpq_version" )){
-
+			
+			//upgrade to 1.8.2, we need to put the queue back in order
+			//plus the numbering should start at 0
+			if($this->_version == '1.8.2'){
+				if($results = $this->_db->getQueueByPosition()){
+					foreach ($results as $position => $qEntry) {
+						$this->_db->setQueuePosition($qEntry->q_img_id, $position);
+					}
+				}
+			}
+			
 			// upgrade to 1.8. the structure of views changed, we don't want to force a rebuild on our users
 			// so we deal with it here, adjusting the old views to the new ones
 			$oldOptionArray = get_option('wimpq_options');
@@ -1559,33 +1587,46 @@ class PhotoQ extends PhotoQObject
 	 * Something like this will be used to allow users to switch imgdir
 	 *
 	 */
-	/*
-	function moveOldImgDir($oldImgDir){
+	
+	function _moveImgDir($oldImgDir, $includingOriginal = true){
+		//$oldImgDir = $this->_oc->getOldValues('imgdir');
 		
-		//$publishedPhotos = $this->_db->getAllPublishedPhotos();
+		//move all dirs to the new place
+		$newImgDir = $this->_oc->getImgDir();
+		$dirs2move = $this->_getOldImgDirContent($oldImgDir, $includingOriginal);
+		foreach( $dirs2move as $dir2move){
+			$moveTo = $this->_oc->getImgDir().basename($dir2move);
+			if(!PhotoQHelper::moveFileIfNotExists($dir2move, $moveTo)){
+					$this->_errStack->push(PHOTOQ_COULD_NOT_MOVE, 'error', array('source' => $dir2move, 'dest' => $moveTo));
+			}//else
+			// @todo we might want to use sth like this to make it more flexible for users who 
+			//already messed up with their imgdir
+			//	PhotoQHelper::mergeDirs($dir2move, $moveTo);
+		}
 		
-		//move all files to the new place
-		$imgDirContent = $this->getOldImgDirContent( ($oldImgDir) );
-
-		foreach( $imgDirContent as $file2move)
-			PhotoQHelper::moveFile($file2move, $this->_oc->getImgDir().basename($file2move));
-
 		//update the watermark directory database entry
 		$oldWatermarkPath = get_option( "wimpq_watermark" );
 		if($oldWatermarkPath){
-			$oldWMFolder = ($oldImgDir).'photoQWatermark/';
-			$newWMFolder = $this->_oc->getImgDir().'photoQWatermark/';
+			$oldWMFolder = $oldImgDir.'photoQWatermark/';
+			$newWMFolder = $newImgDir.'photoQWatermark/';
 			$newWatermarkPath = str_replace($oldWMFolder, $newWMFolder, $oldWatermarkPath);
 			update_option( "wimpq_watermark", $newWatermarkPath);
 		}
+		
+		/*
+		//$publishedPhotos = $this->_db->getAllPublishedPhotos();
+		
+		
+		
+		
 		//get all photo posts, foreach size, rebuild the photo
 		foreach ( $this->_db->getAllPublishedPhotos() as $photo ){
 			$photo->rebuild( array(), false, true, 
 				true, ($oldImgDir).$this->_oc->ORIGINAL_IDENTIFIER, $this->_oc->getImgDir().$this->_oc->ORIGINAL_IDENTIFIER);
 		}
-		
+		*/
 	}
-	*/
+	
 	
 	/**
 	 * Get a list of old (pre photoq 1.5) year-month folders.
@@ -1599,14 +1640,16 @@ class PhotoQ extends PhotoQObject
 	}
 	
 	/**
-	 * Get content of old imgdir for updating to 1.5.2.
+	 * Get content of old imgdir so we know what to move
 	 *
 	 * @return array
 	 */
-	function getOldImgDirContent($oldImgDir)
+	function _getOldImgDirContent($oldImgDir, $includingOriginal = true)
 	{
 		//determine which folders we are allowed to move
-		$allowedFolders  = array('qdir','photoQWatermark', $this->_oc->getOriginalIdentifier());
+		$allowedFolders  = array('qdir','photoQWatermark', 'myPhotoQPresets');
+		if($includingOriginal)
+			$allowedFolders = array_merge($allowedFolders, $this->_oc->getOriginalIdentifier());
 		//only thing allowed to be moved are folders related to photoq
 		$allowedFolders = array_merge($allowedFolders, $this->_oc->getImageSizeNames());
 		for($i = 0; $i<count($allowedFolders); $i++)
@@ -1621,12 +1664,17 @@ class PhotoQ extends PhotoQObject
 		
 	}
 	
-	/*
-	function getOldImgDir($oldImgDir)
+	
+	/**
+	 * Only used by updates from pre 1.5
+	 * @param $oldImgDir
+	 * @return unknown_type
+	 */
+	function _getOldImgDir($oldImgDir)
 	{
 		$newImgDir = $this->_oc->getImgDir();
 		return str_replace('wp-content', $oldImgDir, $newImgDir);
-	}*/
+	}
 	
 	function showFtpFileList(){
 		$ftpDir = $this->_oc->getFtpDir();
@@ -1715,6 +1763,11 @@ class PhotoQ extends PhotoQObject
 		$bp =& new PhotoQBatchProcessor($this, $id);
 		PhotoQHelper::debug('calling process()');
 		return $bp->process();
+	}
+	
+	function initQueue(){
+		if(!isset($this->_queue))//lazy initialization, creating queue
+			$this->_queue =& PhotoQSingleton::getInstance('PhotoQQueue');
 	}
 
 

@@ -36,6 +36,9 @@ class PhotoQQueue extends PhotoQObject
 	
 	function load()
 	{
+		//$timer =& PhotoQSingleton::getInstance('PhotoQTimers');
+		//$timer->start('photoQFullExec');
+		
 		$this->_queuedPhotos = array();
 	
 		if($results = $this->_db->getQueueByPosition()){
@@ -48,6 +51,8 @@ class PhotoQQueue extends PhotoQObject
 					));
 			}
 		}
+		
+		//$timer->stop('photoQFullExec');
 	}
 	
 	function addPhoto(&$photo)
@@ -161,7 +166,7 @@ class PhotoQQueue extends PhotoQObject
 	 * @return unknown_type
 	 */
 	function _postPublishingActions($topID, $postID){
-		$this->_db->deleteQueueEntry($topID, 1);
+		$this->_db->deleteQueueEntry($topID, 0);
 		//if exif is inlined we already need a rebuild to get the post_tag
 		//links needed for the tagsFromExif stuff. These are not available
 		//before the post has been posted (and thus the tags registered).

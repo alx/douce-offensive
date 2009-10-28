@@ -119,6 +119,17 @@ class CompositeOption extends ReusableOption
 		return $result;
 	}
 	
+	function getReferenceArray()
+	{
+		$result = array($this->_name => &$this);
+		
+		foreach ( array_keys($this->_children) as $index ) {
+			$child =& $this->_children[$index];
+			$result = array_merge($child->getReferenceArray(),$result);
+		}
+		return $result;
+	}
+	
 	/**
 	 * Registers form submit buttons if any with the OptionController specified.
 	 * @param $oc
@@ -299,15 +310,33 @@ class CompositeOption extends ReusableOption
 	 */
 	function validate()
 	{
-		$result = array();
+		$result = true;
+
+		//foreach ($this->_children as $child){
+		foreach ( array_keys($this->_children) as $index ) {
+			$child =& $this->_children[$index];
+			if(!$child->validate())
+			$result = false;
+		}
+		return $result;	
+	}
+	
+		/*function validate2Change()
+	{
+		return $this->_validateInputs('validate2Change');
+	}
+	
+	function _validateInputs($validationCallback = 'validate'){
+		$result = true;
 		
 		//foreach ($this->_children as $child){
 		foreach ( array_keys($this->_children) as $index ) {
 			$child =& $this->_children[$index];
-			$result = array_merge($result, $child->validate());
+			if(!$child->$validationCallback())
+				$result = false;
 		}
 		return $result;
-	}
+	}*/
 
 
 }

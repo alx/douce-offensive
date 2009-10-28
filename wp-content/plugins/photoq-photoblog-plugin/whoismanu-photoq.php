@@ -1,7 +1,7 @@
 <?php
 /*
  Plugin Name: PhotoQ
- Version: 1.8
+ Version: 1.8.2
  Plugin URI: http://www.whoismanu.com/blog/
  Description: Adds queue based photo management and upload capability to WordPress.
  Author: M. Flury
@@ -69,7 +69,12 @@ if(( defined('DOING_AJAX') && DOING_AJAX ) || (defined('EXPORTING_PHOTOQ_XML') &
 
 	if (class_exists("PhotoQ")) {
 
+		PhotoQHelper::debug('enter photoq exists()');
+		//$timer =& PhotoQSingleton::getInstance('PhotoQTimers');
+		//$timer->start('photoQInit');
+		
 		$photoq = new PhotoQ();
+		//print_r($timer->stop('photoQInit'));
 		
 		/*in the case where batch upload is enabled, we have to override the pluggable functions
 		 responsible for reading auth cookie, so that they allow login info to be submitted via post

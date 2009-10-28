@@ -33,8 +33,7 @@ class UpdateOptionVisitor extends OptionVisitor
 	 	$oldValue = $textField->getValue();
 	 	$this->visitTextFieldOptionBefore($textField);
 	 	//check whether we pass validation if not put back the old value
-	 	$errMsgs = $textField->validate();
-	 	if(!empty($errMsgs))
+	 	if(!$textField->validate())
 	 		$textField->setValue($oldValue);	
 	 }
 	

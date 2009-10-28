@@ -54,7 +54,7 @@ class RenderOptionVisitor extends OptionVisitor
 
 	function visitStrictValidationTextFieldOptionBefore(&$textField)
 	{
-		$this->visitTextFieldBefore($textField);
+		$this->visitTextFieldOptionBefore($textField);
 	}
 
 	/**

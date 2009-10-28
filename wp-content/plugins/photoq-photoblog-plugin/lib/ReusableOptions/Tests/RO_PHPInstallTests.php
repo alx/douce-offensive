@@ -23,11 +23,12 @@ class RO_SafeModeOffInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$errMsg = '';
 		if (ini_get('safe_mode')) {
     		$errMsg =  "Warning: You are running PHP with safe_mode on. This plugin requires safe_mode off for correct functioning.";
+			$this->raiseErrorMessage($errMsg);
+			return false;
 		}
-		return $this->formatErrMsg($errMsg);
+		return true;
 	}
 	
 	
@@ -53,11 +54,12 @@ class RO_GDAvailableInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$errMsg = '';
 		if (!function_exists("gd_info")) {
     		$errMsg =  "Warning: PHP GD library does not seem to be activated/installed on your server. GD is however required for this plugin to work properly.";
+			$this->raiseErrorMessage($errMsg);
+			return false;
 		}
-		return $this->formatErrMsg($errMsg);
+		return true;
 	}
 	
 	

@@ -13,6 +13,9 @@ if ( !is_user_logged_in() )
 
 // end stuff from admin-ajax.php
 
+//initialize the queue
+$photoq->initQueue(); //lazy initialization of queue
+
 PhotoQHelper::debug('got ajax call');
 
 foreach( $_POST as $key => $value)
@@ -38,7 +41,7 @@ case 'reorder' :
 	for($i=0; $i<$qLength; $i++){
 		$currentPhoto =& $photoq->_queue->getQueuedPhoto($i);
 		if( $_POST['photoq'][$i] != $currentPhoto->getId() ){			
-			$wpdb->query("UPDATE $photoq->QUEUE_TABLE SET q_position = '".($i+1)."' WHERE q_img_id = '" . attribute_escape($_POST['photoq'][$i]) . "'");
+			$wpdb->query("UPDATE $photoq->QUEUE_TABLE SET q_position = '".($i)."' WHERE q_img_id = '" . attribute_escape($_POST['photoq'][$i]) . "'");
 		}
 	}
 		

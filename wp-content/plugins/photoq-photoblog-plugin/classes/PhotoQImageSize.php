@@ -38,14 +38,19 @@ class PhotoQImageSize extends PhotoQObject
 		$this->_yearMonthDir = $yearMonthDir;
 		$this->_originalWidth = $originalWidth;
 		$this->_originalHeight = $originalHeight;
+		//PhotoQHelper::debug('height: ' . $originalHeight);
 		$this->_ratio = $this->_originalWidth/$this->_originalHeight;
 		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
 		$this->_dirPath = $this->_oc->getImgDir() . $this->_name . '/';
 		$this->_yearMonthDirPath = $this->_dirPath . $this->_yearMonthDir;
 		$this->_path = $this->_yearMonthDirPath . $this->_imgName;
-		$this->_quality = $this->_oc->getValue($this->_name . '-imgQuality');
-		$this->_watermark = $this->_oc->getValue($this->_name.'-watermark');
+		
+		if(!is_a($this, 'PhotoQOriginalImageSize')){ 
+			$this->_quality = $this->_oc->getValue($this->_name . '-imgQuality');
+			$this->_watermark = $this->_oc->getValue($this->_name.'-watermark');
+		}
 		$this->_crop = false;
+		
 	}
 	
 	

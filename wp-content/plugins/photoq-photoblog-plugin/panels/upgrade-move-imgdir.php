@@ -14,7 +14,7 @@
 			
 		<?php 
 			
-			$imgDirContent = $this->getOldImgDirContent( $this->getOldImgDir($_POST['oldImgDir']) );
+			$imgDirContent = $this->_getOldImgDirContent( $this->_getOldImgDir($_POST['oldImgDir']) );
 			
 					foreach( $imgDirContent as $folderName)
 						echo "<li>$folderName</li>";

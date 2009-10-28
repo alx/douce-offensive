@@ -354,6 +354,9 @@ class PhotoQDB extends PhotoQObject
 		return $photos;
 	}
 	
+	function setQueuePosition($id, $position){
+		$this->_wpdb->query("UPDATE  $this->QUEUE_TABLE SET q_position = '$position' WHERE q_img_id = '$id'");	
+	}
 		
 	function getQueueByPosition()
 	{

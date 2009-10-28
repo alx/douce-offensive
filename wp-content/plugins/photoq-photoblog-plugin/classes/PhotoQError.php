@@ -10,6 +10,7 @@ define('PHOTOQ_PHOTO_NOT_FOUND', 			10);
 define('PHOTOQ_QUEUED_PHOTO_NOT_FOUND', 	11);
 define('PHOTOQ_FILE_UPLOAD_FAILED', 		12);
 define('PHOTOQ_SIZE_NOT_DEFINED',			13); //image size with given name is not defined (freeform mode)
+define('PHOTOQ_COULD_NOT_MOVE',				14);
 define('PHOTOQ_POST_NOT_FOUND',				20);//post with id 'id' not found
 define('PHOTOQ_BATCH_REGISTER_FAILED', 		30);
 define('PHOTOQ_FIELD_EXISTS',				40); //custom field with same name as the one to be added already exists
@@ -146,6 +147,7 @@ $photoQMsgs = array(
     PHOTOQ_POST_NOT_FOUND 				=> __('The post with ID "%id%" does not seem to exist.', 'PhotoQ'),
     PHOTOQ_FILE_UPLOAD_FAILED			=> __('The file upload failed with the following error: %errMsg%.', 'PhotoQ'),
     PHOTOQ_SIZE_NOT_DEFINED				=> __('The image size "%sizename%" is not defined.', 'PhotoQ'),
+    PHOTOQ_COULD_NOT_MOVE				=> __('Unable to move "%source%" to "%dest%".', 'PhotoQ'),
     PHOTOQ_BATCH_REGISTER_FAILED 		=> __('Error when registering batch process: No photos updated.', 'PhotoQ'),
     PHOTOQ_EXPCOMP_ENTRY_EXISTS			=> __('Please choose another name, an entry with this name already exists.', 'PhotoQ'),
     PHOTOQ_FIELD_EXISTS					=> __('Please choose another name, a meta field with name "%fieldname%" already exists.', 'PhotoQ'),

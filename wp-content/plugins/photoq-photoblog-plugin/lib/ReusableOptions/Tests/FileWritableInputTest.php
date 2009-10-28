@@ -33,9 +33,9 @@ class FileWritableInputTest extends InputTest
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($file = '', $errMsgPrefix = '', $customErrMsg = '')
+	function __construct($errMsgCallback, $file = '', $errMsgPrefix = '', $customErrMsg = '')
 	{
-		parent::__construct($errMsgPrefix, $customErrMsg);
+		parent::__construct($errMsgCallback, $errMsgPrefix, $customErrMsg);
 		$this->_file = $file;
 	}
 	
@@ -48,13 +48,14 @@ class FileWritableInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$errMsg = '';
 		$filename = $this->_file ? $this->_file : $target->getValue();;
 		$filename = ABSPATH . $filename;
-				if (!is_writable($filename)) {
+		if (!is_writable($filename)) {
     		$errMsg =  "The file ". $filename . " is not writable, check permissions.";
+			$this->raiseErrorMessage($errMsg);
+			return false;
 		}
-		return $this->formatErrMsg($errMsg);
+		return true;
 	}
 	
 	

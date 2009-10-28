@@ -38,6 +38,8 @@ class TextFieldOption extends ReusableOption
 	 */
 	var $_tests;
 	
+	//var $_updateTests;
+	
 	/**
 	 * PHP5 type constructor
 	 */
@@ -48,6 +50,7 @@ class TextFieldOption extends ReusableOption
 		$this->_size = $size;
 		$this->_maxlength = $maxlength;
 		$this->_tests = array();
+		//$this->_updateTests = array();
 	}
 	
 	
@@ -99,9 +102,11 @@ class TextFieldOption extends ReusableOption
 	 * @return boolean	True if test could be added, false otherwise.
 	 * @access public
 	 */
-	function addTest(&$test)
+	function addTest(&$test, $mustValidate2Change = false)
 	{	
 		$this->_tests[] =& $test;
+		if($mustValidate2Change)
+			$this->_updateTests[] =& $test;
 		return true;
 	}
 	
@@ -113,17 +118,30 @@ class TextFieldOption extends ReusableOption
 	 */
 	function validate()
 	{
-		$result = array();
 		foreach ( array_keys($this->_tests) as $index ) {
 			$test =& $this->_tests[$index];
-			if($statusMsg = $test->validate($this)){
-				$result[] = $statusMsg;
-				break;	
+			if(!$test->validate($this)){
+				return false;
 			}
 		}	
-		return $result;
+		return true;
+		//return $this->_validateTestSet($this->_tests);
 	}
-
+	
+	/*function validate2Change(){
+		return $this->_validateTestSet($this->_updateTests);
+	}
+	
+	function _validateTestSet(&$set)
+	{
+		foreach ( array_keys($set) as $index ) {
+			$test =& $set[$index];
+			if(!$test->validate($this)){
+				return false;
+			}
+		}	
+		return true;
+	}*/
 }
 
 

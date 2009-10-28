@@ -79,6 +79,11 @@ class OptionController extends ReusableOptionObject
 	var $_options;
 	
 	/**
+	 * Flat associative array of options for fast direct access.
+	 * @var Array
+	 */
+	var $_optionReferences;
+	/**
 	 * Options are stored under this name in Wordpress Database.
 	 * @var string
 	 * @access private
@@ -131,6 +136,7 @@ class OptionController extends ReusableOptionObject
 	{
 		
 		$this->_options = array();
+		$this->_optionReferences = array();
 		$this->_postButtons = array();
 		$this->_getButtons = array();
 		
@@ -165,6 +171,8 @@ class OptionController extends ReusableOptionObject
 	{
 		if(!array_key_exists($option->getName(), $this->_options)){
 			$this->_options[$option->getName()] =& $option;
+			//we also maintain a flat version of above array for fast access
+			$this->_optionReferences = array_merge($option->getReferenceArray(),$this->_optionReferences);
 			$option->registerSubmitButtons($this);
 		}else
 			return false;
@@ -439,16 +447,26 @@ class OptionController extends ReusableOptionObject
 	 */
 	function validate()
 	{
-		$result = array();
 		//first we check general tests not associated with specific options.
-		$result = array_merge($result, $this->_validateGeneral());
+		$result = $this->_validateGeneral();
 		//next are all the test associated with options.
 		//foreach ($this->_options as $option){
 		foreach ( array_keys($this->_options) as $index ) {
 			$option =& $this->_options[$index];
-			$result = array_merge($result, $option->validate());
+			if(!$option->validate())
+				$result = false;
 		}
 		return $result;
+	}
+	
+	/**
+	 * Callback called whenever an error fails validation
+	 * @param $err
+	 * @return unknown_type
+	 */
+	function showValidationError($err)
+	{
+		print 'Validation Error: ' . $err . '<br/>';
 	}
 	
 	/**
@@ -459,11 +477,11 @@ class OptionController extends ReusableOptionObject
 	 */
 	function _validateGeneral()
 	{
-		$result = array();
+		$result = true;
 		foreach ( array_keys($this->_tests) as $index ) {
 			$test =& $this->_tests[$index];
-			if($statusMsg = $test->validate($this)){
-				$result[] = $statusMsg;	
+			if(!$test->validate($this)){
+				$result = false;	
 			}
 		}	
 		return $result;
@@ -492,9 +510,10 @@ class OptionController extends ReusableOptionObject
 	function getValue($optionName)
 	{
 		$result = null;
-		//if(array_key_exists($optionName, $this->_options))
-		//	$result $this->_options[$optionName]->getValue();
-		//else{
+		if(array_key_exists($optionName, $this->_optionReferences)){
+			$option =& $this->_optionReferences[$optionName];				
+			$result = $option->getValue();
+		}else{
 			//foreach ($this->_options as $option){
 			foreach ( array_keys($this->_options) as $index ) {
 				$option =& $this->_options[$index];
@@ -504,7 +523,7 @@ class OptionController extends ReusableOptionObject
 					break;
 				}
 			}	
-		//}	
+		}	
 			
 		return $result;
 	}

@@ -20,7 +20,7 @@
 		<input type="hidden" name="saveAfterEdit" value="1">
 		<p><?php _e('To change the current photo of this post, select a new one here and update the post.', 'PhotoQ'); ?></p>
 		<p><input type="file" class="button-secondary action" name="Filedata" id="Filedata" size="55"/></p>
-	<div/>
+	</div>
 </div>
 
 

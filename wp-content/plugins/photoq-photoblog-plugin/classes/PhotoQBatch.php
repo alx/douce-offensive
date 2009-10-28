@@ -181,7 +181,7 @@ class PhotoQBatchSet extends PhotoQObject
 			
 			// Process the current operation.
 			list($functionName, $args, $state) = $op;
-			$status = call_user_func_array(array(&$context,$functionName), array_merge($args, array($state)));
+			$status = call_user_func_array(array(&$context,$functionName), array_merge($args, array(&$state)));
 			
 			if($status->hasError()){
 				$result->setError(__('An error occured.', 'PhotoQ'));

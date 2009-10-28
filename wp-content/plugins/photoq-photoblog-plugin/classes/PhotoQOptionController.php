@@ -77,175 +77,27 @@ class PhotoQOptionController extends OptionController
 	{
 		
 		//define general tests not associated to options but that should be passed
-		$this->addTest(new RO_SafeModeOffInputTest());
-		$this->addTest(new RO_GDAvailableInputTest());
-		$this->addTest(new RO_WordPressVersionInputTest('2.8.1','2.9'));
-		
-		//exif related settings
-		//first the reorderable list of discovered exif tags
-		$exifTags =& new RO_ReorderableList('exifTags');
-		if($tags = get_option( "wimpq_exif_tags" )){
-			foreach($tags as $key => $value){
-				$exifTags->addChild(new PhotoQExifTagOption($key, $value));
-			}
-		}
-		//localize strings
-		$exifTags->localizeStrings(array(
-				"selectedListLabel" => __('selected', 'PhotoQ'),
-				"deselectedListLabel" => __('deselected', 'PhotoQ')
-			)
-		);
-		$this->registerOption($exifTags);
-		
-		//now the exif display options
-		$exifDisplayOptions =& new CompositeOption('exifDisplay');
-		$exifDisplayOptions->addChild(
-			new TextFieldOption(
-				'exifBefore',
-				attribute_escape('<ul class="photoQExifInfo">'),
-				'',
-				'<table class="optionTable"><tr><td>'. __('Before List','PhotoQ'). ': </td><td>',
-				sprintf(__('Default is %s','PhotoQ'), '<code>'.attribute_escape('<ul class="photoQExifInfo">').'</code>') .'</td></tr>',
-				'30'
-			)
-		);
-		$exifDisplayOptions->addChild(
-			new TextFieldOption(
-				'exifAfter',
-				attribute_escape('</ul>'),
-				'',
-				'<tr><td>'. __('After List','PhotoQ'). ': </td><td>',
-				sprintf(__('Default is %s','PhotoQ'), '<code>'.attribute_escape('</ul>').'</code>') .'</td></tr>',
-				'30'
-			)
-		);
-		$exifDisplayOptions->addChild(
-			new TextFieldOption(
-				'exifElementBetween',
-				'',
-				'',
-				'<tr><td>'. __('Between Elements','PhotoQ'). ': </td><td>',
-				'</td></tr>',
-				'30'
-			)
-		);
-		$exifDisplayOptions->addChild(
-			new TextAreaOption(
-				'exifElementFormatting',
-				attribute_escape('<li class="photoQExifInfoItem"><span class="photoQExifTag">[key]:</span> <span class="photoQExifValue">[value]</span></li>'),
-				'',
-				'<tr><td>'. __('Element Formatting','PhotoQ'). ': </td><td>
-				<span class="setting-description">'
-				.sprintf(__('You can specify the HTML that should be printed for each element here. Two shortags %1$s and %2$s are available. %1$s is replaced with the name of the EXIF tag, %2$s with its value. Here is an example, showing the default value: %3$s', 'PhotoQ'),'[key]','[value]','<code>'.attribute_escape('<li class="photoQExifInfoItem"><span class="photoQExifTag">[key]:</span> <span class="photoQExifValue">[value]</span></li>').'</code>').'
-				</span></td></tr><tr><td/><td>',
-				'</td></tr></table>',
-				2, 75
-			)
-		);
-		$this->registerOption($exifDisplayOptions);
-		
-		//watermark options
-		$watermark =& new CompositeOption('watermarkOptions');
-		$watermarkPosition =& new RadioButtonList(
-				'watermarkPosition',
-				'BL',
-				'',
-				'<tr valign="top"><th scope="row">'. __('Position','PhotoQ'). ': </th><td>',
-				'</td></tr>'
-		);
-		$valueLabelArray = array(
-			'BR' => __('Bottom Right','PhotoQ'),
-			'BL' => __('Bottom Left','PhotoQ'),
-			'TR' => __('Top Right','PhotoQ'),
-			'TL' => __('Top Left','PhotoQ'),
-			'C|' => __('Center','PhotoQ'),
-			'R|' => __('Right','PhotoQ'),
-			'L|' => __('Left','PhotoQ'),
-			'T|' => __('Top','PhotoQ'),
-			'B|' => __('Bottom','PhotoQ'),
-			'*'  => __('Tile','PhotoQ')
-		);
-		$watermarkPosition->populate($valueLabelArray);
-		$watermark->addChild($watermarkPosition);
-		
-		$watermark->addChild(
-			new TextFieldOption(
-				'watermarkOpacity',
-				'100',
-				'',
-				'<tr valign="top"><th scope="row">'. __('Opacity','PhotoQ'). ': </th><td>',
-				'%</td></tr>',
-				'2'
-			)
-		);
-		
-		$watermark->addChild(
-			new TextFieldOption(
-				'watermarkXMargin',
-				'20',
-				__('left/right','PhotoQ'). ':',
-				'<tr valign="top"><th scope="row">'. __('Margins','PhotoQ'). ': </th><td>',
-				'px, ',
-				'2',
-				'2'
-			)
-		);
-		
-		$watermark->addChild(
-			new TextFieldOption(
-				'watermarkYMargin',
-				'20',
-				__('top/bottom', 'PhotoQ'). ':',
-				'',
-				'px<br/>('. __('Values smaller than one are interpreted as percentages instead of pixels.','PhotoQ'). ')</td></tr>',
-				'2',
-				'2'
-			)
-		);
-		
-		$this->registerOption($watermark);
-		
-		//build field checkbox options
-		$this->registerOption(
-			new CheckBoxOption(
-				'fieldAddPosted',
-				'1',
-				__('Add to already posted as well.','PhotoQ')
-			)
-		);
-		
-		$this->registerOption(
-			new CheckBoxOption(
-				'fieldDeletePosted',
-				'0',
-				__('Delete from already posted as well.','PhotoQ')
-			)
-		);
-		$this->registerOption(
-			new CheckBoxOption(
-				'fieldRenamePosted',
-				'1',
-				__('Rename already posted as well.','PhotoQ')
-			)
-		);
+		$this->addTest(new RO_SafeModeOffInputTest(array(&$this,'queueValidationError')));
+		$this->addTest(new RO_GDAvailableInputTest(array(&$this,'queueValidationError')));
+		$this->addTest(new RO_WordPressVersionInputTest(array(&$this,'queueValidationError'),'2.8.1','2.9'));
 
+		//we try to define options that are used most frequently first so that they are found 
+		//the quickest when sequentially searching through options. really need to look into 
+		//alternative data structures as well to speed up this process.
 		
-
-		//build and register further options
+		//path options
 		
-		//$imgDirOption =& new RO_ChangeTrackingContainer('imgDirOption');
-		$imgdir =& new TextFieldOption(
+		$imgdir =& new StrictValidationTextFieldOption(
 				'imgdir',
 				'wp-content',
 				'',
 				'',
 				'<br />'. sprintf(__('Default is %s','PhotoQ'), '<code>wp-content</code>')
 		);
-		$imgdir->addTest(new DirExistsInputTest('',
+		$imgdir->addTest(new DirExistsInputTest(array(&$this,'queueValidationError'),'',
 			__('Image Directory not found','PhotoQ'). ': '));
-		$imgdir->addTest(new FileWritableInputTest('',
+		$imgdir->addTest(new FileWritableInputTest(array(&$this,'queueValidationError'),'',
 			__('Image Directory not writable','PhotoQ'). ': '));
-		//$imgDirOption->addChild($imgdir);	
 		$this->registerOption($imgdir);
 		
 		
@@ -258,6 +110,78 @@ class PhotoQOptionController extends OptionController
 		$this->registerOption($imagemagickPath);
 		
 		
+		//image sizes
+		
+		$imageSizes =& new ImageSizeContainer(
+			'imageSizes', 'ImageSizeOption', 
+			array(&$this,'addImageSizeCallback'), array(&$this,'delImageSizeCallback'), 
+			array('original'), array(),
+			'',
+			'<table width="100%" cellspacing="2" cellpadding="5" class="form-table noborder"><tr valign="top">
+					<th scope="row">
+						<label for="newExpComp-imageSizes">'.__('Name of new image size', 'PhotoQ').':</label>
+					</th>
+					<td>',
+			'</td></tr></table>'
+		);
+		
+		$imageSizes->addChild(new ImageSizeOption($this->THUMB_IDENTIFIER, '', '80', '60'), 0);
+		$imageSizes->addChild(new ImageSizeOption($this->MAIN_IDENTIFIER), 0);
+		
+		$this->registerOption($imageSizes);
+		
+		
+		$originalFolder =& new CompositeOption('originalFolder');
+		$originalFolder->addChild(
+			new CheckBoxOption(
+				'hideOriginals',
+				'0',
+				__('Hide folder containing original photos. If checked, PhotoQ will attribute a random name to the folder.','PhotoQ'),
+				'',
+				''
+			)
+		);
+		$this->registerOption($originalFolder);
+		
+		
+		//next we define the views
+		
+		$contentView =& new PhotoQViewOption('content', true);
+		$contentView->addChild(
+			new CheckBoxOption(
+				'inlineDescr',
+				'1',
+				__('Include photo description in post content (does not apply to freeform mode).','PhotoQ'),
+				'<tr><th>'. __('Photo Description','PhotoQ'). ':</th><td>',
+				'</td></tr>'
+			)
+		);
+		$contentView->addChild(
+			new CheckBoxOption(
+				'inlineExif',
+				'0',
+				__('Include Exif data in post content (does not apply to freeform mode).','PhotoQ'),
+				'<tr><th>'. __('Exif Meta Data','PhotoQ'). ':</th><td>',
+				'</td></tr>'
+			)
+		);
+	
+		
+		$excerptView =& new PhotoQViewOption('excerpt', true);
+		
+		
+		$photoQViews = new RO_ExpandableCompositeOption(
+			'views', 'PhotoQViewOption',
+			array(&$this,'addViewCallback'), array(&$this,'delViewCallback'), 
+			array(), array()
+		);
+		
+		$photoQViews->addChild($contentView, 0);
+		$photoQViews->addChild($excerptView, 0);
+		$this->registerOption($photoQViews);
+		
+		
+		//furhter options
 		
 		$cronOptions =& new CompositeOption('cronJobs');
 		$cronOptions->addChild(
@@ -513,73 +437,162 @@ class PhotoQOptionController extends OptionController
 		
 		$this->registerOption($roleOptions);
 		
-		$imageSizes =& new ImageSizeContainer(
-			'imageSizes', 'ImageSizeOption', 
-			array(&$this,'addImageSizeCallback'), array(&$this,'delImageSizeCallback'), 
-			array('original'), array(),
-			'',
-			'<table width="100%" cellspacing="2" cellpadding="5" class="form-table noborder"><tr valign="top">
-					<th scope="row">
-						<label for="newExpComp-imageSizes">'.__('Name of new image size', 'PhotoQ').':</label>
-					</th>
-					<td>',
-			'</td></tr></table>'
-		);
-		
-		$imageSizes->addChild(new ImageSizeOption($this->THUMB_IDENTIFIER, '', '80', '60'), 0);
-		$imageSizes->addChild(new ImageSizeOption($this->MAIN_IDENTIFIER), 0);
-		
-		$this->registerOption($imageSizes);
-		
-		
-		$originalFolder =& new CompositeOption('originalFolder');
-		$originalFolder->addChild(
-			new CheckBoxOption(
-				'hideOriginals',
-				'0',
-				__('Hide folder containing original photos. If checked, PhotoQ will attribute a random name to the folder.','PhotoQ'),
+				//watermark options
+		$watermark =& new CompositeOption('watermarkOptions');
+		$watermarkPosition =& new RadioButtonList(
+				'watermarkPosition',
+				'BL',
 				'',
-				''
+				'<tr valign="top"><th scope="row">'. __('Position','PhotoQ'). ': </th><td>',
+				'</td></tr>'
+		);
+		$valueLabelArray = array(
+			'BR' => __('Bottom Right','PhotoQ'),
+			'BL' => __('Bottom Left','PhotoQ'),
+			'TR' => __('Top Right','PhotoQ'),
+			'TL' => __('Top Left','PhotoQ'),
+			'C|' => __('Center','PhotoQ'),
+			'R|' => __('Right','PhotoQ'),
+			'L|' => __('Left','PhotoQ'),
+			'T|' => __('Top','PhotoQ'),
+			'B|' => __('Bottom','PhotoQ'),
+			'*'  => __('Tile','PhotoQ')
+		);
+		$watermarkPosition->populate($valueLabelArray);
+		$watermark->addChild($watermarkPosition);
+		
+		$watermark->addChild(
+			new TextFieldOption(
+				'watermarkOpacity',
+				'100',
+				'',
+				'<tr valign="top"><th scope="row">'. __('Opacity','PhotoQ'). ': </th><td>',
+				'%</td></tr>',
+				'2'
 			)
 		);
-		$this->registerOption($originalFolder);
 		
+		$watermark->addChild(
+			new TextFieldOption(
+				'watermarkXMargin',
+				'20',
+				__('left/right','PhotoQ'). ':',
+				'<tr valign="top"><th scope="row">'. __('Margins','PhotoQ'). ': </th><td>',
+				'px, ',
+				'2',
+				'2'
+			)
+		);
 		
-		//next we define the views
+		$watermark->addChild(
+			new TextFieldOption(
+				'watermarkYMargin',
+				'20',
+				__('top/bottom', 'PhotoQ'). ':',
+				'',
+				'px<br/>('. __('Values smaller than one are interpreted as percentages instead of pixels.','PhotoQ'). ')</td></tr>',
+				'2',
+				'2'
+			)
+		);
 		
-		$contentView =& new PhotoQViewOption('content', true);
-		$contentView->addChild(
+		$this->registerOption($watermark);
+		
+		//build field checkbox options
+		$this->registerOption(
 			new CheckBoxOption(
-				'inlineDescr',
+				'fieldAddPosted',
 				'1',
-				__('Include photo description in post content (does not apply to freeform mode).','PhotoQ'),
-				'<tr><th>'. __('Photo Description','PhotoQ'). ':</th><td>',
-				'</td></tr>'
+				__('Add to already posted as well.','PhotoQ')
 			)
 		);
-		$contentView->addChild(
+		
+		$this->registerOption(
 			new CheckBoxOption(
-				'inlineExif',
+				'fieldDeletePosted',
 				'0',
-				__('Include Exif data in post content (does not apply to freeform mode).','PhotoQ'),
-				'<tr><th>'. __('Exif Meta Data','PhotoQ'). ':</th><td>',
-				'</td></tr>'
+				__('Delete from already posted as well.','PhotoQ')
 			)
 		);
-	
-		
-		$excerptView =& new PhotoQViewOption('excerpt', true);
-		
-		
-		$photoQViews = new RO_ExpandableCompositeOption(
-			'views', 'PhotoQViewOption',
-			array(&$this,'addViewCallback'), array(&$this,'delViewCallback'), 
-			array(), array()
+		$this->registerOption(
+			new CheckBoxOption(
+				'fieldRenamePosted',
+				'1',
+				__('Rename already posted as well.','PhotoQ')
+			)
 		);
+
 		
-		$photoQViews->addChild($contentView, 0);
-		$photoQViews->addChild($excerptView, 0);
-		$this->registerOption($photoQViews);
+		
+		
+		
+		
+		//exif related settings
+		//first the reorderable list of discovered exif tags
+		$exifTags =& new RO_ReorderableList('exifTags');
+		if($tags = get_option( "wimpq_exif_tags" )){
+			foreach($tags as $key => $value){
+				$exifTags->addChild(new PhotoQExifTagOption($key, $value));
+			}
+		}
+		//localize strings
+		$exifTags->localizeStrings(array(
+				"selectedListLabel" => __('selected', 'PhotoQ'),
+				"deselectedListLabel" => __('deselected', 'PhotoQ')
+			)
+		);
+		$this->registerOption($exifTags);
+		
+		//now the exif display options
+		$exifDisplayOptions =& new CompositeOption('exifDisplay');
+		$exifDisplayOptions->addChild(
+			new TextFieldOption(
+				'exifBefore',
+				attribute_escape('<ul class="photoQExifInfo">'),
+				'',
+				'<table class="optionTable"><tr><td>'. __('Before List','PhotoQ'). ': </td><td>',
+				sprintf(__('Default is %s','PhotoQ'), '<code>'.attribute_escape('<ul class="photoQExifInfo">').'</code>') .'</td></tr>',
+				'30'
+			)
+		);
+		$exifDisplayOptions->addChild(
+			new TextFieldOption(
+				'exifAfter',
+				attribute_escape('</ul>'),
+				'',
+				'<tr><td>'. __('After List','PhotoQ'). ': </td><td>',
+				sprintf(__('Default is %s','PhotoQ'), '<code>'.attribute_escape('</ul>').'</code>') .'</td></tr>',
+				'30'
+			)
+		);
+		$exifDisplayOptions->addChild(
+			new TextFieldOption(
+				'exifElementBetween',
+				'',
+				'',
+				'<tr><td>'. __('Between Elements','PhotoQ'). ': </td><td>',
+				'</td></tr>',
+				'30'
+			)
+		);
+		$exifDisplayOptions->addChild(
+			new TextAreaOption(
+				'exifElementFormatting',
+				attribute_escape('<li class="photoQExifInfoItem"><span class="photoQExifTag">[key]:</span> <span class="photoQExifValue">[value]</span></li>'),
+				'',
+				'<tr><td>'. __('Element Formatting','PhotoQ'). ': </td><td>
+				<span class="setting-description">'
+				.sprintf(__('You can specify the HTML that should be printed for each element here. Two shortags %1$s and %2$s are available. %1$s is replaced with the name of the EXIF tag, %2$s with its value. Here is an example, showing the default value: %3$s', 'PhotoQ'),'[key]','[value]','<code>'.attribute_escape('<li class="photoQExifInfoItem"><span class="photoQExifTag">[key]:</span> <span class="photoQExifValue">[value]</span></li>').'</code>').'
+				</span></td></tr><tr><td/><td>',
+				'</td></tr></table>',
+				2, 75
+			)
+		);
+		$this->registerOption($exifDisplayOptions);
+		
+		
+		
+		
 		
 		//overwrite default options with saved options from database
 		$this->load();
@@ -594,10 +607,12 @@ class PhotoQOptionController extends OptionController
 		//convert backslashes (windows) to slashes
 		$cleanAbs = str_replace('\\', '/', ABSPATH);
 		$this->addTest( new DirExistsInputTest(
+			array(&$this,'queueValidationError'),
 			preg_replace('#'.$cleanAbs.'#', '', $this->getCacheDir()), 
 			__('Cache Directory not found','PhotoQ'). ': ')
 		);
 		$this->addTest( new FileWritableInputTest(
+			array(&$this,'queueValidationError'),
 			preg_replace('#'.$cleanAbs.'#', '', $this->getCacheDir()), 
 			__('Cache Directory not writeable','PhotoQ'). ': ')
 		);
@@ -659,9 +674,13 @@ class PhotoQOptionController extends OptionController
 		//$this->_options['excerptView']->populate($this->getImageSizeNames(),$this->ORIGINAL_IDENTIFIER == 'original');
 		
 		//test for presence of imageMagick
-		$imagemagickTest = new PhotoQImageMagickPathCheckInputTest();
+		$imagemagickTest = new PhotoQImageMagickPathCheckInputTest(array(&$this,'showImageMagickValError'));
 		$msg = $imagemagickTest->validate($this->_options['imagemagickPath']);
 		$this->_options['imagemagickPath']->setTextAfter('<br/>'. $msg);
+	}
+	
+	function showImageMagickValError($valError){
+		$this->_options['imagemagickPath']->setTextAfter('<br/>'. $valError);
 	}
 	
 	/**
@@ -991,7 +1010,7 @@ class PhotoQOptionController extends OptionController
 	/**
 	 * Validate options and record any errors occuring
 	 */
-	function validateOptions(){
+	/*function validateOptions(){
 		//do the input validation
 		$validationErrors = parent::validate();
 		if(count($validationErrors)){
@@ -999,6 +1018,16 @@ class PhotoQOptionController extends OptionController
 				$this->_errStack->push(PHOTOQ_ERROR_VALIDATION,'error', array(), $valError);
 			}
 		}
+	}*/
+	
+	/**
+	 * Callback called whenever an error fails validation
+	 * @param $valError string the error message
+	 * @return unknown_type
+	 */
+	function queueValidationError($valError)
+	{
+		$this->_errStack->push(PHOTOQ_ERROR_VALIDATION,'error', array(), $valError);
 	}
 	
 	function renderListOfPresets(){
@@ -1779,7 +1808,6 @@ class PhotoQImageMagickPathCheckInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$errMsg = '';
 		require_once(PHOTOQ_PATH.'lib/phpThumb_1.7.9/phpthumb.class.php');
 		// create phpThumb object
 		$phpThumb = new phpThumb();
@@ -1787,8 +1815,10 @@ class PhotoQImageMagickPathCheckInputTest extends InputTest
 		//under windows the version check doesn't seem to work so we also check for availability of resize
 		if ( !$phpThumb->ImageMagickVersion() && !$phpThumb->ImageMagickSwitchAvailable('resize') ) {
     		$errMsg = __("Note: ImageMagick does not seem to be installed at the location you specified. ImageMagick is optional but might be needed to process bigger photos, plus PhotoQ might run faster if you configure ImageMagick correctly. If you don't care about ImageMagick and are happy with using the GD library you can safely ignore this message.",'PhotoQ');
+			$this->raiseErrorMessage($errMsg);
+			return false;
 		}
-		return $this->formatErrMsg($errMsg);
+		return true;
 	}
 	
 	

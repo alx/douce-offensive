@@ -33,9 +33,9 @@ class DirExistsInputTest extends InputTest
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($dir = '', $errMsgPrefix = '', $customErrMsg = '')
+	function __construct($errMsgCallback, $dir = '', $errMsgPrefix = '', $customErrMsg = '')
 	{
-		parent::__construct($errMsgPrefix, $customErrMsg);
+		parent::__construct($errMsgCallback, $errMsgPrefix, $customErrMsg);
 		$this->_dir = $dir;
 	}
 	
@@ -48,7 +48,6 @@ class DirExistsInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$errMsg = '';
 		$dirname = $this->_dir ? $this->_dir : $target->getValue();
 		$dirname = ABSPATH . $dirname;
 		//convert backslashes (windows) to slashes
@@ -56,8 +55,10 @@ class DirExistsInputTest extends InputTest
 
 		if (!is_dir($dirname)) {
     		$errMsg =  "The directory ". $dirname . " does not exist on your server.";
+    		$this->raiseErrorMessage($errMsg);
+			return false;
 		}
-		return $this->formatErrMsg($errMsg);
+		return true;
 	}
 	
 	

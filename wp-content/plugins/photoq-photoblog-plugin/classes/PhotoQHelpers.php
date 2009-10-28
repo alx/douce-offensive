@@ -167,6 +167,27 @@ class PhotoQHelper extends PhotoQObject
 			return FALSE;
 	}
 	
+	function mergeDirs($oldfile, $newfile){
+		if(!file_exists($newfile)){
+			return PhotoQHelper::moveFile($oldfile,$newfile);
+		}else
+			if(is_dir($oldfile) && is_dir($newfile)){
+				$oldfile = rtrim($oldfile,'/').'/';
+				$newfile = rtrim($newfile,'/').'/';
+				//get all visible files from old img dir
+				$match = '#^[^\.]#';//exclude hidden files starting with .
+				$visibleFiles = PhotoQHelper::getMatchingDirContent($oldfile, $match);
+				foreach($visibleFiles as $file2merge){
+					PhotoQHelper::mergeDirs($file2merge, str_replace($oldfile,$newfile,$file2merge));
+					/*if(!$res){
+						return false;
+					}*/
+				}
+			}else{
+				return false;
+			}
+	}
+	
 	/**
 	 * PHP built-in array_combine only works for PHP5. 
 	 * This function should do more or less the same and

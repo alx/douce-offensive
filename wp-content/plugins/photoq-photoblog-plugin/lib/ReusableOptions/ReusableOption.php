@@ -158,6 +158,15 @@ class ReusableOption extends ReusableOptionObject
 	}
 	
 	/**
+	 * Just returns an array with one entry containg a self reference.
+	 * @return unknown_type
+	 */
+	function getReferenceArray()
+	{
+		return array($this->_name => &$this);
+	}
+	
+	/**
 	 * Store old values before updating such that we can later check whether any of them changed.
 	 *
 	 */
@@ -241,8 +250,9 @@ class ReusableOption extends ReusableOptionObject
 	 */
 	function validate()
 	{	
-		return array();
+		return true;
 	}
+	
 	
 	
 	

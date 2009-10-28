@@ -248,7 +248,9 @@ class PhotoQPhoto extends PhotoQObject
 	 */
 	function generateContent($viewName = 'content')
 	{
+		PhotoQHelper::debug('enter generateContent()');
 		$viewType = $this->_oc->getValue($viewName . 'View-type');
+		PhotoQHelper::debug('viewName: ' . $viewName. ', viewType: ' . $viewType);
 		switch($viewType){
 
 			case 'single':
@@ -788,7 +790,7 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 	function rebuild($changedSizes, $updateExif = true, $changedViews = array(),
 		$updateOriginalFolder = false, $oldFolder = '', $newFolder = '', 
 		$addedTags = array(), $deletedTags = array()){
-		
+		PhotoQHelper::debug('updatePath: ' . $oldFolder.', ' . $newFolder);
 		if($updateOriginalFolder)
 			$this->_updatePath($oldFolder,$newFolder);
 
@@ -975,6 +977,7 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 	 * @return array the updated data
 	 */	
 	function syncPostUpdateData($data){
+		PhotoQHelper::debug('enter syncPostUpdateData()');
 		//get the description, add formatting, e.g. replace line breaks with <p>
 		$this->descr = apply_filters('the_content', $data['post_content']);
 		//sync it with the field
@@ -986,6 +989,7 @@ class PhotoQPublishedPhoto extends PhotoQPhoto
 			$data['post_excerpt'] = $this->generateContent('excerpt');
 		//update all custom views
 		$this->_updateViews($this->_oc->getViewNames(), true);
+		PhotoQHelper::debug('leave syncPostUpdateData()');
 		return $data;
 	}
 	

@@ -12,7 +12,12 @@
  */
 class InputTest extends ReusableOptionObject
 {
-
+	/**
+	 * The function to call when a validation error is raised.
+	 * @var unknown_type
+	 */
+	var $_errMsgCallback;
+	
 	/**
 	 * A custom error message to be shown instead of the default one.
 	 * @var String
@@ -26,21 +31,14 @@ class InputTest extends ReusableOptionObject
 	 * @access private
 	 */
 	var $_errMsgPrefix;
-	
-	/**
-	 * PHP4 type constructor
-	 */
-	/*function InputTest($errMsgPrefix = '', $customErrMsg = '')
-	{
-		$this->__construct($errMsgPrefix, $customErrMsg);
-	}*/
-	
+		
 	
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($errMsgPrefix = '', $customErrMsg = '')
+	function __construct($errMsgCallback, $errMsgPrefix = '', $customErrMsg = '')
 	{
+		$this->_errMsgCallback = $errMsgCallback;
 		$this->_errMsgPrefix = $errMsgPrefix;
 		$this->_customErrMsg = $customErrMsg;
 	}
@@ -54,7 +52,7 @@ class InputTest extends ReusableOptionObject
 	 */
 	function validate(&$target)
 	{	
-		return ''; //no error -> test passed
+		return true;//''; //no error -> test passed
 	}
 	
 	/**
@@ -72,6 +70,10 @@ class InputTest extends ReusableOptionObject
 			$errMsg = $this->_errMsgPrefix . ' ' . $errMsg;
 		}
 		return $errMsg;
+	}
+	
+	function raiseErrorMessage($errMsg){
+		call_user_func_array($this->_errMsgCallback, array($this->formatErrMsg($errMsg)));
 	}
 	
 	

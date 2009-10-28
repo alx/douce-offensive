@@ -42,9 +42,9 @@ class RO_WordPressVersionInputTest extends InputTest
 	/**
 	 * PHP5 type constructor
 	 */
-	function __construct($lowerBound, $upperBound = '', $errMsgPrefix = '', $customErrMsg = '')
+	function __construct($errMsgCallback, $lowerBound, $upperBound = '', $errMsgPrefix = '', $customErrMsg = '')
 	{
-		parent::__construct($errMsgPrefix, $customErrMsg);
+		parent::__construct($errMsgCallback, $errMsgPrefix, $customErrMsg);
 		$this->_lower = $lowerBound;	
 		$this->_upper = $upperBound;
 	}
@@ -58,14 +58,17 @@ class RO_WordPressVersionInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$errMsg = '';
 		if ($this->_lower && $this->_compareVersions(get_bloginfo('version'), $this->_lower) == -1) {
     		$errMsg .=  "Warning: The minimum WordPress version required for this plugin is $this->_lower. You are running WordPress ".get_bloginfo('version').".";
+			$this->raiseErrorMessage($errMsg);
+			return false;
 		}
 		if ($this->_upper && $this->_compareVersions(get_bloginfo('version'), $this->_upper) == 1) {
     		$errMsg .=  "Warning: This plugin has been tested with Wordpress versions up to $this->_upper. You are running WordPress ".get_bloginfo('version').".";
+			$this->raiseErrorMessage($errMsg);
+			return false;
 		}
-		return $this->formatErrMsg($errMsg);
+		return true;
 	}
 	
 	/**
