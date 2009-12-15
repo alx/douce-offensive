@@ -66,7 +66,7 @@ progressBar = function (id, updateCallback, method, errorCallback) {
 progressBar.prototype.setProgress = function (percentage, message, errorMessage) {
   if (percentage >= 0 && percentage <= 100) {
 	var percent = Math.ceil(percentage * 350 / 100);
-	jQuery('#progressBar').css("background", "url(../wp-content/plugins/photoq-photoblog-plugin/imgs/progressbar_v12.jpg) no-repeat -" + (350-percent) + "px");
+	jQuery('#progressBar').css("background", "url("+ batchProgressL10n.progressBarUrl +") no-repeat -" + (350-percent) + "px");
     jQuery('div.percentage', this.element).html(batchProgressL10n.waitStr1 + " " + Math.round(percentage*100)/100 +"% " + batchProgressL10n.waitStr2);
   }
   jQuery('div.message', this.element).html(message);

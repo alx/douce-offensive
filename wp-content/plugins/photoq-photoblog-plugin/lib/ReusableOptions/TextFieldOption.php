@@ -144,6 +144,17 @@ class TextFieldOption extends ReusableOption
 	}*/
 }
 
+/**
+ * The TextFieldSiteOption:: same as TextFieldOption but it is stored 
+ * in the sitewide option table in the DB.
+ *
+ * @author  M.Flury
+ * @package ReusableOptions
+ */
+class TextFieldSiteOption extends TextFieldOption
+{	
+}
+
 
 /**
  * The PasswordTextFieldOption:: defines a textfield that accepts a password

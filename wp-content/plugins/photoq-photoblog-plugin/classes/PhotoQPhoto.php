@@ -459,15 +459,15 @@ class PhotoQPhoto extends PhotoQObject
 	function getAdminThumbURL($width = 200, $height = 90)
 	{
 		$phpThumbLocation = PhotoQHelper::getRelUrlFromPath(PHOTOQ_PATH.'lib/phpThumb_1.7.9/phpThumb.php?');
-		//$phpThumbParameters = 'src=../../../../../'.PhotoQHelper::getRelUrlFromPath($this->getPath()).'&amp;h='.$height.'&amp;w='.$width;
 		$phpThumbParameters = 'src='.$this->getPath().'&amp;h='.$height.'&amp;w='.$width;
 		
 		$imagemagickPath = 
 			( $this->_oc->getValue('imagemagickPath') ? $this->_oc->getValue('imagemagickPath') : null );
 		if($imagemagickPath)
 			$phpThumbParameters .= '&amp;impath='.$imagemagickPath;
-		$imagesrc = $phpThumbLocation.$phpThumbParameters;
-		return get_option('siteurl').'/'.$imagesrc;
+		//for WPMU we also have to set the cache path via get
+		//$phpThumbParameters .= '&amp;cpath='.$this->_oc->getCacheDir();
+		return $phpThumbLocation.$phpThumbParameters;
 	}
 	
 	
@@ -481,17 +481,19 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 	var $_authorID;
 	var $_position;
 	var $_slug;
+	var $_captureDate;
 	
 	
 	/**
 	 * PHP5 type constructor
 	 */
 	function __construct($id, $title, $descr, $exif, $path, $imgname, $tags, 
-					$slug, $edited, $authorID, $position)
+					$slug, $edited, $authorID, $position, $date)
 	{
 		
 		$this->edited = $edited;
 		$this->_position = $position;
+		$this->_captureDate = $date;
 		$this->_slug = $slug;
 		$this->_authorID = $authorID;
 		
@@ -508,6 +510,14 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 	 */
 	function getPosition(){
 		return $this->_position;
+	}
+	
+	/**
+	 * Getter for the captureDate field
+	 * @return int
+	 */
+	function getCaptureDate(){
+		return $this->_captureDate;
 	}
 	
 	/**
@@ -575,7 +585,7 @@ class PhotoQQueuedPhoto extends PhotoQPhoto
 		$descr = attribute_escape($_POST['img_descr']) ? attribute_escape(stripslashes($_POST['img_descr'])) : $this->getDescription();
 		$tags = attribute_escape($_POST['tags_input']) ? attribute_escape(stripslashes($_POST['tags_input'])) : $this->getTagString();
 		$selectedAuthor = attribute_escape($_POST['img_author']) ? attribute_escape(stripslashes($_POST['img_author'])) : $this->getAuthor();
-		$fullSizeUrl = "../". PhotoQHelper::getRelUrlFromPath($this->getPath());
+		$fullSizeUrl = PhotoQHelper::getRelUrlFromPath($this->getPath());
 		
 		// output photo information form
 		$path = $this->getAdminThumbURL($this->_oc->getValue('photoQAdminThumbs-Width'), 

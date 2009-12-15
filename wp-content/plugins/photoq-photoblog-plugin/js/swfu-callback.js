@@ -82,7 +82,7 @@ function uploadStart(file) {
 function uploadProgress(file, bytesLoaded, bytesTotal) {
 	try{
 		var percent = Math.ceil((bytesLoaded / bytesTotal) * 350)
-		jQuery("#" + file.id + "progress").css("background", "url(../wp-content/plugins/photoq-photoblog-plugin/imgs/progressbar_v12.jpg) no-repeat -" + (350-percent) + "px");
+		jQuery("#" + file.id + "progress").css("background", "url("+swfuCallbackL10n.progressBarUrl+") no-repeat -" + (350-percent) + "px");
 	} catch (ex) {
 		this.debug(ex);
 	}
@@ -151,7 +151,7 @@ function uploadError(file, error_code, message) {
 
 function uploadSuccess(file, server_data) {
 	try {
-		jQuery("#" + file.id + "progress").css("background", "url(../wp-content/plugins/photoq-photoblog-plugin/imgs/progressbar_v12.jpg) no-repeat -0px");
+		jQuery("#" + file.id + "progress").css("background", "url("+swfuCallbackL10n.progressBarUrl+") no-repeat -0px");
 		jQuery("#" + file.id).attr("class", "SWFUploadFileItem uploadCompleted");
 		jQuery("#" + file.id + "> a").before("<span class='okbtn'><!--IE--></span>");
 	} catch (ex) {

@@ -21,7 +21,7 @@ class PhotoQ extends PhotoQObject
 	 * @var string
 	 * @access private
 	 */
-	var $_version = '1.8.2';
+	var $_version = '1.8.3';
 	
 	/**
 	 * Reference to OptionControllor singleton
@@ -48,6 +48,12 @@ class PhotoQ extends PhotoQObject
 	 * @var object PEAR_ErrorStack
 	 */
 	var $_errStack;
+	
+	/**
+	 * Holds the directory to which the next upload is directed.
+	 * @var unknown_type
+	 */
+	var $_uploadDir;
 	
 	
 	/**
@@ -94,7 +100,7 @@ class PhotoQ extends PhotoQObject
 	{
 
 		global $wpdb;
-		
+
 		//get the PhotoQ error stack for easy access
 		$this->_errStack = &PEAR_ErrorStack::singleton('PhotoQ');
 		
@@ -114,11 +120,13 @@ class PhotoQ extends PhotoQObject
 		
 		// setting up options
 		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
-		
-		$this->_autoUpgrade();
-		
+				
 		// actions and filters are next
 
+		// Upgrade the plugin after version changes
+		add_action('init', array(&$this, '_autoUpgrade'));
+		
+		
 		// Insert the _actionAddAdminPages() sink into the plugin hook list for 'admin_menu'
 		add_action('admin_menu', array(&$this, '_actionAddAdminPages'));
 
@@ -483,9 +491,19 @@ class PhotoQ extends PhotoQObject
 			}
 					
 
+
 			if(isset($_POST['upgradePhotoQ'])){
+
 				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+
 				$this->upgradeFrom12();
+
+			}
+			
+			elseif (isset($_POST['fixPermissions'])) {
+				check_admin_referer('wimpq_options-nonce','wimpq_options-nonce');
+				//show upgrade panel
+				$this->fixPermissions();
 			}
 
 			/*elseif(isset($_POST['moveOldImgDir'])){
@@ -568,7 +586,7 @@ class PhotoQ extends PhotoQObject
 		//do some inital setup
 		$this->createDirIfNotExists($this->_oc->getCacheDir(), true);
 			
-		if ( isset($_POST['add_entry']) || isset($_POST['ftp_upload']) ) {
+		if ( isset($_POST['add_entry']) || $this->_isFtpUpload() ) {
 			//a photo will be added
 			
 			$this->createDirIfNotExists($this->_oc->getQDir());
@@ -577,7 +595,7 @@ class PhotoQ extends PhotoQObject
 		}elseif (isset($_POST['edit_batch'])) {
 		
 			PhotoQHelper::debug('manage_page: load edit-batch panel');
-			if(isset($_POST['ftpFiles'])){
+			if($this->_isFtpUpload()){
 				foreach ($_POST['ftpFiles'] as $ftpFile)
 					$this->uploadPhoto(basename($ftpFile), '', $this->_oc->getValue('qPostDefaultTags'), '', $ftpFile);
 				//refresh the queue
@@ -671,6 +689,12 @@ class PhotoQ extends PhotoQObject
 				//check for correct nonce first
 				check_admin_referer('photoq-manageQueue', 'manageQueueNonce');
 				$this->_queue->deleteAll();
+			}
+			
+			if (isset($_POST['sort_queue'])) {
+				//check for correct nonce first
+				check_admin_referer('photoq-manageQueue', 'manageQueueNonce');
+				$this->_queue->sort($_POST['sort_criterion']);
 			}
 				
 			//refresh the queue as it might have changed because of above operations
@@ -771,10 +795,21 @@ class PhotoQ extends PhotoQObject
 			return false;
 				
 		//get exif meta data
-		$exif = serialize(PhotoQExif::readExif($file));
+		$exif = PhotoQExif::readExif($file);
+		
+		$dateTime = $exif['DateTimeOriginal'];
+		$exifDescr = $exif['ImageDescription'];
+		// use EXIF image description if none was provided
+		if (empty($descr) && $this->_oc->getValue('descrFromExif'))
+			$descr = $exifDescr;
+			
+		if(!empty($exifDescr) && $this->_oc->getValue('autoTitleFromExif'))
+			$title = $exifDescr;
+		
+		$exif = serialize($exif);
 
 		PhotoQHelper::debug('uploadPhoto: got EXIF');
-		
+		PhotoQHelper::debug('DateTimeOriginal: ' . $dateTime );
 		$filename = basename($file);
 		
 		//make nicer titles
@@ -786,7 +821,7 @@ class PhotoQ extends PhotoQObject
 		
 		
 		//add photo to queue
-		if(!$result = $wpdb->query("INSERT INTO $this->QUEUE_TABLE (q_title, q_imgname, q_position, q_slug, q_descr, q_tags, q_exif, q_fk_author_id) VALUES ('$title', '$filename', '".($this->_queue->getLength())."', '$slug', '$descr', '$tags', '$exif', '$post_author')"))
+		if(!$result = $wpdb->query("INSERT INTO $this->QUEUE_TABLE (q_title, q_imgname, q_position, q_slug, q_descr, q_tags, q_exif, q_date, q_fk_author_id) VALUES ('$title', '$filename', '".($this->_queue->getLength())."', '$slug', '$descr', '$tags', '$exif', '$dateTime', '$post_author')"))
 			return false;
 		
 					
@@ -914,7 +949,7 @@ class PhotoQ extends PhotoQObject
 		PhotoQHelper::debug('enter cronjob()');
 	
 		//add ftp dir to queue if corresponding option is set
-		if( $this->_oc->getValue('enableFtpUploads') && $this->_oc->getValue('cronFtpToQueue') ){
+		if( $this->_oc->onCronimportFtpUploadsToQueue() ){
 			$ftpDir = $this->_oc->getFtpDir();
 			if (is_dir($ftpDir)) {
 				$ftpDirContent = PhotoQHelper::getMatchingDirContent($ftpDir,'#.*\.(jpg|jpeg|png|gif)$#i');
@@ -929,6 +964,7 @@ class PhotoQ extends PhotoQObject
 		//echo "Testing Cron Job";
 		//echo "Cron frequency: ".$this->_oc->getValue('cronFreq')." <br />";
 		
+
 		
 		//calculate time in hours since last post
 	
@@ -1003,7 +1039,8 @@ class PhotoQ extends PhotoQObject
 					'queueEmpty' => __('Upload Queue is empty', 'PhotoQ'),
 					'addMore' => __('Add more...', 'PhotoQ'),
 					'queued' => __('photos queued for upload', 'PhotoQ'),
-					'cancelled' => __('cancelled', 'PhotoQ')
+					'cancelled' => __('cancelled', 'PhotoQ'),
+					'progressBarUrl' => plugins_url('photoq-photoblog-plugin/imgs/progressbar_v12.jpg')
 				));
 			}
 			
@@ -1094,12 +1131,10 @@ class PhotoQ extends PhotoQObject
 	  		'abortStr' => __('Aborting batch processing due to following error:', 'PhotoQ'),
 			'doneStr' => __('Updating done.', 'PhotoQ'),
 			'waitStr1' => _c('Please wait, updating', 'PhotoQ'),
-			'waitStr2' => _c('complete.', 'PhotoQ')
+			'waitStr2' => _c('complete.', 'PhotoQ'),
+			'progressBarUrl' => plugins_url('photoq-photoblog-plugin/imgs/progressbar_v12.jpg')
 		));
-		?>
 		
-		
-		<?php 
 	}
 	
 	
@@ -1288,16 +1323,10 @@ class PhotoQ extends PhotoQObject
 		
 		PhotoQHelper::debug('destDir: '. $destDir);
 		if($oldPath === ''){
-			/*try to use the functions provided by wordpress, however there is no way to
-				specify the upload path other than changing the option, so we do this */
-			//save the old value
-			$oldUploadPath = get_option('upload_path');
 			
-			update_option('upload_path', $destDir);
-		
-			//do the same for yearmonth_folders
-			$oldYMFolders = get_option('uploads_use_yearmonth_folders');
-			update_option('uploads_use_yearmonth_folders', 0); //turn this off
+			//prepare for upload -> set photoq upload dirs
+			$this->_uploadDir = $destDir;
+			add_filter( 'upload_dir', array(&$this, '_filterPhotoQUploadDir') );
 		
 			//set the options that we override
 			$overrides = array('action'=>'save');
@@ -1319,9 +1348,9 @@ class PhotoQ extends PhotoQObject
 			
 			PhotoQHelper::debug(print_r($file, true));
 	
-			//reset upload options to saved ones
-			update_option('upload_path', $oldUploadPath);
-			update_option('uploads_use_yearmonth_folders',$oldYMFolders);
+			//reset upload options
+			remove_filter( 'upload_dir', array(&$this, '_filterPhotoQUploadDir') );
+			
 		}else{ /* ftp upload */
 			$newPath = $destDir . '/' . basename($oldPath);
 			//move file if we have permissions, otherwise copy file
@@ -1348,6 +1377,45 @@ class PhotoQ extends PhotoQObject
 		return $path;
 	}
 	
+	/**
+	 * Called before a file is uploaded. We replace the standard WP upload location 
+	 * with the one we set in $this->_uploadDir before calling the upload function.
+	 * @param $uploads
+	 * @return unknown_type
+	 */
+	function _filterPhotoQUploadDir( $uploads ) {
+		
+		$dir = $this->_uploadDir;
+		$url = PhotoQHelper::getRelUrlFromPath($dir);
+	
+		$bdir = $dir;
+		$burl = $url;
+
+		$subdir = '';
+	
+		$dir .= $subdir;
+		$url .= $subdir;
+
+		$uploads = array( 'path' => $dir, 'url' => $url, 'subdir' => $subdir, 'basedir' => $bdir, 'baseurl' => $burl, 'error' => false );
+
+		// Make sure we have an uploads dir
+		if ( ! wp_mkdir_p( $uploads['path'] ) ) {
+			$message = sprintf( __( 'Unable to create directory %s. Is its parent directory writable by the server?' ), $uploads['path'] );
+			$uploads['error'] = $message;
+		}
+		
+		return $uploads;
+	}
+	
+	/**
+	 * Are we currently doing an ftp upload?
+	 * @return boolean
+	 */
+	function _isFtpUpload(){
+		return !PhotoQHelper::isWPMU() && isset($_POST['ftp_upload']);
+	}
+	
+
 	/**
 	 * Handles uploading of a new watermark image.
 	 *
@@ -1389,7 +1457,7 @@ class PhotoQ extends PhotoQObject
 			_e('None', 'PhotoQ');
 		else{
 			$size = getimagesize($path);
-			echo '<img class="watermark" width="'.$size[0].'" height="'.$size[1].'" alt="PhotoQ Watermark" src="../'. PhotoQHelper::getRelUrlFromPath($path) .'" />';
+			echo '<img class="watermark" width="'.$size[0].'" height="'.$size[1].'" alt="PhotoQ Watermark" src="'. PhotoQHelper::getRelUrlFromPath($path) .'" />';
 		}
 	}
 	
@@ -1572,16 +1640,62 @@ class PhotoQ extends PhotoQObject
 		}	
 	}
 	
-	
+
+
 	/**
 	 * Upgrade pre photoq 1.5 photos to 1.5
 	 *
 	 */
 	function upgradeFrom12(){
+
 		foreach ( $this->_db->getAllPhotos2Import() as $photo ){
+
 			$photo->upgrade();
+
+		}
+
+	}
+
+	/**
+	 * Fix PhotoQ file and folder permissios such that they match the ones from WP.
+	 * @return unknown_type
+	 */
+	function fixPermissions(){
+		//get permissions of imgdir = permissions of directories
+		$stat = @stat( $this->_oc->getImgDir() );
+		$dirPerms = $stat['mode'] & 0007777;  // Get the permission bits.
+		
+		//get permissions for files
+		$filePerms = $stat['mode'] & 0000666;
+		
+		//change all files inside imgdir
+		$topLevelDirs = $this->_getOldImgDirContent($this->_oc->getImgDir());
+		foreach($topLevelDirs as $dir)
+			$this->_recursiveChmod($dir, $dirPerms, $filePerms);
+		
+		//change all files inside cache dir
+		$this->_recursiveChmod($this->_oc->getCacheDir(), $dirPerms, $filePerms);
+		
+	}
+	
+	function _recursiveChmod($dir, $dirPerms, $filePerms){
+		@chmod($dir, $dirPerms);
+		
+		//get all visible files inside dir
+		$match = '#^[^\.]#';//exclude hidden files starting with .
+		$visibleFiles = PhotoQHelper::getMatchingDirContent($dir, $match);
+		
+		foreach($visibleFiles as $file){
+			//echo $file .'<br/>';
+			if(is_dir($file)){
+				@chmod($file, $dirPerms);
+				$this->_recursiveChmod($file, $dirPerms, $filePerms);	
+			}else{
+				@chmod($file, $filePerms);	
+			}	
 		}
 	}
+	
 	
 	/**
 	 * Something like this will be used to allow users to switch imgdir
@@ -1649,7 +1763,7 @@ class PhotoQ extends PhotoQObject
 		//determine which folders we are allowed to move
 		$allowedFolders  = array('qdir','photoQWatermark', 'myPhotoQPresets');
 		if($includingOriginal)
-			$allowedFolders = array_merge($allowedFolders, $this->_oc->getOriginalIdentifier());
+			$allowedFolders[] = $this->_oc->getOriginalIdentifier();
 		//only thing allowed to be moved are folders related to photoq
 		$allowedFolders = array_merge($allowedFolders, $this->_oc->getImageSizeNames());
 		for($i = 0; $i<count($allowedFolders); $i++)

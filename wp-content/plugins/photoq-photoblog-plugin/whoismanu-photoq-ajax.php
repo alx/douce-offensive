@@ -3,10 +3,11 @@
 // first lines to include all the stuff from admin-ajax.php 
 define('DOING_AJAX', true);
 
-require_once('../../../wp-load.php');
-//require_once('../../../wp-config.php');
-require_once('../../../wp-admin/includes/admin.php');
+// let's load WordPress
+require_once( 'whoismanu-photoq-wploader.php' );
 
+
+PhotoQHelper::debug('got ajax call');
 
 if ( !is_user_logged_in() )
 	die('-1');
@@ -16,7 +17,7 @@ if ( !is_user_logged_in() )
 //initialize the queue
 $photoq->initQueue(); //lazy initialization of queue
 
-PhotoQHelper::debug('got ajax call');
+PhotoQHelper::debug('queue initialized');
 
 foreach( $_POST as $key => $value)
 	PhotoQHelper::debug("POST $key: $value");

@@ -34,7 +34,7 @@
 			<input type="submit" class="button-primary action" name="edit_batch" value="<?php echo $submitLabel; ?>" />
 		</p>
 		</div>
-		<?php if(isset($_POST['ftp_upload'])) $this->showFtpFileList(); ?>
+		<?php if($this->_isFtpUpload()) $this->showFtpFileList(); ?>
 		</div>
 		</form>
 		<div class="clr">&nbsp;</div>
@@ -58,7 +58,7 @@
 				<input type="button" id="cancelbtn" class="button-secondary action" onclick="cancelUpload()" value="<?php _e('Cancel', 'PhotoQ') ?>" />		
 			</div>
 			<div class="alignright actions">
-			<?php if($this->_oc->getValue('enableFtpUploads')): ?>
+			<?php if(!PhotoQHelper::isWPMU() && $this->_oc->getValue('enableFtpUploads')): ?>
 				<input type="submit" id="ftpUploadBtn" name="ftp_upload" class="button-secondary action" value="<?php _e('Import from FTP directory...', 'PhotoQ') ?>" />
 			<?php endif; ?>
 			</div>

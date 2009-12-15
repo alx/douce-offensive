@@ -50,6 +50,21 @@ class UpdateOptionVisitor extends OptionVisitor
 	 }
 	 
 	 /**
+	  * Abstract implementation of the visitTextField() method called whenever a
+	  * TextFieldSiteOption is visited. Contrary to standard text field, for WPMU
+	  * we only allow site_admins to make changes.
+	  *
+	  * @param object TextFieldOption &$textField	Reference to visited option.
+	  */
+	 function visitTextFieldSiteOptionBefore(&$textField)
+	 {
+	 	if(function_exists( 'is_site_admin' ) && is_site_admin())
+			$this->visitTextFieldOptionBefore($textField);
+	 }
+
+	 
+	  
+	 /**
 	 * Abstract implementation of the visitTextArea() method called whenever a
 	 * TextAreaOption is visited. Subclasses should override this and and
 	 * define the operation to be performed.

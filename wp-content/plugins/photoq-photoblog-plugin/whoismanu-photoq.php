@@ -1,7 +1,7 @@
 <?php
 /*
  Plugin Name: PhotoQ
- Version: 1.8.2
+ Version: 1.8.3
  Plugin URI: http://www.whoismanu.com/blog/
  Description: Adds queue based photo management and upload capability to WordPress.
  Author: M. Flury

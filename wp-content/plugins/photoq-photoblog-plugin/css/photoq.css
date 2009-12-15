@@ -8,11 +8,11 @@
 	width: 17px;
 	height: 17px;
 	margin-right: 5px;
-	background: url(../../../../wp-content/plugins/photoq-photoblog-plugin/imgs/cancel_white.jpg) no-repeat; 
+	background: url(../imgs/cancel_white.jpg) no-repeat; 
 }
 
 .cancelbtn:hover{
-	background: url(../../../../wp-content/plugins/photoq-photoblog-plugin/imgs/cancel_red.jpg) no-repeat; 
+	background: url(../imgs/cancel_red.jpg) no-repeat; 
 }
 
 .infobutton{
@@ -54,7 +54,7 @@ span.progressBar {
 	height: 17px;
 	margin-top: 2px;
 	margin-bottom: 10px;
-	background: url(../../../../wp-content/plugins/photoq-photoblog-plugin/imgs/progressbar_v12.jpg) no-repeat -350px;
+	background: url(../imgs/progressbar_v12.jpg) no-repeat -350px;
 }
 
 span.okbtn{
@@ -67,7 +67,7 @@ span.okbtn{
 	width: 17px;
 	height: 17px;
 	margin-right: 5px;
-	background: url(../../../../wp-content/plugins/photoq-photoblog-plugin/imgs/ok_button.jpg) no-repeat;
+	background: url(../imgs/ok_button.jpg) no-repeat;
 }
 
 .clr{
@@ -169,6 +169,11 @@ span.okbtn{
 .qAuthor{
 	width: 100px;
 }
+
+.qDate{
+	width: 100px;
+}
+
 
 .qDescr{
 	width: 300px;
@@ -276,6 +281,10 @@ th.imageSizeName, th.viewName{
 
 #autoconf h4, #autoconf .inside p{
 	margin: 10px;
+}
+
+#sortOptions{
+	margin-right: 20px;
 }
 
 

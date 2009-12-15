@@ -47,7 +47,7 @@ class PhotoQQueue extends PhotoQObject
 				$this->addPhoto(new PhotoQQueuedPhoto($qEntry->q_img_id,
 						$qEntry->q_title, $qEntry->q_descr, $qEntry->q_exif, '', 
 						$qEntry->q_imgname, preg_split("/[\s]*,[\s]*/", $qEntry->q_tags),
-						$qEntry->q_slug, $qEntry->q_edited, $qEntry->q_fk_author_id, $position
+						$qEntry->q_slug, $qEntry->q_edited, $qEntry->q_fk_author_id, $position, $qEntry->q_date
 					));
 			}
 		}
@@ -205,6 +205,17 @@ class PhotoQQueue extends PhotoQObject
 		}
 		$statusMsg = '<strong>'.__('Your posts have been saved.', 'PhotoQ').'</strong>';
 		return new PhotoQStatusMessage($statusMsg);
+	}
+	
+	/**
+	 * Sorts the queue according to the specified criterion
+	 * @param $criterion
+	 * @return unknown_type
+	 */
+	function sort($criterion){
+		if($criterion === '-1')
+			return;
+		$this->_db->sortQueue($criterion);
 	}
 	
 

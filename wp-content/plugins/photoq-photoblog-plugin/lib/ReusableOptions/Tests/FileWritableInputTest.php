@@ -48,8 +48,9 @@ class FileWritableInputTest extends InputTest
 	 */
 	function validate(&$target)
 	{	
-		$filename = $this->_file ? $this->_file : $target->getValue();;
-		$filename = ABSPATH . $filename;
+		$filename = $this->_file ? $this->_file : $target->getValue();
+		$filename = path_join( ABSPATH, $filename );
+		//$filename = ABSPATH . $filename;
 		if (!is_writable($filename)) {
     		$errMsg =  "The file ". $filename . " is not writable, check permissions.";
 			$this->raiseErrorMessage($errMsg);

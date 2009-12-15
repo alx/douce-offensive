@@ -49,7 +49,8 @@ class DirExistsInputTest extends InputTest
 	function validate(&$target)
 	{	
 		$dirname = $this->_dir ? $this->_dir : $target->getValue();
-		$dirname = ABSPATH . $dirname;
+		//$dirname = ABSPATH . $dirname;
+		$dirname = path_join( ABSPATH, trim($dirname) );
 		//convert backslashes (windows) to slashes
 		$dirname = str_replace('\\', '/', $dirname);
 

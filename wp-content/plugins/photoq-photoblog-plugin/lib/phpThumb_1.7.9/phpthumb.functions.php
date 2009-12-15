@@ -838,8 +838,14 @@ class phpthumb_functions {
 					// directory name already exists as a file
 					return false;
 				}
-				@mkdir($test_directory, 0755);
-				@chmod($test_directory, 0755);
+				
+				//Manuel: do it wordpress style = permissions of parent directory. 
+				//get permissions of parent directory
+				$stat = @stat( dirname($test_directory) );
+				$dirPerms = $stat['mode'] & 0007777;  // Get the permission bits.
+				
+				@mkdir($test_directory, $dirPerms);
+				@chmod($test_directory, $dirPerms);
 				if (!@is_dir($test_directory) || !@is_writeable($test_directory)) {
 					return false;
 				}

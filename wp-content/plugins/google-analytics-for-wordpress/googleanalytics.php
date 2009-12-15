@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.2.4
+Version: 3.2.5
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
@@ -358,7 +358,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					echo "\t".'} catch(err) {}'."\n";
 					echo '</script>'."\n";						
 				} else if ($wp_query->is_search && $wp_query->found_posts == 0) {
-					echo "\t\t".'pageTracker._trackPageview("'.get_bloginfo('url').'/?s=no-results: '.$wp_query->query_vars['s'].'&cat=no-results");'."\n";
+					echo "\t\t".'pageTracker._trackPageview("'.get_bloginfo('url').'/?s=no-results: '.rawurlencode($wp_query->query_vars['s']).'&cat=no-results");'."\n";
 					echo "\t".'} catch(err) {}'."\n";
 					echo '</script>'."\n";						
 				} else {

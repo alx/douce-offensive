@@ -161,6 +161,7 @@ if (!empty($PHPTHUMB_CONFIG)) {
         	$value = $_GET['impath'];
 		}
 		
+		
 		$phpThumb->setParameter($keyname, $value);
 		if (!eregi('password|mysql', $key)) {
 			$phpThumb->DebugMessage('setParameter('.$keyname.', '.$phpThumb->phpThumbDebugVarDump($value).')', __FILE__, __LINE__);
@@ -589,7 +590,13 @@ if ($phpThumb->config_allow_parameter_file && $phpThumb->file) {
 
 		$phpThumb->CleanUpCacheDirectory();
 		if ($phpThumb->RenderToFile($phpThumb->cache_filename) && is_readable($phpThumb->cache_filename)) {
-			chmod($phpThumb->cache_filename, 0644);
+			
+			//Manuel: do it wordpress style = permissions of parent directory.
+			//get permissions of parent directory
+			$stat = @stat( dirname($phpThumb->cache_filename) );
+			$filePerms = $stat['mode'] & 0000666;
+			
+			chmod($phpThumb->cache_filename, $filePerms);
 			RedirectToCachedFile();
 		} else {
 			$phpThumb->DebugMessage('Failed: RenderToFile('.$phpThumb->cache_filename.')', __FILE__, __LINE__);

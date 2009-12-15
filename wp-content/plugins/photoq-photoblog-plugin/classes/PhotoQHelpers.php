@@ -6,11 +6,13 @@ class PhotoQHelper extends PhotoQObject
 	{
 		$created = true;
 		if (!file_exists($path)) {
-			$created = PhotoQHelper::recursiveMakeDir($path, 0777);
+			//use built-in wp function -> we have same directory permissions
+			//as standard wp created directories
+			$created = wp_mkdir_p($path);
 		}
 		return $created;
 	}
-	
+
 	function removeDir($path)
 	{
 		$removed = true;
@@ -19,80 +21,7 @@ class PhotoQHelper extends PhotoQObject
 		}
 		return $removed;
 	}
-	
-	function getArrayOfTagNames($postID){
-		return PhotoQHelper::getArrayOfTermNames($postID, 'get_the_tags');
-	}
-	function getArrayOfCategoryNames($postID){
-		return PhotoQHelper::getArrayOfTermNames($postID, 'get_the_category');
-	}
-	function getArrayOfTermNames($postID, $funcName = 'get_the_tags'){
-		$terms = $funcName($postID);
-		$result = array();
-		if ( !empty( $terms ) ) {
-			foreach ( $terms as $term )
-			$result[] = $term->name;
-		}
-		return $result;
-	}
-	
-	/**
-	 * Returns matching content from a directory.
-	 *
-	 * @param string $path			path of the directory.
-	 * @param string $matchRegex	regex a filename should match.
-	 * @return array	path to files that matched
-	 */
-	function getMatchingDirContent($path, $matchRegex)
-	{
-		$result = array();
-		if ( $handle = opendir($path) ) {
-			while (false !== ($file = readdir($handle))) {
-				if (preg_match($matchRegex, $file)) { //only include files matching regex
-					array_push($result, $path.$file);
-				}
-			}
-			closedir($handle);
-		}
-		//sort alphabetically
-		sort($result);
-		return $result;
-	}
-	
-	/**
-	 * Generates automatic name for display from filename. Removes suffix,
-	 * replaces underscores, dashes and dots by spaces and capitalizes only first
-	 * letter of any word.
-	 *
-	 * @param string $filename
-	 * @return string
-	 */
-	function niceDisplayNameFromFileName($filename){
-		//remove suffix
-		$displayName = preg_replace('/\.[^\.]*$/', '', $filename);
-		//replace underscores and hyphens with spaces
-		$replaceWithWhiteSpace = array('-', '_', '.');
-		$displayName = str_replace($replaceWithWhiteSpace, ' ', $displayName);
-		//proper capitalization
-		$displayName = ucwords(strtolower($displayName));
-		return $displayName;
-	}
-	
-	/**
-	 * The mkdir() recursive flag doesn't work under php4. So we have to
-	 * define our own function to create dirs recursively.
-	 *
-	 * @param string $pathname
-	 * @param int $mode
-	 * @return boolean
-	 */
-	function recursiveMakeDir($pathname, $mode)
-	{
-		is_dir(dirname($pathname)) || PhotoQHelper::recursiveMakeDir(dirname($pathname), $mode);
-		return is_dir($pathname) || @mkdir($pathname, $mode);
-	}
 
-	
 	/**
 	 * Remove directory and all its content recursively.
 	 *
@@ -122,12 +51,72 @@ class PhotoQHelper extends PhotoQObject
 			return rmdir($filepath);
 		}
 		if(file_exists($filepath))
-			return unlink($filepath);
+		return unlink($filepath);
 		else
-			return false;	
+		return false;
 	}
 
-	
+	function getArrayOfTagNames($postID){
+		return PhotoQHelper::getArrayOfTermNames($postID, 'get_the_tags');
+	}
+	function getArrayOfCategoryNames($postID){
+		return PhotoQHelper::getArrayOfTermNames($postID, 'get_the_category');
+	}
+	function getArrayOfTermNames($postID, $funcName = 'get_the_tags'){
+		$terms = $funcName($postID);
+		$result = array();
+		if ( !empty( $terms ) ) {
+			foreach ( $terms as $term )
+			$result[] = $term->name;
+		}
+		return $result;
+	}
+
+	/**
+	 * Returns matching content from a directory.
+	 *
+	 * @param string $path			path of the directory.
+	 * @param string $matchRegex	regex a filename should match.
+	 * @return array	path to files that matched
+	 */
+	function getMatchingDirContent($path, $matchRegex)
+	{
+		$path = rtrim($path, '/') . '/';
+		$result = array();
+		if ( $handle = opendir($path) ) {
+			while (false !== ($file = readdir($handle))) {
+				if (preg_match($matchRegex, $file)) { //only include files matching regex
+					array_push($result, $path.$file);
+				}
+			}
+			closedir($handle);
+		}
+		//sort alphabetically
+		sort($result);
+		return $result;
+	}
+
+	/**
+	 * Generates automatic name for display from filename. Removes suffix,
+	 * replaces underscores, dashes and dots by spaces and capitalizes only first
+	 * letter of any word.
+	 *
+	 * @param string $filename
+	 * @return string
+	 */
+	function niceDisplayNameFromFileName($filename){
+		//remove suffix
+		$displayName = preg_replace('/\.[^\.]*$/', '', $filename);
+		//replace underscores and hyphens with spaces
+		$replaceWithWhiteSpace = array('-', '_', '.');
+		$displayName = str_replace($replaceWithWhiteSpace, ' ', $displayName);
+		//proper capitalization
+		$displayName = ucwords(strtolower($displayName));
+		return $displayName;
+	}
+
+
+
 	/**
 	 * Moves $oldfile to $newfile, overwriting $newfile if it exists. We have to use
 	 * this function instead of the builtin PHP rename because the latter does not work as expected
@@ -151,7 +140,7 @@ class PhotoQHelper extends PhotoQObject
 		}
 		return TRUE;
 	}
-	
+
 	/**
 	 * Same as above but returns error if file already exists at destination.
 	 *
@@ -162,34 +151,34 @@ class PhotoQHelper extends PhotoQObject
 	function moveFileIfNotExists($oldfile, $newfile)
 	{
 		if(!file_exists($newfile))
-			return PhotoQHelper::moveFile($oldfile,$newfile);
+		return PhotoQHelper::moveFile($oldfile,$newfile);
 		else
-			return FALSE;
+		return FALSE;
 	}
-	
+
 	function mergeDirs($oldfile, $newfile){
 		if(!file_exists($newfile)){
 			return PhotoQHelper::moveFile($oldfile,$newfile);
 		}else
-			if(is_dir($oldfile) && is_dir($newfile)){
-				$oldfile = rtrim($oldfile,'/').'/';
-				$newfile = rtrim($newfile,'/').'/';
-				//get all visible files from old img dir
-				$match = '#^[^\.]#';//exclude hidden files starting with .
-				$visibleFiles = PhotoQHelper::getMatchingDirContent($oldfile, $match);
-				foreach($visibleFiles as $file2merge){
-					PhotoQHelper::mergeDirs($file2merge, str_replace($oldfile,$newfile,$file2merge));
-					/*if(!$res){
-						return false;
+		if(is_dir($oldfile) && is_dir($newfile)){
+			$oldfile = rtrim($oldfile,'/').'/';
+			$newfile = rtrim($newfile,'/').'/';
+			//get all visible files from old img dir
+			$match = '#^[^\.]#';//exclude hidden files starting with .
+			$visibleFiles = PhotoQHelper::getMatchingDirContent($oldfile, $match);
+			foreach($visibleFiles as $file2merge){
+				PhotoQHelper::mergeDirs($file2merge, str_replace($oldfile,$newfile,$file2merge));
+				/*if(!$res){
+				 return false;
 					}*/
-				}
-			}else{
-				return false;
 			}
+		}else{
+			return false;
+		}
 	}
-	
+
 	/**
-	 * PHP built-in array_combine only works for PHP5. 
+	 * PHP built-in array_combine only works for PHP5.
 	 * This function should do more or less the same and
 	 * also work with PHP4.
 	 *
@@ -199,17 +188,17 @@ class PhotoQHelper extends PhotoQObject
 	 */
 	function arrayCombine($keys, $values) {
 		$out = array();
-		 
+			
 		$keys = array_values($keys);
 		$values = array_values($values);
-		 
+			
 		foreach( $keys as $index => $key ) {
 			$out[(string)$key] = $values[$index];
 		}
-		 
+			
 		return $out;
 	}
-	
+
 	/**
 	 * PHP built-in str_ireplace only works for PHP5.
 	 * This function should do more or less the same and
@@ -225,7 +214,7 @@ class PhotoQHelper extends PhotoQObject
 		return preg_replace("/$needle/i", $str, $haystack);
 	}
 
-	
+
 	/**
 	 * PHP built-in pathinfo() does not have filename field
 	 * under PHP4. This is a fix for this.
@@ -241,7 +230,7 @@ class PhotoQHelper extends PhotoQObject
 		}
 		return $pathParts;
 	}
-	
+
 	/**
 	 * Converts absolute path to relative url
 	 *
@@ -249,7 +238,12 @@ class PhotoQHelper extends PhotoQObject
 	 * @return string
 	 */
 	function getRelUrlFromPath($path)
-	{	
+	{
+		//replace WP_CONTENT_DIR with WP_CONTENT_URL
+		$wpcd = str_replace('\\', '/', WP_CONTENT_DIR);
+		if(strpos($path, $wpcd) === 0)//it starts with WP_CONTENT_DIR
+		return str_replace($wpcd, WP_CONTENT_URL, $path);
+
 		//convert backslashes (windows) to slashes
 		$abs = str_replace('\\', '/', ABSPATH);
 		$path = str_replace('\\', '/', $path);
@@ -257,9 +251,9 @@ class PhotoQHelper extends PhotoQObject
 		$relUrl = str_replace($abs, '', trim($path));
 		//remove slashes from beginning
 		//echo "<br/> relURl: $relUrl </br>";
-		return preg_replace('/^\/*/', '', $relUrl);
+		return trailingslashit( get_option( 'siteurl' ) ) . preg_replace('/^\/*/', '', $relUrl);
 	}
-	
+
 	/**
 	 * Reduces multidimensional array to single dimension.
 	 *
@@ -279,8 +273,8 @@ class PhotoQHelper extends PhotoQObject
 		}
 		return $out;
 	}
-	
-	
+
+
 	/**
 	 * Gets an array of all the <$tag>content</$tag> tags contained in $string.
 	 *
@@ -308,8 +302,8 @@ class PhotoQHelper extends PhotoQObject
 		}
 		return $result;
 	}
-	
-	
+
+
 	/**
 	 * Fills in shorttags into the format string specified
 	 * @param $format
@@ -319,10 +313,10 @@ class PhotoQHelper extends PhotoQObject
 	function formatShorttags($format, $tagValArray)
 	{
 		foreach ($tagValArray as $tag => $val)
-			$format = str_replace("[$tag]",$val,$format);
+		$format = str_replace("[$tag]",$val,$format);
 		return $format;
 	}
-	
+
 	/**
 	 * Determines whether the given shorttag is part of the formatting string given.
 	 * @param $format
@@ -332,7 +326,7 @@ class PhotoQHelper extends PhotoQObject
 	function containsShorttag($format, $tag){
 		return strpos($format, $tag) !== false;
 	}
-	
+
 	/**
 	 * Given array of shorttags, checks whether the format string contains least one of them.
 	 * @param $format
@@ -347,8 +341,8 @@ class PhotoQHelper extends PhotoQObject
 		}
 		return false;
 	}
-	
-	
+
+
 	/**
 	 * Get the maximum allowable file size in KB from php.ini
 	 *
@@ -364,11 +358,11 @@ class PhotoQHelper extends PhotoQObject
 		$max_upl_kbytes = $max_upl_size * 1024;
 		if (strpos($max_upl_size, 'g') !== false)
 		$max_upl_kbytes = $max_upl_size * 1024 * 1024;
-	
+
 		return $max_upl_kbytes;
 	}
-	
-	
+
+
 	/**
 	 * Logs message $msg to a file if debbugging is enabled.
 	 *
@@ -383,68 +377,68 @@ class PhotoQHelper extends PhotoQObject
 			$conf = array('mode' => 0777, 'timeFormat' => '%X %x');
 			$logger = &Log::singleton('file', PHOTOQ_PATH.'log/out.log', '', $conf);
 			$logger->log($msg);
-		}	
+		}
 	}
-	
+
 	/**
 	 * Escapes an entire array to prevent SQL injection.
 	 * @param $array the array to be escaped.
 	 * @return Array the escaped array
-	 */   
+	 */
 	function arrayAttributeEscape($array){
 		if(is_array($array))
-  			return array_map("attribute_escape",$array);
-    	else
-    		return attribute_escape($array);
+		return array_map("attribute_escape",$array);
+		else
+		return attribute_escape($array);
 	}
-	
+
 	/**
 	 * Encodes all string elements of a (possibly nested) array using htmlentities.
 	 * @param $array the array whose elements are to be encoded.
 	 * @return Array the encoded array
-	 */   
+	 */
 	function arrayHtmlEntities($array){
 		if(is_array($array))
-  			return array_map(array('PhotoQHelper', 'arrayHtmlEntities'),$array);
-    	else{
-    		if(is_string($array))
-    			return htmlentities($array);
-    		else
-    			return $array;
-    	}
+		return array_map(array('PhotoQHelper', 'arrayHtmlEntities'),$array);
+		else{
+			if(is_string($array))
+			return htmlentities($array);
+			else
+			return $array;
+		}
 	}
-    
-    
-    /**
-     * Outputs the category list where the user can select categories.
-     * @param $q_id int id of the queued photo for which to choose cats
-     * @param $default int id of the default photoq category
-     * @param $selectedCats array category ids of categories that should appear selected
-     */
-    function showCategoryCheckboxList( $q_id = 0, $default = 0, $selectedCats = array() ) {
-		
+
+
+	/**
+	 * Outputs the category list where the user can select categories.
+	 * @param $q_id int id of the queued photo for which to choose cats
+	 * @param $default int id of the default photoq category
+	 * @param $selectedCats array category ids of categories that should appear selected
+	 */
+	function showCategoryCheckboxList( $q_id = 0, $default = 0, $selectedCats = array() ) {
+
 		if(!$selectedCats)
 		{
-		 	// No selected categories, set to default
-		 	$selectedCats[] = $default;
+			// No selected categories, set to default
+			$selectedCats[] = $default;
 		}
-		
+
 		//$q_id = preg_replace('/\./','_',$q_id); //. in post vars become _
-		
+
 		// check the fold option
 		$oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
-		$closed = $oc->getValue('foldCats') ? 'closed' : ''; 
-		
+		$closed = $oc->getValue('foldCats') ? 'closed' : '';
+
 		echo '<div class="postbox '.$closed.'">';
 		echo '<h3 class="postbox-handle"><span>'.__('Categories','PhotoQ').'</span></h3>';
 		echo '<div class="inside">';
 		echo '<ul>';
 		//$this->category_checklist(0,0,$selectedCats,$q_id);
 		wp_category_checklist( 0, 0, $selectedCats, false, new Walker_PhotoQ_Category_Checklist($q_id));
-	
+
 		echo '</ul></div></div>';
 	}
-	
+
 	/**
 	 * Shows the list of meta fields
 	 * @param $id int if given shows the meta field of queued photo with this id.
@@ -453,7 +447,7 @@ class PhotoQHelper extends PhotoQObject
 		$db =& PhotoQSingleton::getInstance('PhotoQDB');
 		if($results = $db->getAllFields()){
 			echo '<div class="info_group">';
-			
+				
 			foreach ($results as $field_entry) {
 				if($id){
 					//get posted values if any from common info
@@ -465,15 +459,22 @@ class PhotoQHelper extends PhotoQObject
 				}
 				echo '<div class="info_unit">'.$field_entry->q_field_name.':<br /><textarea style="font-size:small;" name="'.$field_entry->q_field_name.'[]" cols="30" rows="3"  class="uploadform">'.$field_value.'</textarea></div>';
 			}
-			
+				
 			echo '</div>';
 		}
 	}
-	
-	
-	
-	
-	
+
+	/**
+	 * Checks whether we are dealing with standard WP or WPMU
+	 * @return boolean
+	 */
+	function isWPMU(){
+		return function_exists( 'is_site_admin' );
+	}
+
+
+
+
 	/**
 	 * Checks whether a post is a photo post. A post is considered a photopost if the same image
 	 * appears in the content and the excerpt part
@@ -483,27 +484,27 @@ class PhotoQHelper extends PhotoQObject
 	 * @access public
 	 */
 	/*function isPhotoPost($post)
-	{
+	 {
 		$imgTags = $this->getHtmlTags($post->post_excerpt, "img");
 		if(!count($imgTags)){
-			return false;
+		return false;
 		}
 		foreach($imgTags as $thumb){
-			$attributes = $this->getAttributesFromHtmlTag($thumb);
-			$thumbName = basename($attributes['src']);
-			$expectedImgName = basename($this->getImgPathFromThumbPath($attributes['src'], $post));
-			if($thumbName == $expectedImgName)
-			return false;//it didn't have the thumb_identifier
-	
-			//now check whether the content part has an image tag with $expectedImgName
-			if(!$this->getImgTagByName($post->post_content, $expectedImgName))
-			return false;
+		$attributes = $this->getAttributesFromHtmlTag($thumb);
+		$thumbName = basename($attributes['src']);
+		$expectedImgName = basename($this->getImgPathFromThumbPath($attributes['src'], $post));
+		if($thumbName == $expectedImgName)
+		return false;//it didn't have the thumb_identifier
+
+		//now check whether the content part has an image tag with $expectedImgName
+		if(!$this->getImgTagByName($post->post_content, $expectedImgName))
+		return false;
 		}
-	
+
 		return true;
-	}*/
-	
-	
+		}*/
+
+
 	/**
 	 * Extracts attribute - value pairs from HTML tags.
 	 *
@@ -513,20 +514,20 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function getAttributesFromHtmlTag($tag)
-	{
+	 {
 		$result = array();
-	
+
 		if(PhotoQHelper::isSingleHtmlTag($tag)){
-			//get and return the attribute->value pairs
-			preg_match_all('/(\w+)=\"([^\"]+)\"/', $tag, $attributes, PREG_SET_ORDER);
-			foreach ($attributes as $attr){
-				$result[$attr[1]] = $attr[2];
-			}
+		//get and return the attribute->value pairs
+		preg_match_all('/(\w+)=\"([^\"]+)\"/', $tag, $attributes, PREG_SET_ORDER);
+		foreach ($attributes as $attr){
+		$result[$attr[1]] = $attr[2];
+		}
 		}
 		return $result;
-	}*/
-	
-	
+		}*/
+
+
 	/**
 	 * Checks whether the string contains one single HTML tag and nothing else. Single HTML tag if
 	 * one single opening bracket at beginning and one single closing bracket that is at the end of
@@ -538,10 +539,10 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function isSingleHtmlTag($string)
-	{
+	 {
 		return preg_match('/^<[^<^>]*>$/',$string);
-	}*/
-	
+		}*/
+
 	/**
 	 * Returns all HTML tags of a given type found in a string.
 	 *
@@ -552,11 +553,11 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function getHtmlTags($string, $tag)
-	{
+	 {
 		preg_match_all("/<$tag [^<^>]*>/", $string, $foundTags, PREG_PATTERN_ORDER);
 		return $foundTags[0];
-	}*/
-	
+		}*/
+
 	/**
 	 * Constructs image path from thumb paths.
 	 *
@@ -569,34 +570,34 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function getImgPathFromThumbPath($thumbPath, $post)
-	{
+	 {
 		$imgPath = preg_replace("/.".$this->_oc->getThumbIdentifier()."/",'',$thumbPath);
 		if ($thumbPath == $this->getThumbPathFromImgPath($imgPath)){
-			return $imgPath;
+		return $imgPath;
 		}
 		else{
-			//there was a non standard transformation, we have to look through the
-			//whole post and match the image path via the backwards transformation
-			$imgTags = $this->getHtmlTags($post->post_content, "img");
-			foreach($imgTags as $img){
-				$attributes = $this->getAttributesFromHtmlTag($img);
-				$imgPath = $attributes['src'];
-				if ( $thumbPath == $this->getThumbPathFromImgPath($imgPath)){
-					return $imgPath;
-				}
-			}
-			return null;
+		//there was a non standard transformation, we have to look through the
+		//whole post and match the image path via the backwards transformation
+		$imgTags = $this->getHtmlTags($post->post_content, "img");
+		foreach($imgTags as $img){
+		$attributes = $this->getAttributesFromHtmlTag($img);
+		$imgPath = $attributes['src'];
+		if ( $thumbPath == $this->getThumbPathFromImgPath($imgPath)){
+		return $imgPath;
 		}
-	}*/
-	
-	
+		}
+		return null;
+		}
+		}*/
+
+
 	/*returns the name of the thumbnail path from the image path*/
 	/*function getThumbPathFromImgPath($imgPath) {
 		// If no filters change the filename, we'll do a default transformation.
 		$thumb = preg_replace('!(\.[^.]+)?$!', ".".$this->_oc->getThumbIdentifier() . '$1', basename($imgPath), 1);
 		return str_replace(basename($imgPath), $thumb, $imgPath);
-	}*/
-	
+		}*/
+
 	/**
 	 * Looks in $string whether it finds an img tag with an image of filename $name.
 	 *
@@ -607,19 +608,19 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function getImgTagByName($string, $name)
-	{
+	 {
 		$imgTags = $this->getHtmlTags($string, "img");
 		foreach($imgTags as $img){
-			$attributes = $this->getAttributesFromHtmlTag($img);
-			$imgName = basename($attributes['src']);
-			if($imgName == $name){
-				return $img;
-			}
+		$attributes = $this->getAttributesFromHtmlTag($img);
+		$imgName = basename($attributes['src']);
+		if($imgName == $name){
+		return $img;
 		}
-	
+		}
+
 		return null;
-	}*/
-	
+		}*/
+
 	/**
 	 * Checks whether an <img> tag is part of a link, i.e. a child of an <a> tag.
 	 *
@@ -630,14 +631,14 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function isPartOfLink($string,$imgTag)
-	{
+	 {
 		foreach($this->getAllLinks($string) as $link){
-			if(preg_match("#$imgTag#",$link))
-			return true;
+		if(preg_match("#$imgTag#",$link))
+		return true;
 		}
 		return false;
-	}*/
-	
+		}*/
+
 	/**
 	 * Returns all links (<a href="bla.html">bla bla</a>) contained in a string.
 	 *
@@ -647,12 +648,12 @@ class PhotoQHelper extends PhotoQObject
 	 *
 	 */
 	/*function getAllLinks($string)
-	{
+	 {
 		preg_match_all('#<a.*?</a>#', $string, $matches);
 		return $matches[0];
-	}*/
-	
-	
+		}*/
+
+
 	/**
 	 * Transforms an associative array of attributes to string of attribute="value" pairs.
 	 *
@@ -664,12 +665,12 @@ class PhotoQHelper extends PhotoQObject
 	/*function attibutesToString($attributes){
 		$result = '';
 		foreach($attributes as $attribute => $value){
-			$result .= $attribute . '="' . $value . '" ';
+		$result .= $attribute . '="' . $value . '" ';
 		}
 		return $result;
-	}*/
-	
-	
+		}*/
+
+
 	/**
 	 * This is a filter hooked into the the_content WordPress hook. Replaces image tags with a link
 	 * to corresponding image, the link text being the thumbnail version. This enables scripts like
@@ -681,64 +682,64 @@ class PhotoQHelper extends PhotoQObject
 	 * @access public
 	 */
 	/*function replaceImagesWithImageLink($content)
-	{
+	 {
 		global $post;
 		if($this->isPhotoPost($post)){
-				
-			$thumbs = $this->getHtmlTags($post->post_excerpt, "img");
-				
-			foreach($thumbs as $thumb){
-				$thumbAttributes = $this->getAttributesFromHtmlTag($thumb);
-				$expectedImgName = basename($this->getImgPathFromThumbPath($thumbAttributes['src'],$post));
-				
-				if($img = $this->getImgTagByName($post->post_content, $expectedImgName)){
-					if(!$this->isPartOfLink($post->post_content,$img)){
-						//build image link
-						$imgAttributes = $this->getAttributesFromHtmlTag($img);
-						$imgLink = '<a '. stripslashes(html_entity_decode($this->_oc->getValue('imgLinksAttributes'))) . ' href="'.$imgAttributes['src'].'"><img ';
-						$imgLink .= $this->attibutesToString($thumbAttributes);
-						$imgLink .= '/></a>';
-						//replace image tag with img link
-						$content = preg_replace('#'.preg_quote($img, '#').'#',$imgLink,$content);
-					}
-				}
-			}
+
+		$thumbs = $this->getHtmlTags($post->post_excerpt, "img");
+
+		foreach($thumbs as $thumb){
+		$thumbAttributes = $this->getAttributesFromHtmlTag($thumb);
+		$expectedImgName = basename($this->getImgPathFromThumbPath($thumbAttributes['src'],$post));
+
+		if($img = $this->getImgTagByName($post->post_content, $expectedImgName)){
+		if(!$this->isPartOfLink($post->post_content,$img)){
+		//build image link
+		$imgAttributes = $this->getAttributesFromHtmlTag($img);
+		$imgLink = '<a '. stripslashes(html_entity_decode($this->_oc->getValue('imgLinksAttributes'))) . ' href="'.$imgAttributes['src'].'"><img ';
+		$imgLink .= $this->attibutesToString($thumbAttributes);
+		$imgLink .= '/></a>';
+		//replace image tag with img link
+		$content = preg_replace('#'.preg_quote($img, '#').'#',$imgLink,$content);
+		}
+		}
+		}
 		}
 		return $content;
-	}
-	
-	function listAllPhotosWithoutParent($currentName, $currentParent){
+		}
+
+		function listAllPhotosWithoutParent($currentName, $currentParent){
 		global $wpdb;
 		//check whether this one has children
 		if($children = $this->getPhotoChildren($currentName)){
-			echo "";
+		echo "";
 		}else{
-			//get possible parent photos
-			$results = $wpdb->get_results("
-			SELECT
-			q_imgname, q_title
-			FROM
-			$this->QUEUE_TABLE
-			WHERE
-			q_parent = ''
-					");
-			if($results){
-				echo 'Parent Photo: <select name="img_parent[]">';
-				echo '<option value="">None</option>';
-	
-				foreach($results as $parent)
-				if($parent->q_imgname != $currentName){
-					echo '<option';
-					if($parent->q_imgname == $currentParent)
-					echo ' selected="selected"';
-					echo ' value="'.$parent->q_imgname.'">'. $parent->q_title.'</option>';
-				}
-				echo '</select>';
-			}
+		//get possible parent photos
+		$results = $wpdb->get_results("
+		SELECT
+		q_imgname, q_title
+		FROM
+		$this->QUEUE_TABLE
+		WHERE
+		q_parent = ''
+		");
+		if($results){
+		echo 'Parent Photo: <select name="img_parent[]">';
+		echo '<option value="">None</option>';
+
+		foreach($results as $parent)
+		if($parent->q_imgname != $currentName){
+		echo '<option';
+		if($parent->q_imgname == $currentParent)
+		echo ' selected="selected"';
+		echo ' value="'.$parent->q_imgname.'">'. $parent->q_title.'</option>';
 		}
-	}
-	
-	function getPhotoChildren($currentName){
+		echo '</select>';
+		}
+		}
+		}
+
+		function getPhotoChildren($currentName){
 		global $wpdb;
 		$children = $wpdb->get_results("
 		SELECT
@@ -747,14 +748,14 @@ class PhotoQHelper extends PhotoQObject
 		$this->QUEUE_TABLE
 		WHERE
 		q_parent = '$currentName'
-				");
-	
+		");
+
 		return $children;
-	}*/
-	
+		}*/
+
 	/**
 	 * This is a filter hooked into the the_content WordPress hook. Allows to modify the_content on
-	 * the fly, e.g., replace image tags with a link to corresponding image, the link text being the 
+	 * the fly, e.g., replace image tags with a link to corresponding image, the link text being the
 	 * thumbnail version. This enables scripts like Lightbox and Shutter Reloaded.
 	 *
 	 * @param string $content     The content of the post as it is stored in the WordPress Database.
@@ -763,14 +764,14 @@ class PhotoQHelper extends PhotoQObject
 	 * @access public
 	 */
 	/*function modifyContentOnTheFly($content)
-	{
+	 {
 		return $this->_modifyOnTheFly($content);
-	}*/
-	
-	
+		}*/
+
+
 	/**
 	 * This is a filter hooked into the the_excerpt WordPress hook. Allows to modify the_excerpt on
-	 * the fly, e.g., replace image tags with a link to corresponding image, the link text being the 
+	 * the fly, e.g., replace image tags with a link to corresponding image, the link text being the
 	 * thumbnail version. This enables scripts like Lightbox and Shutter Reloaded.
 	 *
 	 * @param string $excerpt     The excerpt of the post as it is stored in the WordPress Database.
@@ -779,11 +780,11 @@ class PhotoQHelper extends PhotoQObject
 	 * @access public
 	 */
 	/*function modifyExcerptOnTheFly($excerpt)
-	{
+	 {
 		return $this->_modifyOnTheFly($excerpt, 'excerpt');
-	}*/
-	
-	
+		}*/
+
+
 	/**
 	 * Both of the above filter functions call this one to do the work.
 	 *
@@ -793,21 +794,21 @@ class PhotoQHelper extends PhotoQObject
 	 * @access private
 	 */
 	/*function _modifyOnTheFly($data, $viewName = 'content')
-	{
+	 {
 		global $post;
-		
+
 		if($this->isPhotoPost($post)){
-			$photo =& PhotoQPhoto::createInstance('PhotoQPublishedPhoto', $post->ID, $post->title);
-			$data = $photo->generateContent($viewName);
+		$photo =& PhotoQPhoto::createInstance('PhotoQPublishedPhoto', $post->ID, $post->title);
+		$data = $photo->generateContent($viewName);
 		}
 		return $data;
-	}*/
-	
-	
+		}*/
+
+
 }
 
 /**
- * My own category walker visitor object that will output categories in array syntax such that we can 
+ * My own category walker visitor object that will output categories in array syntax such that we can
  * have multiple category dropdown lists on the same page.
  */
 class Walker_PhotoQ_Category_Checklist extends Walker {
@@ -850,20 +851,20 @@ class Walker_PhotoQ_Category_Checklist extends Walker {
 	function end_el(&$output, $category, $depth, $args) {
 		$output .= "</li>\n";
 	}
-	
-	
+
+
 }
 
 
 /**
  * Shamelessly copied from Drupal. This gives us a set of timers that we for now use
- * in the batch processing stuff to prevent script timeouts. 
+ * in the batch processing stuff to prevent script timeouts.
  * Usage:
- * 
+ *
  * $timer =& PhotoQSingleton::getInstance('PhotoQTimers');
  * $timer->start('batchProcessing');
  * if($timer->read('batchProcessing') < 1000) ...
- * 
+ *
  * @author manu
  *
  */
@@ -886,7 +887,7 @@ class PhotoQTimers extends PhotoQSingleton
 	 *   The name of the timer.
 	 */
 	function start($name) {
-		
+
 		list($usec, $sec) = explode(' ', microtime());
 		$this->_timers[$name]['start'] = (float)$usec + (float)$sec;
 		$this->_timers[$name]['count'] = isset($this->_timers[$name]['count']) ? ++$this->_timers[$name]['count'] : 1;
@@ -901,7 +902,7 @@ class PhotoQTimers extends PhotoQSingleton
 	 *   The current timer value in ms.
 	 */
 	function read($name) {
-		
+
 		if (isset($this->_timers[$name]['start'])) {
 			list($usec, $sec) = explode(' ', microtime());
 			$stop = (float)$usec + (float)$sec;

@@ -38,6 +38,21 @@
 	</div>
 	
 	<div class="alignright actions">
+		<?php if(current_user_can( 'reorder_photoq' )): ?>
+			<span id="sortOptions"><select name="sort_criterion">
+				<option selected="selected" value="-1"><?php _e('Sort Criterion:', 'PhotoQ') ?></option>
+				<option value="date_asc"><?php _e('Capture Date (oldest first)', 'PhotoQ') ?></option>
+				<option value="date_desc"><?php _e('Capture Date (newest first)', 'PhotoQ') ?></option>
+				<option value="title_asc"><?php _e('Title (ascending)', 'PhotoQ') ?></option>
+				<option value="title_desc"><?php _e('Title (descending)', 'PhotoQ') ?></option>
+				<option value="filename_asc"><?php _e('Filename (ascending)', 'PhotoQ') ?></option>
+				<option value="filename_desc"><?php _e('Filename (descending)', 'PhotoQ') ?></option>
+				<option value="random"><?php _e('Random', 'PhotoQ') ?></option>
+			</select>
+			<input id="sort_queue" class="button-secondary action" type="submit" name="sort_queue" value="Sort"/>
+			</span>	
+		<?php endif; ?>
+		
 		<?php 
 		if ( current_user_can('use_secondary_photoq_post_button') ):
 		
@@ -73,6 +88,7 @@
 		<div class="qHCol qTitle"><?php _e('Title', 'PhotoQ') ?></div>
 		<div class="qHCol qAuthor"><?php _e('Author', 'PhotoQ') ?></div>
 		<div class="qHCol qDescr"><?php _e('Description', 'PhotoQ') ?></div>
+		<div class="qHCol qDate"><?php _e('Captured', 'PhotoQ') ?></div>
 		<div class="qHCol qEdit"></div>
 		<div class="qHCol qDelete"></div>
 		<div class="clr">&nbsp;</div>
@@ -87,7 +103,7 @@
 			$currentPhoto =& $this->_queue->getQueuedPhoto($i);
 			
 			//construct the url to the fullsize image
-			$imgUrl = "../". PhotoQHelper::getRelUrlFromPath($currentPhoto->getPath());
+			$imgUrl = PhotoQHelper::getRelUrlFromPath($currentPhoto->getPath());
 	
 			$path = $currentPhoto->getAdminThumbURL();		
 			
@@ -106,6 +122,8 @@
 				<div class="qCol qTitle"><?php echo $currentPhoto->getTitle(); ?></div>
 				<div class="qCol qAuthor"><?php $userData = get_userdata($currentPhoto->getAuthor()); echo $userData->display_name; ?></div>
 				<div class="qCol qDescr"><?php if($currentPhoto->getDescription()) echo $currentPhoto->getDescription(); else echo "&nbsp;"; ?></div>
+				<div class="qCol qDate"><?php echo $currentPhoto->getCaptureDate(); ?></div>
+				
 				<?php if ( $current_user->id == $currentPhoto->getAuthor() ||  current_user_can('edit_others_posts') ): ?>
 				<div class="qCol qEdit">
 					<a href="#" onclick="return editQEntry('<?php echo $currentPhoto->getId(); ?>');"><?php _e('Edit', 'PhotoQ') ?></a>

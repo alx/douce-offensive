@@ -86,22 +86,39 @@ class PhotoQOptionController extends OptionController
 		//alternative data structures as well to speed up this process.
 		
 		//path options
-		
-		$imgdir =& new StrictValidationTextFieldOption(
+		if(!PhotoQHelper::isWPMU()){ //no imgdir and ftp setting in WPMU
+			$imgdir =& new StrictValidationTextFieldOption(
 				'imgdir',
 				'wp-content',
 				'',
 				'',
 				'<br />'. sprintf(__('Default is %s','PhotoQ'), '<code>wp-content</code>')
-		);
-		$imgdir->addTest(new DirExistsInputTest(array(&$this,'queueValidationError'),'',
+			);
+			$imgdir->addTest(new DirExistsInputTest(array(&$this,'queueValidationError'),'',
 			__('Image Directory not found','PhotoQ'). ': '));
-		$imgdir->addTest(new FileWritableInputTest(array(&$this,'queueValidationError'),'',
+			$imgdir->addTest(new FileWritableInputTest(array(&$this,'queueValidationError'),'',
 			__('Image Directory not writable','PhotoQ'). ': '));
-		$this->registerOption($imgdir);
+			$this->registerOption($imgdir);
+			
+			$enableFtp =& new CheckBoxOption(
+				'enableFtpUploads',
+				'0',
+				__('Allow importing of photos from the following directory on the server','PhotoQ'). ': '
+			);
+			$enableFtp->addChild(
+				new TextFieldOption(
+					'ftpDir',
+					'',
+					'',
+					'',
+					'<br />'. sprintf(__('Full path (e.g., %s)','PhotoQ'),'<code>'.ABSPATH.'wp-content/ftp</code>')
+				)
+			);
+			$this->registerOption($enableFtp);
 		
+		}//end if(!PhotoQHelper::isWPMU())
 		
-		$imagemagickPath =& new TextFieldOption(
+		$imagemagickPath =& new TextFieldSiteOption(
 				'imagemagickPath',
 				'',
 				sprintf(_c('Absolute path to the ImageMagick convert executable. (e.g. %1$s ). Leave empty if %2$s is in the path.| example programname','PhotoQ'),'<code>/usr/bin/convert</code>','"convert"')
@@ -203,14 +220,16 @@ class PhotoQOptionController extends OptionController
 				'<p>', '</p>'
 			)
 		);
-		$cronOptions->addChild(
+		if(!PhotoQHelper::isWPMU()){ //no imgdir and ftp setting in WPMU
+			$cronOptions->addChild(
 			new CheckBoxOption(
 				'cronFtpToQueue',
 				'0',
 				__('When cronjob runs, automatically add FTP uploads to queue.','PhotoQ'),
 				'<p>', '</p>'
-			)
-		);
+				)
+			);
+		}
 		$this->registerOption($cronOptions);
 
 		$adminThumbs =& new CompositeOption('showThumbs', '1','','<table>','</table>');
@@ -282,7 +301,22 @@ class PhotoQOptionController extends OptionController
 		);
 		$this->registerOption($adminThumbs);
 		
+		$this->registerOption(
+			new CheckBoxOption(
+				'descrFromExif',
+				'0',
+				__('Get default description automatically from EXIF &ldquo;ImageDescription&rdquo; field.','PhotoQ') 
+			)
+		);
+		
 		$autoTitles = new CompositeOption('autoTitles');
+		$autoTitles->addChild(
+			new CheckBoxOption(
+				'autoTitleFromExif',
+				'0',
+				__('Get auto title from EXIF &ldquo;ImageDescription&rdquo; field instead of filename, unless field is empty.','PhotoQ') . '<br/>'
+			)
+		);
 		$autoTitles->addChild(
 			new TextFieldOption(
 				'autoTitleRegex',
@@ -330,21 +364,6 @@ class PhotoQOptionController extends OptionController
 		);
 		$this->registerOption($autoTitles);
 		
-		$enableFtp =& new CheckBoxOption(
-			'enableFtpUploads',
-			'0',
-			__('Allow importing of photos from the following directory on the server','PhotoQ'). ': '
-		);
-		$enableFtp->addChild(
-			new TextFieldOption(
-				'ftpDir',
-				'',
-				'',
-				'',
-				'<br />'. sprintf(__('Full path (e.g., %s)','PhotoQ'),'<code>'.ABSPATH.'wp-content/ftp</code>')
-			)
-		);
-		$this->registerOption($enableFtp);
 		
 		$this->registerOption(
 			new TextFieldOption(
@@ -451,11 +470,11 @@ class PhotoQOptionController extends OptionController
 			'BL' => __('Bottom Left','PhotoQ'),
 			'TR' => __('Top Right','PhotoQ'),
 			'TL' => __('Top Left','PhotoQ'),
-			'C|' => __('Center','PhotoQ'),
-			'R|' => __('Right','PhotoQ'),
-			'L|' => __('Left','PhotoQ'),
-			'T|' => __('Top','PhotoQ'),
-			'B|' => __('Bottom','PhotoQ'),
+			'C' => __('Center','PhotoQ'),
+			'R' => __('Right','PhotoQ'),
+			'L' => __('Left','PhotoQ'),
+			'T' => __('Top','PhotoQ'),
+			'B' => __('Bottom','PhotoQ'),
 			'*'  => __('Tile','PhotoQ')
 		);
 		$watermarkPosition->populate($valueLabelArray);
@@ -655,6 +674,10 @@ class PhotoQOptionController extends OptionController
 		return $this->getValue($viewName . 'View-type') !== 'none';
 	}
 	
+	function onCronimportFtpUploadsToQueue(){
+		return !PhotoQHelper::isWPMU() && $this->getValue('enableFtpUploads') && $this->getValue('cronFtpToQueue');
+	}
+	
 	/**
 	 * initialize stuff that depends on runtime configuration so that 
 	 * what is displayed represents the changes from last update.
@@ -662,21 +685,13 @@ class PhotoQOptionController extends OptionController
 	 */
 	function initRuntime()
 	{
-		//$this->load();
 		//populate lists of image sizes that depend on runtime stuff and cannot be populated before
 		$this->_unpopulateAllViews();
 		$this->_populateAllViews();
-		//$this->_options['contentView']->unpopulate();
-		//$this->_options['excerptView']->unpopulate();
-		
-		//put the available image sizes into the list for content and excerpt
-		//$this->_options['contentView']->populate($this->getImageSizeNames(),$this->ORIGINAL_IDENTIFIER == 'original');
-		//$this->_options['excerptView']->populate($this->getImageSizeNames(),$this->ORIGINAL_IDENTIFIER == 'original');
 		
 		//test for presence of imageMagick
 		$imagemagickTest = new PhotoQImageMagickPathCheckInputTest(array(&$this,'showImageMagickValError'));
-		$msg = $imagemagickTest->validate($this->_options['imagemagickPath']);
-		$this->_options['imagemagickPath']->setTextAfter('<br/>'. $msg);
+		$imagemagickTest->validate($this->_options['imagemagickPath']);
 	}
 	
 	function showImageMagickValError($valError){
@@ -766,11 +781,18 @@ class PhotoQOptionController extends OptionController
 	 * @return string	The cache directory.
 	 */
 	function getCacheDir(){
-		return str_replace('\\', '/', ABSPATH) . 'wp-content/photoQCache/';
+		/*if(PhotoQHelper::isWPMU()){
+			return BLOGUPLOADDIR . 'photoQCache/';
+		}*/
+		return str_replace('\\', '/', WP_CONTENT_DIR) . '/photoQCache/';
 	}
 	
+	/**
+	 * This is a folder where the user can place his/her own presets
+	 * @return string
+	 */
 	function getMyPresetsDir(){
-		return str_replace('\\', '/', ABSPATH) . 'wp-content/myPhotoQPresets/';
+		return str_replace('\\', '/', WP_CONTENT_DIR) . '/myPhotoQPresets/';
 	}
 	
 	function getPresetsDir(){
@@ -778,11 +800,17 @@ class PhotoQOptionController extends OptionController
 	}
 	
 	function getImgDir(){
-		//prepend ABSPATH to $imgdir if it is not already there
-		$dirPath = str_replace(ABSPATH, '', trim($this->getValue('imgdir')));
-		//$dirPath = str_replace(ABSPATH, '', 'wp-content');
-		$dir = rtrim(ABSPATH . $dirPath, '/');
-		return str_replace('\\',  '/', $dir) . '/';
+		if(PhotoQHelper::isWPMU()){
+			return BLOGUPLOADDIR;
+		}else{
+			// if path is relative, assumes relative to ABSPATH -> ABSPATH added
+			// if path is absolute, returned as is
+			$dir = path_join( ABSPATH, trim($this->getValue('imgdir')) );
+			//prepend ABSPATH to $imgdir if it is not already there
+			//$dirPath = str_replace(ABSPATH, '', trim($this->getValue('imgdir')));
+			//$dir = rtrim(ABSPATH . $dirPath, '/');
+			return str_replace('\\',  '/', $dir) . '/';
+		}
 	}
 	
 	function getFtpDir(){
@@ -1160,7 +1188,7 @@ class PhotoQOptionController extends OptionController
 			//store the imported options to the database
 			$storedOptions = get_option($this->_optionsDBName);
 			foreach($optionArray as $key => $val){
-				if(array_key_exists($key,$storedOptions))
+				if(!is_array($storedOptions) || array_key_exists($key,$storedOptions))
 					$storedOptions[$key] = PhotoQHelper::arrayHtmlEntities($val);
 			}
 			update_option($this->_optionsDBName, $storedOptions);
@@ -1815,7 +1843,7 @@ class PhotoQImageMagickPathCheckInputTest extends InputTest
 		//under windows the version check doesn't seem to work so we also check for availability of resize
 		if ( !$phpThumb->ImageMagickVersion() && !$phpThumb->ImageMagickSwitchAvailable('resize') ) {
     		$errMsg = __("Note: ImageMagick does not seem to be installed at the location you specified. ImageMagick is optional but might be needed to process bigger photos, plus PhotoQ might run faster if you configure ImageMagick correctly. If you don't care about ImageMagick and are happy with using the GD library you can safely ignore this message.",'PhotoQ');
-			$this->raiseErrorMessage($errMsg);
+    		$this->raiseErrorMessage($errMsg);
 			return false;
 		}
 		return true;

@@ -38,6 +38,7 @@ class PhotoQImageSize extends PhotoQObject
 		$this->_yearMonthDir = $yearMonthDir;
 		$this->_originalWidth = $originalWidth;
 		$this->_originalHeight = $originalHeight;
+		//PhotoQHelper::debug('name: ' . $imgName);
 		//PhotoQHelper::debug('height: ' . $originalHeight);
 		$this->_ratio = $this->_originalWidth/$this->_originalHeight;
 		$this->_oc =& PhotoQSingleton::getInstance('PhotoQOptionController');
@@ -107,8 +108,7 @@ class PhotoQImageSize extends PhotoQObject
 	
 	function getUrl()
 	{
-		$siteUrl = preg_replace('/\/*$/', '', get_option('siteurl'));
-		return $siteUrl . "/". PhotoQHelper::getRelUrlFromPath($this->_path);
+		return PhotoQHelper::getRelUrlFromPath($this->_path);
 	}
 	
 	function getName()

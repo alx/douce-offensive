@@ -7,15 +7,11 @@
  * @package PhotoQ
  */
 
-//ini_set('display_errors', 1);
-//ini_set('error_reporting', E_ALL ^ E_NOTICE);
-
 //if we don't define this switch, PhotoQ doesn't run
 define('EXPORTING_PHOTOQ_XML', true);
 
 //Load WordPress Bootstrap
-require_once('../../../wp-load.php');
-require_once('../../../wp-admin/admin.php');
+require_once( 'whoismanu-photoq-wploader.php' );
 
 //next are some access and nonce checks
 if ( !is_user_logged_in() )

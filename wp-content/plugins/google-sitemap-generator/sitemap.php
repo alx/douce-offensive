@@ -1,7 +1,7 @@
 <?php
 
 /*
- $Id: sitemap.php 165547 2009-10-21 20:19:36Z arnee $
+ $Id: sitemap.php 175664 2009-11-20 21:21:09Z arnee $
 
  Google XML Sitemaps Generator for WordPress
  ==============================================================================
@@ -25,7 +25,7 @@
  Plugin Name: Google XML Sitemaps
  Plugin URI: http://www.arnebrachhold.de/redir/sitemap-home/
  Description: This plugin will generate a sitemaps.org compatible sitemap of your WordPress blog which is supported by Ask.com, Google, MSN Search and YAHOO. <a href="options-general.php?page=sitemap.php">Configuration Page</a>
- Version: 3.1.7
+ Version: 3.2
  Author: Arne Brachhold
  Author URI: http://www.arnebrachhold.de/
 */
@@ -66,6 +66,9 @@ class GoogleSitemapGeneratorLoader {
 		//WP Cron hook
 		add_action('sm_build_cron', array('GoogleSitemapGeneratorLoader', 'CallBuildSitemap'),1,0);
 		
+		//External build hook
+		add_action('sm_rebuild', array('GoogleSitemapGeneratorLoader', 'CallBuildNowRequest'),1,0);
+		
 		//Robots.txt request
 		add_action('do_robots', array('GoogleSitemapGeneratorLoader', 'CallDoRobots'),100,0);
 		
@@ -76,6 +79,11 @@ class GoogleSitemapGeneratorLoader {
 		if(!empty($_GET["sm_command"]) && !empty($_GET["sm_key"])) {
 			GoogleSitemapGeneratorLoader::CallCheckForManualBuild();
 		}
+		
+		//Check if the result of a ping request should be shown
+		if(!empty($_GET["sm_ping_service"])) {
+			GoogleSitemapGeneratorLoader::CallShowPingResult();
+		}
 	}
 
 	/**
@@ -84,12 +92,12 @@ class GoogleSitemapGeneratorLoader {
 	function RegisterAdminPage() {
 		
 		if (function_exists('add_options_page')) {
-			add_options_page(__('XML-Sitemap Generator','sitemap'), __('XML-Sitemap','sitemap'), 10, 'sitemap.php', array('GoogleSitemapGeneratorLoader','CallHtmlShowOptionsPage'));
+			add_options_page(__('XML-Sitemap Generator','sitemap'), __('XML-Sitemap','sitemap'), 10, GoogleSitemapGeneratorLoader::GetBaseName(), array('GoogleSitemapGeneratorLoader','CallHtmlShowOptionsPage'));
 		}
 	}
 	
 	function RegisterAdminIcon($hook) {
-		if ( $hook == 'sitemap.php' && function_exists('plugins_url')) {
+		if ( $hook == GoogleSitemapGeneratorLoader::GetBaseName() && function_exists('plugins_url')) {
 			return plugins_url('img/icon-arne.gif',GoogleSitemapGeneratorLoader::GetBaseName());
 		}
 		return $hook;
@@ -98,7 +106,7 @@ class GoogleSitemapGeneratorLoader {
 	function RegisterPluginLinks($links, $file) {
 		$base = GoogleSitemapGeneratorLoader::GetBaseName();
 		if ($file == $base) {
-			$links[] = '<a href="options-general.php?page=sitemap.php">' . __('Settings') . '</a>';
+			$links[] = '<a href="options-general.php?page=' . GoogleSitemapGeneratorLoader::GetBaseName() .'">' . __('Settings') . '</a>';
 			$links[] = '<a href="http://www.arnebrachhold.de/redir/sitemap-plist-faq/">' . __('FAQ') . '</a>';
 			$links[] = '<a href="http://www.arnebrachhold.de/redir/sitemap-plist-support/">' . __('Support') . '</a>';
 			$links[] = '<a href="http://www.arnebrachhold.de/redir/sitemap-plist-donate/">' . __('Donate') . '</a>';
@@ -127,6 +135,16 @@ class GoogleSitemapGeneratorLoader {
 	}
 	
 	/**
+	 * Invokes the CheckForAutoBuild method of the generator
+	 */
+	function CallBuildNowRequest() {
+		if(GoogleSitemapGeneratorLoader::LoadPlugin()) {
+			$gs = GoogleSitemapGenerator::GetInstance();
+			$gs->BuildNowRequest();
+		}
+	}
+	
+	/**
 	 * Invokes the BuildSitemap method of the generator
 	 */
 	function CallBuildSitemap() {
@@ -143,6 +161,16 @@ class GoogleSitemapGeneratorLoader {
 		if(GoogleSitemapGeneratorLoader::LoadPlugin()) {
 			$gs = GoogleSitemapGenerator::GetInstance();
 			$gs->CheckForManualBuild();
+		}
+	}
+	
+	/**
+	 * Invokes the ShowPingResult method of the generator
+	 */
+	function CallShowPingResult() {
+		if(GoogleSitemapGeneratorLoader::LoadPlugin()) {
+			$gs = GoogleSitemapGenerator::GetInstance();
+			$gs->ShowPingResult();
 		}
 	}
 	

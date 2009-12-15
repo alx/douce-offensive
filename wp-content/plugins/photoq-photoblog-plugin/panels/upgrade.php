@@ -11,7 +11,7 @@
 			
 		<?php 
 			if ( function_exists('wp_nonce_field') )
-					wp_nonce_field('photoq-updateOptions');
+					wp_nonce_field('wimpq_options-nonce','wimpq_options-nonce');
 					
 			//get all photo posts, foreach size, rebuild the photo
 			$photos = $this->_db->getAllPhotos2Import();
@@ -44,7 +44,7 @@
 			
 		<?php 
 			if ( function_exists('wp_nonce_field') )
-					wp_nonce_field('photoq-updateOptions');
+					wp_nonce_field('wimpq_options-nonce','wimpq_options-nonce');
 			
 					foreach( $folders as $folderName)
 						echo "<li>$folderName</li>";

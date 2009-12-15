@@ -21,6 +21,7 @@
 		<input type="hidden" name="importXML" value="true" />
 		</p>
 	</form>
+	<?php if(!PhotoQHelper::isWPMU() || is_site_admin()): ?>
 	<br/>
 	<form action="../wp-content/plugins/photoq-photoblog-plugin/whoismanu-photoq-xml-export.php" method="get">
 	<?php wp_nonce_field('photoqExportXML-nonce', 'photoqExportXML-nonce'); ?>
@@ -92,7 +93,7 @@
 			<input type="hidden" name="download" value="true" />
 		</p>
 	</form>
-
+	<?php endif; //!PhotoQHelper::isWPMU()?>
 	</div>
 </div>
 
@@ -280,24 +281,37 @@
 				
 				<?php 
 				
+				
 				$furtherOptions = array(
-					'imgdir' => __('Image Directory:', 'PhotoQ'),
-					'imagemagickPath' => __('ImageMagick Path:', 'PhotoQ'),
+					'postMulti' => __('Second Post Button:', 'PhotoQ'),
 					'cronJobs' => __('Automatic Posting:', 'PhotoQ'),
 					'qPostStatus' => __('PhotoQ Post Status:', 'PhotoQ'),
 					'qPostDefaultCat' => __('PhotoQ Default Category:', 'PhotoQ'),
 					'qPostAuthor' => __('PhotoQ Default Author:', 'PhotoQ'),
 					'qPostDefaultTags' => __('PhotoQ Default Tags:', 'PhotoQ'),
-					'specialCaps' => __('Roles/Capabilities:', 'PhotoQ'),
-					'foldCats' => __('Fold Categories:', 'PhotoQ'),
-					'showThumbs' => __('Admin Thumbs:', 'PhotoQ'),
 					'autoTitles' => __('Auto Titles:', 'PhotoQ'),
-					'enableFtpUploads' => __('FTP Upload:', 'PhotoQ'),
-					'postMulti' => __('Second Post Button:', 'PhotoQ'),
+					'descrFromExif' => __('Auto Description:', 'PhotoQ'),
+					'specialCaps' => __('Roles/Capabilities:', 'PhotoQ'),
+					'showThumbs' => __('Admin Thumbs:', 'PhotoQ'),
+					'foldCats' => __('Fold Categories:', 'PhotoQ'),
 					'deleteImgs' => __('Deleting Posts:', 'PhotoQ'),
 					'enableBatchUploads' => __('Batch Uploads:', 'PhotoQ')
 				); 
 				
+				
+				if(!PhotoQHelper::isWPMU()){//WPMU version has no imgdir and ftp setting
+					$furtherOptions = array_merge(array(
+							'imgdir' => __('Image Directory:', 'PhotoQ'),
+							'enableFtpUploads' => __('FTP Upload:', 'PhotoQ'),
+							'imagemagickPath' => __('ImageMagick Path:', 'PhotoQ')
+						), $furtherOptions
+					);					
+				}elseif(is_site_admin()){//in case of WPMU IMPath is a sitewide setting only accessible to site_admins
+					$furtherOptions = array_merge(array(
+							'imagemagickPath' => __('ImageMagick Path:', 'PhotoQ') . '<br/><b>' . __('(Sitewide Setting)', 'PhotoQ') . '</b>'
+						), $furtherOptions
+					);
+				}
 				
 				$this->_oc->showOptionArray($furtherOptions);
 				
@@ -313,24 +327,21 @@
 			<div class="inside">
 			<table width="100%" cellspacing="2" cellpadding="5" class="form-table">
 				
-				<?php if(false): //eventually move this out completely?>
-				<tr valign="top">
-					<th scope="row"><?php _e('PhotoQ < 1.5.2:','PhotoQ') ?></th>
-					<td><label for="oldImgDir">Old Image Directory: </label>
-					<input type="text" name="oldImgDir" id="oldImgDir"
-					size="20" maxlength="20" value="" />
-					<input style="vertical-align: top;" type="submit" class="button-secondary"
-					name="showMoveImgDirPanel"
-					value="<?php _e('Move ImgDir to wp-content', 'PhotoQ') ?> &raquo;" /></td>
-				</tr>
-				<?php endif; ?>
-				
+				<?php if(!PhotoQHelper::isWPMU()): ?>
 				<tr valign="top">
 					<th scope="row"><?php _e('Upgrade:','PhotoQ') ?></th>
 					<td><input style="vertical-align: top;" type="submit" class="button-secondary"
 					name="showUpgradePanel"
 					value="<?php _e('Upgrade from PhotoQ < 1.5', 'PhotoQ') ?> &raquo;" /></td>
 				</tr>
+				<tr valign="top">
+					<th scope="row"><?php _e('Fix Permissions:','PhotoQ') ?></th>
+					<td><input style="vertical-align: top;" type="submit" class="button-secondary"
+					name="fixPermissions"
+					value="<?php _e('Fix File and Folder Permissions', 'PhotoQ') ?>" /></td>
+				</tr>
+				<?php endif; ?>
+				
 				<tr valign="top">
 					<th scope="row"><?php _e('Rebuild Published:','PhotoQ') ?></th>
 					<td><input style="vertical-align: top;" type="submit" class="button-secondary"

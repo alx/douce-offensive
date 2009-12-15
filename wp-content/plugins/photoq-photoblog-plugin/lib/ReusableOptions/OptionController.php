@@ -91,6 +91,14 @@ class OptionController extends ReusableOptionObject
 	var $_optionsDBName;
 	
 	/**
+	 * Site options are stored under this name in Wordpress Database.
+	 * @var string
+	 * @access private
+	 */
+	
+	var $_siteOptionsDBName;
+	
+	/**
 	 * The visitor object used to render options.
 	 * @var object RenderOptionVisitor
 	 * @access private
@@ -141,6 +149,8 @@ class OptionController extends ReusableOptionObject
 		$this->_getButtons = array();
 		
 		$this->_optionsDBName = $name;
+		$this->_siteOptionsDBName = $name.'_site';
+		
 
 		if( $renderVisitor === '')
 			$this->_renderOptionVisitor = new RenderOptionVisitor();
@@ -248,8 +258,8 @@ class OptionController extends ReusableOptionObject
 	function load()
 	{
 		$storedOptions = get_option($this->_optionsDBName);
-		
-		//print_r($storedOptions);
+		if(is_array($storedOptions) && is_array($storedSiteOptions = get_site_option($this->_siteOptionsDBName)))
+			$storedOptions = array_merge($storedOptions, $storedSiteOptions);
 		
 		if(!empty($storedOptions)){
 			//foreach ($this->_options as $option){
@@ -269,12 +279,18 @@ class OptionController extends ReusableOptionObject
 	function _store()
 	{
 		$optionArray = array();
+		$siteOptionArray = array();
 		//foreach ($this->_options as $option){
 		foreach ( array_keys($this->_options) as $index ) {
 			$option =& $this->_options[$index];
-			$optionArray[$option->getName()] = $option->store();
+			if(is_a($option, TextFieldSiteOption))
+				$siteOptionArray[$option->getName()] = $option->store();
+			else
+				$optionArray[$option->getName()] = $option->store();
+				
 		}
 		update_option($this->_optionsDBName, $optionArray);
+		update_site_option($this->_siteOptionsDBName, $siteOptionArray);
 	}
 	
 	/**

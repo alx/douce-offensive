@@ -387,6 +387,68 @@ class PhotoQDB extends PhotoQObject
 		return $this->_wpdb->get_col("SELECT q_img_id FROM $this->QUEUE_TABLE WHERE 1");
 	}
 	
+	/**
+	 * Sorts the queue according to the given criterion.
+	 * @param $criterion
+	 * @return unknown_type
+	 */
+	function sortQueue($criterion){
+		//get the sorted ids of the images in the queue.
+		$sortedIds = $this->_wpdb->get_col("SELECT q_img_id
+			FROM $this->QUEUE_TABLE ORDER BY " . $this->_getSortOrderByClause($criterion));
+		
+		//randomize?
+		if($criterion === 'random') shuffle($sortedIds);
+		
+		//sort the database accordingly
+		$this->_multiRowSort($sortedIds);
+	}
+	
+	/**
+	 * Returns the ORDER BY clause that is used when ordering the queue positions.
+	 * @param $criterion
+	 * @return unknown_type
+	 */
+	function _getSortOrderByClause($criterion = 'id'){
+		$order = "q_img_id";
+		switch($criterion){
+			case "date_desc":
+				$order = "q_date DESC, q_imgname, q_img_id";
+				break;
+			case "date_asc":
+				$order = "q_date ASC, q_imgname, q_img_id";
+				break;
+			case "title_asc":
+				$order = "q_title ASC, q_date, q_imgname, q_img_id";
+				break;
+			case "title_desc":
+				$order = "q_title DESC, q_date, q_imgname, q_img_id";
+				break;
+			case "filename_asc":
+				$order = "q_imgname ASC, q_date, q_imgname, q_img_id";
+				break;
+			case "filename_desc":
+				$order = "q_imgname DESC, q_date, q_imgname, q_img_id";
+				break;	
+		}
+		return $order;
+	}
+	
+	/**
+	 * Updates DB such that positions correspond to the ordering of the IDs of the array given.
+	 * Done in a server friendly way, in only one single query.
+	 * @param $sortedIds
+	 * @return unknown_type
+	 */
+	function _multiRowSort($sortedIds){
+		$multiRowSortQuery = "UPDATE $this->QUEUE_TABLE SET q_position = CASE q_img_id ";
+		foreach($sortedIds as $pos => $id){
+			$multiRowSortQuery .= "WHEN '$id' THEN '$pos' ";
+		}
+		$multiRowSortQuery .= "ELSE q_position END";
+		$this->_wpdb->query($multiRowSortQuery);
+	}
+	
 	function updateTags($imgId, $tags){
 		$this->_wpdb->query("UPDATE $this->QUEUE_TABLE SET q_tags = '$tags' WHERE q_img_id = '$imgId'");
 	}
@@ -539,6 +601,7 @@ class PhotoQDB extends PhotoQObject
 			$wpdb->query("ALTER TABLE $this->QUEUE_TABLE ADD COLUMN q_img_id bigint(20) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY  (q_img_id)");	
 		}
 		
+		
 		//add new column for q_fk_img_id to queue meta table and match it with queue table
 		if($this->tableExists($this->QUEUEMETA_TABLE) && !$this->colExists($this->QUEUEMETA_TABLE, 'q_fk_img_id')){
 			//add column
@@ -605,7 +668,6 @@ class PhotoQDB extends PhotoQObject
 				$charset_collate .= " COLLATE $wpdb->collate";
 		}
 		
-		
 		//echo "creating Table: ".$this->QUEUE_TABLE;
 	
 		$sql = "
@@ -618,6 +680,7 @@ class PhotoQDB extends PhotoQObject
 		q_descr text,
 		q_tags text,
 		q_exif text,
+		q_date datetime,
 		q_edited tinyint default 0,
 		q_fk_author_id bigint(20) unsigned NOT NULL default '0',
 		PRIMARY KEY  (q_img_id)
@@ -666,7 +729,7 @@ class PhotoQDB extends PhotoQObject
 		PRIMARY KEY  (bid)
 		) $charset_collate;";
 		$this->_upgradeDB($this->QBATCH_TABLE, $sql, $currentVersion);
-	
+		
 	}
 	
 	
@@ -693,7 +756,6 @@ class PhotoQDB extends PhotoQObject
 					$currentRole->remove_cap($capName);	
 			}
 		}
-		
 		//add the capabilities
 		foreach($capRolesArray as $capName => $roleNames){
 			foreach ($roleNames as $roleName){
@@ -718,6 +780,7 @@ class PhotoQDB extends PhotoQObject
 	 * @access private
 	 */
 	function _upgradeDB($table, $sql, $currentVersion) {
+		
 		if($this->_wpdb->get_var("show tables like '$table'") != $table 
 					|| $currentVersion != get_option( "wimpq_version" )) {
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -727,6 +790,7 @@ class PhotoQDB extends PhotoQObject
 			}else
 				add_option("wimpq_version", $currentVersion);
 		}
+		
 	}
 	
 	function deleteQueueEntry($id, $position){
