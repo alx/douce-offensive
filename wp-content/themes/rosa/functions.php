@@ -61,8 +61,9 @@ function display_recent_categories(){
 	// }
 	
 	$args=array(
-	  'orderby' => 'name',
-	  'order' => 'ASC'
+		'number' => '5',
+		'orderby' => 'name',
+		'order' => 'ASC'
 	  );
 	$categories=get_categories($args);
 	foreach($categories as $category) { 
