@@ -38,11 +38,7 @@
 		
 		<div class="nav">
 			<h2>Archivo &mdash;</h2>
-			<ul>
-			<?php 
-				display_recent_categories();
-			?>
-			</ul>
+			<ul><?php display_recent_categories(); ?></ul>
 		</div>
 		
 		<div class="nav talleres-nav">
