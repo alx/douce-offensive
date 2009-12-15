@@ -66,7 +66,7 @@ function display_recent_categories(){
 	  );
 	$categories=get_categories($args);
 	foreach($categories as $category) { 
-		echo '<li><a href='" . get_category_link( $category->term_id ) . "'>' . $category->name . '</a></li>';
+		echo "<li><a href='" . get_category_link( $category->term_id ) . "'>" . $category->name . "</a></li>";
 	}
 }
 
