@@ -8,7 +8,7 @@
  *
  * @global string $wp_version
  */
-$wp_version = '2.8.5';
+$wp_version = '2.8.6';
 
 /**
  * Holds the WordPress DB revision, increments when changes are made to the WordPress DB schema.
@@ -30,3 +30,5 @@ $tinymce_version = '3241-1141';
  * @global string $manifest_version
  */
 $manifest_version = '20090616';
+
+$wp_local_package = 'es_ES';

@@ -315,6 +315,10 @@ function akismet_get_server_connectivity( $cache_timeout = 86400 ) {
 
 // Returns true if server connectivity was OK at the last check, false if there was a problem that needs to be fixed.
 function akismet_server_connectivity_ok() {
+	// skip the check on WPMU because the status page is hidden
+	global $wpcom_api_key;
+	if ( $wpcom_api_key )
+		return true;
 	$servers = akismet_get_server_connectivity();
 	return !( empty($servers) || !count($servers) || count( array_filter($servers) ) < count($servers) );
 }
@@ -403,7 +407,8 @@ function akismet_http_post($request, $host, $path, $port = 80, $ip=null) {
 // filter handler used to return a spam result to pre_comment_approved
 function akismet_result_spam( $approved ) {
 	// bump the counter here instead of when the filter is added to reduce the possibility of overcounting
-	update_option( 'akismet_spam_count', get_option('akismet_spam_count') + 1 );
+	if ( $incr = apply_filters('akismet_spam_count_incr', 1) )
+		update_option( 'akismet_spam_count', get_option('akismet_spam_count') + $incr );
 	return 'spam';
 }
 
@@ -442,7 +447,8 @@ function akismet_auto_check_comment( $comment ) {
 		
 		if ( $post->post_type == 'post' && $diff > 30 && get_option( 'akismet_discard_month' ) == 'true' ) {
 			// akismet_result_spam() won't be called so bump the counter here
-			update_option( 'akismet_spam_count', get_option('akismet_spam_count') + 1 );
+			if ( $incr = apply_filters('akismet_spam_count_incr', 1) )
+				update_option( 'akismet_spam_count', get_option('akismet_spam_count') + $incr );
 			die;
 		}
 	}
